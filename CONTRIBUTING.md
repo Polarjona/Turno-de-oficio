@@ -5,23 +5,30 @@ Convenciones para las cuatro personas del equipo (ETL/DevOps · Backend · Front
 
 ## Ramas
 
-- `main` — la verdad del proyecto. Todo lo que está en `entregables/` viene de aquí.
-- `feature/<rol>-<descripcion>` — una tarjeta de Trello por rama
-  (`feature/etl-inventario-fuentes`, `feature/devops-repo-readme`…).
-- `fix/<descripcion>` — corrección de un defecto ya revisado.
-- Sin ramas `test`, `wip` o nombres personales: el nombre de la rama es el de la
-  tarjeta, no el tuyo.
+- `produccion` — lo que se entrega al cliente: solo la versión final y revisada.
+  Aquí no se trabaja; se actualiza desde `develop` cuando el entregable está cerrado.
+- `develop` — rama por defecto y base de todo. Aquí se juntan los cuatro roles.
+- Una rama por rol, donde cada persona hace push de lo suyo:
+  - `etl-devops` — Pol (ETL y DevOps)
+  - `backend` — Yazan
+  - `frontend` — Dhruva
+  - `database` — Akram
+- Si un cambio es grande o arriesgado, `feature/<descripcion>` sale de la rama del
+  rol y vuelve a ella. Sin ramas `test`, `wip` ni nombres personales.
 
 ## Flujo de una tarjeta
 
 1. **To do → Doing** al empezarla (moverla, no asignarse). Una persona, una tarjeta.
-2. Cambios pequeños y frecuentes; cada commit puede verse solo.
-3. **PR contra `main`**, con la tarjeta de Trello enlazada en la descripción.
+2. Commits pequeños y frecuentes en tu rama de rol; cada commit puede verse solo.
+3. **PR de la rama del rol contra `develop`**, con la tarjeta de Trello enlazada en
+   la descripción. El PR y el merge los hace Pol; el autor del cambio no mergea el suyo.
 4. **Doing → Review** cuando el entregable está listo. Acompañarlo de un comentario
    en la tarjeta con qué se ha hecho y dónde está el fichero.
 5. **Review → Done solo tras la revisión** de otra persona (la revisión de Yazan
    en el mapa normativo es el ejemplo a seguir). Sin revisión, la tarjeta se queda
    en Review aunque el plazo haya pasado: el plazo atrasado se comenta, no se esconde.
+6. `produccion` se actualiza solo con un PR de `develop`, cuando el entregable está
+   cerrado y revisado.
 
 ## Commits
 

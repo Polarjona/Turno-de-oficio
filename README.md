@@ -36,8 +36,9 @@ git clone https://github.com/Polarjona/Turno-de-oficio.git
 cd Turno-de-oficio
 ```
 
-Cada persona trabaja en `feature/<rol>-<descripcion>` y abre PR contra `main`
-con la tarjeta de Trello enlazada. El detalle está en `CONTRIBUTING.md`.
+Cada persona hace push en su rama de rol (`etl-devops`, `backend`, `frontend`,
+`database`); Pol abre el PR contra `develop` y hace el merge. `produccion` guarda
+solo la versión final que se entrega al cliente. El detalle está en `CONTRIBUTING.md`.
 
 ## Cómo se regeneran los documentos
 
