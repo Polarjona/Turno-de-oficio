@@ -12,7 +12,7 @@ jurídica gratuita. Documentación y entregables del proyecto de ejercicio de la
 │   ├── ISSUE_TEMPLATE/tarjeta.md    Plantilla de issue = tarjeta de Trello
 │   └── workflows/ci.yml             CI: lint, tipos, pruebas, contrato y build web
 ├── apps/
-│   ├── api/                         NestJS 11 · contrato en http://localhost:3001/api-docs
+│   ├── api/                         NestJS 11 · contrato en http://localhost:3101/api-docs
 │   └── web/                         Next.js 15
 ├── packages/shared/                 Tipos y esquemas Zod que usan api y web
 ├── db/migrations/                   SQL del cuadrante (0001_init.sql)
@@ -57,7 +57,7 @@ Requisitos: Node 22 y Docker (solo para la base de datos).
 npm install                 # instala workspaces y compila packages/shared
 docker compose -f docker/docker-compose.yml up -d   # Postgres 16 en localhost:5432
 
-npm run dev:api             # http://localhost:3001 y contrato en /api-docs
+npm run dev:api             # http://localhost:3101 (PORT=... para cambiarlo) y contrato en /api-docs
 npm run dev:web             # http://localhost:3000
 ```
 
