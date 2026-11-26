@@ -1,0 +1,19 @@
+name: puerta-produccion
+
+# Solo se mergea en produccion desde develop.
+on:
+  pull_request:
+    branches: [produccion]
+
+jobs:
+  solo-desde-develop:
+    name: produccion-solo-desde-develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprueba la rama de origen del PR
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "::error::Solo se mergea en produccion desde develop. Este PR viene de '${{ github.head_ref }}'."
+            exit 1
+          fi
+          echo "PR desde develop: correcto."
