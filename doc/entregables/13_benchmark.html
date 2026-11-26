@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Benchmark de apps de guardias y turnos</title>
+</head>
+<body>
+
+<div class="dkicker">Entregable T1 · Dhruva (Frontend) · Tarjeta #24</div>
+<h1 class="dtitle">Benchmark de apps de guardias y turnos</h1>
+<p class="dlead">Tabla comparativa de 5 productos — colegiales y genéricos — con qué copiamos, qué
+evitamos y qué nadie resuelve todavía, para la aplicación del Turno de Oficio de Tarragona.</p>
+
+<h2>1. Método</h2>
+<p>Análisis de 5 aplicaciones a partir de <b>información pública</b> (web, documentación y ayuda pública):
+no se han probado las aplicaciones ni se han usado cuentas, y los colegiales (ICAM, ICA Cádiz, ICAB)
+son sistemas cerrados con acceso restringido, por lo que de ellos solo se evalúa su enfoque general,
+no pantallas concretas. Los genéricos (Deputy, PagerDuty) sí tienen documentación pública de producto.
+Fecha del análisis: noviembre de 2026.</p>
+
+<h2>2. Tabla comparativa</h2>
+<table class="grid">
+<thead><tr><th style="width:14%">Producto</th><th style="width:11%">Origen</th><th style="width:25%">Lo bueno</th><th style="width:25%">Qué copiamos</th><th style="width:25%">Qué evitamos</th></tr></thead>
+<tbody>
+<tr><td><strong>ICAM</strong></td><td>Colegial (Madrid)</td><td>Gestión colegial integrada en el ecosistema del colegio: turnos, comunicaciones y credenciales en un solo entorno.</td><td>Lenguaje y credibilidad colegial; la guardia vive dentro del portal del colegio, no en una app genérica.</td><td>Portal cerrado sin UX pública evaluable; nada que copiar de pantallas concretas.</td></tr>
+<tr><td><strong>ICA Cádiz</strong></td><td>Colegial (Cádiz)</td><td>Enfoque de colegio mediano: servicios de turno y avisos pensados para letrados, no para plantillas.</td><td>Comunicaciones al colegiado como servicio colegial, con identidad institucional.</td><td>Sin demostración pública del flujo de sustitución ni de la trazabilidad.</td></tr>
+<tr><td><strong>ICAB</strong></td><td>Colegial (Barcelona)</td><td>Infraestructura colegial madura y cultura de autogestión del letrado (turno d'ofici).</td><td>Autenticación colegial y autogestión por el letrado dentro de su cuenta.</td><td>Acceso restringido: no se puede comprobar confirmación, acuses ni estados sin ser colegiado.</td></tr>
+<tr><td><strong>Deputy</strong></td><td>Genérico (turnos)</td><td>Calendario semanal muy visual y confirmación rápida de turnos por los empleados.</td><td>Vista semanal clara y confirmación en pocos toques.</td><td>Complejidad de roles y permisos pensada para empresas; sobra para un turno colegial.</td></tr>
+<tr><td><strong>PagerDuty</strong></td><td>Genérico (alertas)</td><td>Escalado y acuses de alertas muy trabajados: quién está de guardia, quién ha confirmado, quién falta.</td><td>El patrón de acuse y escalado: sin acuse, la alerta sube a coordinación.</td><td>Pensado para operaciones 24/7 técnicas; su densidad no encaja con un letrado de guardia.</td></tr>
+</tbody>
+</table>
+<p class="small">En una primera pasada se revisaron también When I Work, Connecteam, Calendly y Google Calendar;
+se descartaron: los tres primeros por no aportar nada colegial que Deputy no dé mejor, y Google Calendar por
+ser solo un calendario sin gestión de guardias. De ellos solo se conserva la lección del calendario mensual
+intuitivo, ya recogida en los wireframes.</p>
+
+<h2>3. Qué copiamos</h2>
+<ul class="tight">
+<li>Vista semanal y calendario mensual claros (Deputy).</li>
+<li>Confirmación rápida de la guardia en pocos toques (Deputy).</li>
+<li>Centro de avisos visible y persistente (PagerDuty).</li>
+<li>Patrón de acuse con escalado a coordinación si el letrado no confirma (PagerDuty, RN-11).</li>
+<li>Identidad y lenguaje colegial dentro de la cuenta del letrado (colegiales).</li>
+</ul>
+
+<h2>4. Qué evitamos</h2>
+<ul class="tight">
+<li>Pantallas sobrecargadas y menús complejos (la densidad de PagerDuty).</li>
+<li>Formularios largos y pasos de más para confirmar o pedir una sustitución.</li>
+<li>Información irrelevante en la pantalla de guardia: solo estado, horario y acciones.</li>
+<li>Depender de un portal cerrado sin prueba pública del flujo completo.</li>
+</ul>
+
+<h2>5. Qué nadie resuelve todavía</h2>
+<ul class="tight">
+<li>Gestión específica para abogados de oficio (materias, habilitaciones, cómputo de equidad).</li>
+<li>Sustituciones validadas por el Colegio: el acuerdo entre letrados no cambia el cuadrante hasta la validación.</li>
+<li>Reparto equitativo demostrable ante cualquier letrado (RN-02, RN-04 y el índice de equidad).</li>
+<li>Trazabilidad completa de cambios: quién publicó, cuándo y quién lo cambió.</li>
+<li>Gestión integrada de incidencias y partes con cierre motivado.</li>
+</ul>
+
+<h2>6. Conclusión</h2>
+<p>Los colegiales confirman el encuadre institucional pero no dejan ver su UX; los genéricos dejan ver
+patrones útiles (calendario, confirmación, acuse y escalado) pero ninguno cubre las necesidades del Turno
+de Oficio. La solución deberá combinar calendarios intuitivos, notificaciones efectivas y gestión de
+disponibilidad con las funcionalidades específicas para guardias, sustituciones y trazabilidad legal.</p>
+
+<p class="footnote">Tarjeta #24 — Dhruva (Frontend). Proyecto de ejercicio, sin interlocución con el Colegio.
+Análisis con información pública; sin pruebas de las aplicaciones.</p>
+
+</body>
+</html>

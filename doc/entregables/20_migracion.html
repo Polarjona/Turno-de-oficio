@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plan de migración de datos existentes</title>
+</head>
+<body>
+<div class="entregable">
+<div class="dkicker">Entregable · Akram (Database) · Complementa el Flujo ETL TOF-2026-007</div>
+<h1 class="dtitle">Plan de migración de datos existentes</h1>
+<p class="dlead">Plan de migración del Excel actual a la base de datos sin perder historia ni duplicar
+letrados, con deduplicación, reconciliación de totales y consultas de aceptación. Sustituye a la
+versión anterior: ya no existen las tablas <code>abogados</code> (como entidad separada del usuario) ni
+<code>historial_asignaciones</code>; la migración carga las entidades reales
+(<code>usuario</code>, <code>abogado</code>, <code>guardia</code>, <code>cuadrante</code>…) por el flujo
+ETL y registra cada fila con <code>auditoria.origen = 'migracion'</code>.</p>
+
+<h2>1. Estrategia de migración (flujo ETL TOF-2026-007)</h2>
+<table class="grid">
+<thead><tr><th style="width:30%">Paso</th><th style="width:70%">Qué se hace</th></tr></thead>
+<tbody>
+<tr><td>1. Extracción</td><td>Lectura de los ficheros Excel (letrados, cuadrantes y guardias históricas) tal como los entrega el Colegio.</td></tr>
+<tr><td>2. Staging</td><td>Carga en tablas temporales sin tocar el modelo: ahí se limpian formatos (fechas, correos, nombres) y se detectan los registros con formato inválido.</td></tr>
+<tr><td>3. Validación</td><td>Se comprueban unicidades y claves foráneas contra el modelo: <code>num_colegiado</code> y <code>email</code> únicos; toda guardia apunta a una plantilla y una materia existentes.</td></tr>
+<tr><td>4. Deduplicación</td><td>Un letrado por <code>num_colegiado</code>; coincidencias por nombre y correo se registran como incidencias para revisión manual según el ETL (no se inventa un segundo letrado).</td></tr>
+<tr><td>5. Carga</td><td>Inserción en las tablas del modelo por el pipeline origen → staging → validado → carga; cada fila deja <code>auditoria.origen = 'migracion'</code>.</td></tr>
+<tr><td>6. Reconciliación</td><td>Comparación de totales Excel vs. base de datos (siguiente sección) antes de dar por buena la migración.</td></tr>
+</tbody>
+</table>
+<p class="small">La habilitación por especialidad <b>no</b> se carga desde el Excel (no hay fuente fiable de
+acreditaciones): se crea desde la aplicación cuando el Colegio la acredita.</p>
+
+<h2>2. Reconciliación de totales</h2>
+<table class="grid">
+<thead><tr><th style="width:44%">Total a conciliar</th><th style="width:56%">Excel vs. base de datos</th></tr></thead>
+<tbody>
+<tr><td>Número total de letrados</td><td>Filas de letrados del Excel = <code>SELECT COUNT(*) FROM abogado;</code></td></tr>
+<tr><td>Número de cuentas de usuario</td><td>Filas del Excel con correo válido = <code>SELECT COUNT(*) FROM usuario;</code></td></tr>
+<tr><td>Guardias históricas migradas</td><td>Filas de servicio del Excel = <code>SELECT COUNT(*) FROM guardia;</code></td></tr>
+<tr><td>Cuadrantes publicados</td><td>Periodos publicados del Excel = <code>SELECT COUNT(*) FROM cuadrante WHERE estado = 'publicado';</code></td></tr>
+</tbody>
+</table>
+
+<h2>3. Consultas de aceptación</h2>
+<table class="grid">
+<thead><tr><th style="width:44%">Verificación</th><th style="width:56%">Consulta</th></tr></thead>
+<tbody>
+<tr><td>No hay colegiados duplicados</td><td><code>SELECT num_colegiado, COUNT(*) FROM abogado GROUP BY num_colegiado HAVING COUNT(*) &gt; 1;</code></td></tr>
+<tr><td>No hay correos duplicados</td><td><code>SELECT email, COUNT(*) FROM usuario GROUP BY email HAVING COUNT(*) &gt; 1;</code></td></tr>
+<tr><td>Toda guardia apunta a una plantilla válida</td><td><code>SELECT COUNT(*) FROM guardia g LEFT JOIN tipo_guardia t ON g.tipo_guardia_id = t.id WHERE t.id IS NULL;</code></td></tr>
+<tr><td>No hay solicitudes huérfanas</td><td><code>SELECT COUNT(*) FROM solicitud s LEFT JOIN guardia g ON s.guardia_id = g.id WHERE g.id IS NULL;</code></td></tr>
+<tr><td>Lo migrado es distinguible</td><td><code>SELECT COUNT(*) FROM auditoria WHERE origen = 'migracion';</code></td></tr>
+</tbody>
+</table>
+
+<div class="box ok">
+<div class="box-title">Criterios de aceptación</div>
+<ul class="tight" style="margin-bottom:0;">
+<li>Ningún duplicado por <code>num_colegiado</code> ni por <code>email</code>.</li>
+<li>Los totales de letrados, cuentas, guardias y cuadrantes coinciden con el Excel.</li>
+<li>Sin errores de integridad referencial (consultas de aceptación a cero filas huérfanas).</li>
+<li>Todo lo migrado queda marcado con <code>origen = 'migracion'</code> y el histórico se conserva completo.</li>
+</ul>
+</div>
+<p class="footnote">Tarjeta de Akram (Database) «Plan de migración de datos existentes», plazo 19 de noviembre.
+Ejecuta el flujo ETL TOF-2026-007 (origen → staging → validado → carga) sobre el modelo TOF-2026-012.
+Documento de ejercicio, sin interlocución con el Colegio.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!-- ============ CAPÍTULO 17 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 17</span>Diagrama entidad-relación</h1>
+<p class="chlead">Las relaciones y cardinalidades del modelo, en una sola vista. Se representan los campos
+identificativos; el detalle completo figura en el capítulo anterior.</p>
+
+<div class="fig" style="text-align:center; margin-top:1mm;">
+  {{ER_SVG}}
+  <div class="fig-cap">Figura 17.1 — Modelo entidad-relación. La guardia concentra la designación, la movilidad,
+  la incidencia y el cierre del servicio.</div>
+</div>
+
+<div class="box" style="margin-top:2mm;">
+  <div class="box-title">Cómo leerlo</div>
+  <ul class="tight">
+    <li><strong>1 : N</strong> — un registro del origen se relaciona con varios del destino: un abogado, con muchas
+    guardias a lo largo del tiempo.</li>
+    <li><strong>1 : 1</strong> — relación única en ambos sentidos: cada guardia tiene un único parte.</li>
+    <li><strong>N : M resuelto</strong> — abogado y especialidad se relacionan mediante
+    <span class="mono">HABILITACION</span>, que conserva fecha y estado de la acreditación.</li>
+    <li><strong>Polimórfica</strong> — <span class="mono">AUDITORIA</span> referencia cualquier entidad por el par
+    <span class="mono">entidad</span> + <span class="mono">entidad_id</span>; sin aristas para no sobrecargar el
+    dibujo.</li>
+  </ul>
+</div>
+
+<!-- ============ CAPÍTULO 18 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 18</span>Seguridad y protección de datos</h1>
+<p class="chlead">La aplicación trata datos de profesionales y, en un caso concreto, datos de salud. Esa circunstancia
+condiciona el diseño y obliga a formalizar responsabilidades antes del primer día de uso.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:26%">Cuestión</th><th style="width:74%">Planteamiento</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Responsable</strong></td><td>El Colegio, como titular del servicio y de la organización del turno.</td></tr>
+    <tr><td><strong>Encargado</strong></td><td>El proveedor, con contrato de encargo que fija finalidad, duración,
+      medidas de seguridad y prohibición de uso para fines propios.</td></tr>
+    <tr><td><strong>Base jurídica</strong></td><td>Organización del servicio de asistencia jurídica gratuita y
+      cumplimiento de obligaciones legales; los datos de salud se limitan a constatar la indisponibilidad.</td></tr>
+    <tr><td><strong>Minimización</strong></td><td>Sin diagnóstico, sin informe clínico y sin dato biométrico. Solo el
+      periodo de indisponibilidad y, si la norma lo exige, el parte en espacio restringido.</td></tr>
+    <tr><td><strong>Conservación</strong></td><td>Calendario aprobado por el Colegio, alineado con los plazos de
+      prescripción; al vencer, bloqueo de acceso y eliminación.</td></tr>
+    <tr><td><strong>Derechos</strong></td><td>Canal definido para acceso, rectificación, supresión y limitación, con
+      plazo de respuesta y constancia.</td></tr>
+    <tr><td><strong>Evaluación de impacto</strong></td><td>Recomendable por el tratamiento de datos de salud a escala
+      del colectivo; se documenta antes de la puesta en producción.</td></tr>
+  </tbody>
+</table>
+
+<h2>Medidas de seguridad</h2>
+<div class="two-col">
+  <ul class="tight">
+    <li>Acceso nominal, sin cuentas compartidas.</li>
+    <li>Mínimo privilegio por rol; la administración técnica no accede al contenido.</li>
+    <li>Doble factor para roles con capacidad de resolución.</li>
+    <li>Cifrado en tránsito y en reposo, con claves gestionadas aparte.</li>
+    <li>Copias de seguridad con prueba de restauración documentada.</li>
+    <li>Registro de accesos a información sensible, con alerta ante patrones anómalos.</li>
+    <li>Procedimiento de incidentes con plazos y responsable identificado.</li>
+    <li>Plan de continuidad: vía manual de designación durante una caída.</li>
+  </ul>
+</div>
+
+<h2>Uso real y accesibilidad</h2>
+<p>La aplicación se usará de pie, en un pasillo de juzgado, con una mano y a veces sin cobertura. De ahí tres
+requisitos que no son cosméticos: contraste y tamaños legibles a la intemperie, navegación que no dependa solo del
+color y funcionamiento degradado que conserve lo esencial —mi guardia de hoy, el teléfono de la sede y el registro de
+una actuación— cuando la conexión falla. El objetivo es el nivel AA de las pautas WCAG en las pantallas principales.</p>
+
+<!-- ============ ANEXO A ============ -->
+<h1 class="chapter"><span class="chnum">Anexo A</span>Pantallas de referencia</h1>
+<p class="chlead">Tres pantallas resumen la experiencia del letrado: saber qué le toca hoy, consultar lo que viene y
+resolver un imprevisto. Ninguna requiere más de dos toques para llegar a la acción principal.</p>
+
+<div class="wf-grid" style="gap:5mm; margin-top:5mm;">
+  <div class="wf-col">
+    <div class="wf-phone">
+      <div class="notch"></div>
+      <div class="ph-bar"><span>Mi guardia</span><span>hoy</span></div>
+      <div class="ph-h">Penal · 24 h</div>
+      <div class="ph-sub">Martes 16 de marzo · localizada</div>
+      <div class="ph-card">
+        <div class="ph-row"><b>Estado</b><span class="ph-tag">Confirmada</span></div>
+        <div class="ph-row" style="margin-top:0.8mm;"><span>Inicio</span><b>08:00</b></div>
+        <div class="ph-row"><span>Fin</span><b>08:00 (17/03)</b></div>
+      </div>
+      <div class="ph-card">
+        <b>Juzgado de guardia</b><br>
+        <span style="color:var(--muted);">Tarragona · 977 000 000</span>
+      </div>
+      <div class="ph-btn">Estoy operativo</div>
+      <div class="ph-btn ghost">Registrar actuación</div>
+      <div class="ph-btn ghost">Necesito refuerzo</div>
+      <div class="ph-nav"><span>Hoy</span><span>Mis guardias</span><span>Avisos</span><span>Perfil</span></div>
+    </div>
+    <div class="wf-caption"><strong>A.1 · Mi guardia de hoy.</strong> La pantalla que se abre al comenzar la franja;
+    la acción principal es confirmar disponibilidad.</div>
+  </div>
+
+  <div class="wf-col">
+    <div class="wf-phone">
+      <div class="notch"></div>
+      <div class="ph-bar"><span>Mis guardias</span><span>marzo</span></div>
+      <div class="ph-card">
+        <div class="ph-row"><b>15 mar</b><span class="ph-tag">Confirmada</span></div>
+        <span style="color:var(--muted);">Penal · 08:00–20:00</span>
+      </div>
+      <div class="ph-card">
+        <div class="ph-row"><b>18 mar</b><span class="ph-tag">Confirmada</span></div>
+        <span style="color:var(--muted);">Violencia de género · 24 h</span>
+      </div>
+      <div class="ph-card">
+        <div class="ph-row"><b>31 mar</b><span class="ph-tag a">Sin acuse</span></div>
+        <span style="color:var(--muted);">Penal · 08:00–20:00</span>
+        <div class="ph-btn" style="margin-top:1.2mm;">Confirmar</div>
+      </div>
+      <div class="ph-card" style="background:#f7f9fb;">
+        <div class="ph-row"><b>23–26 mar</b><span class="ph-tag">Vacaciones</span></div>
+        <span style="color:var(--muted);">Validadas por el Colegio</span>
+      </div>
+      <div class="ph-btn ghost">Comunicar indisponibilidad</div>
+      <div class="ph-nav"><span>Hoy</span><span>Mis guardias</span><span>Avisos</span><span>Perfil</span></div>
+    </div>
+    <div class="wf-caption"><strong>A.2 · Mis guardias.</strong> Lista cronológica con el estado de cada designación y
+    el acuse pendiente a un toque.</div>
+  </div>
+
+  <div class="wf-col">
+    <div class="wf-phone">
+      <div class="notch"></div>
+      <div class="ph-bar"><span>Solicitar sustitución</span><span>1 de 3</span></div>
+      <div class="ph-h">Guardia del 17 de marzo</div>
+      <div class="ph-sub">Penal · 24 h · titular: J. Roca</div>
+      <div class="ph-card">
+        <b>Motivo</b>
+        <div style="margin-top:1mm;"><span class="ph-tag">Deber inexcusable</span></div>
+        <div style="margin-top:1mm; color:var(--muted);">Enfermedad · fallecimiento · formación · otro</div>
+      </div>
+      <div class="ph-card">
+        <b>Observaciones</b><br>
+        <span style="color:var(--muted);">Comparecencia citada por el juzgado…</span>
+      </div>
+      <div class="ph-card" style="background:#fbf7ef; border-color:#e6d3ab;">
+        <b>Ten en cuenta</b><br>
+        <span style="color:var(--muted);">La guardia sigue siendo tuya hasta que el Colegio valide el cambio.</span>
+      </div>
+      <div class="ph-btn">Continuar</div>
+      <div class="ph-nav"><span>Hoy</span><span>Mis guardias</span><span>Avisos</span><span>Perfil</span></div>
+    </div>
+    <div class="wf-caption"><strong>A.3 · Solicitud de sustitución.</strong> El aviso legal aparece en la propia
+    pantalla, no en condiciones que nadie lee.</div>
+  </div>
+</div>
+
+<h2>Pantalla de resolución para la coordinación</h2>
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Expediente de solicitud · EX-2027-0311</span><span>Guardia 17/03 · Penal 24 h</span></div>
+    <div class="wf-body">
+      <div style="display:flex; gap:4mm;">
+        <div style="flex:1.1;">
+          <div style="font-size:7pt; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:1.2mm;">Solicitante</div>
+          <div style="font-size:9pt; color:var(--navy); font-weight:600;">J. Roca</div>
+          <div style="font-size:7pt; color:var(--muted); margin-bottom:2.6mm;">Motivo: deber inexcusable · dentro de plazo</div>
+          <div style="font-size:7pt; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:1.2mm;">Sustituto propuesto</div>
+          <div style="font-size:9pt; color:var(--navy); font-weight:600;">M. Serra</div>
+          <div style="font-size:7pt; color:var(--muted);">Habilitación vigente · disponible · cómputo 4,00</div>
+        </div>
+        <div style="flex:1; border-left:1px solid var(--line); padding-left:4mm;">
+          <div style="font-size:7pt; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:1.2mm;">Comprobaciones</div>
+          <div style="font-size:7pt; line-height:1.7;">
+            <div><span class="chip g">Plazo</span> presentada 3 días antes</div>
+            <div><span class="chip g">Habilitación</span> vigente en la materia</div>
+            <div><span class="chip g">Solapamiento</span> sin conflicto</div>
+            <div><span class="chip a">Cómputo</span> el sustituto queda por encima de la media</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:2mm; margin-top:3mm;">
+        <div class="ph-btn" style="flex:1; margin:0;">Aprobar y publicar v2</div>
+        <div class="ph-btn ghost" style="flex:1; margin:0;">Denegar con motivación</div>
+        <div class="ph-btn ghost" style="flex:1; margin:0;">Devolver al solicitante</div>
+      </div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura A.4 — Expediente de resolución: las comprobaciones automáticas se muestran antes de
+  decidir y la decisión, sea cual sea, exige motivación.</div>
+</div>

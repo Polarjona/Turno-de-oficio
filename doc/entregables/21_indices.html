@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Índices y consultas críticas</title>
+</head>
+<body>
+<div class="entregable">
+<div class="dkicker">Entregable · Akram (Database) · Modelo TOF-2026-012 · NFR TOF-2026-014</div>
+<h1 class="dtitle">Índices y consultas críticas</h1>
+<p class="dlead">Patrones de consulta reales, plan de índices y medición sobre el dataset de pruebas, para
+que el calendario y el cálculo de equidad respondan al instante. Sustituye a la versión anterior: ya
+no existe la tabla <code>expedientes</code> ni la columna <code>cuadrante.fecha_guardia</code> (la fecha
+vive en <code>guardia.fecha</code>); los índices mostrados son los que ya están definidos en el DDL
+TOF-2026-012.</p>
+
+<h2>1. Patrones de consulta (los que ocurren en una guardia real)</h2>
+<table class="grid">
+<thead><tr><th style="width:34%">Patrón</th><th style="width:66%">Cómo se resuelve en el modelo</th></tr></thead>
+<tbody>
+<tr><td>«Guardia de hoy» (sin JavaScript)</td><td><code>SELECT * FROM guardia WHERE fecha = CURRENT_DATE AND estado IN ('publicada','confirmada','en_curso');</code></td></tr>
+<tr><td>Calendario personal del letrado</td><td><code>SELECT * FROM guardia WHERE abogado_id = :letrado AND fecha BETWEEN :desde AND :hasta ORDER BY fecha;</code></td></tr>
+<tr><td>Disponibilidades que afectan a un rango</td><td><code>SELECT * FROM disponibilidad WHERE abogado_id = :letrado AND fecha_inicio &lt;= :hasta AND fecha_fin &gt;= :desde;</code></td></tr>
+<tr><td>Cálculo de equidad del reparto</td><td><code>SELECT abogado_id, SUM(tg.peso_computo) AS carga FROM guardia g JOIN tipo_guardia tg ON g.tipo_guardia_id = tg.id GROUP BY abogado_id;</code></td></tr>
+<tr><td>Cola de notificaciones pendientes</td><td><code>SELECT * FROM notificacion WHERE estado_entrega = 'pendiente' ORDER BY fecha_envio LIMIT 100;</code></td></tr>
+</tbody>
+</table>
+
+<h2>2. Plan de índices (tal como está en el DDL)</h2>
+<table class="grid">
+<thead><tr><th style="width:34%">Índice</th><th style="width:66%">Qué patrón cubre</th></tr></thead>
+<tbody>
+<tr><td><code>ix_guardia_fecha_materia (fecha, especialidad_id, estado)</code></td><td>«Guardia de hoy» y el cuadrante por fecha y materia.</td></tr>
+<tr><td><code>ix_guardia_abogado_fecha (abogado_id, fecha)</code></td><td>Calendario personal y carga por letrado.</td></tr>
+<tr><td><code>ux_guardia_solape EXCLUDE USING gist (abogado_id WITH =, tsrange(inicio_en, fin_en) WITH &amp;&amp;)</code></td><td>Prohibe dos guardias solapadas del mismo abogado (RN-04) en el motor.</td></tr>
+<tr><td><code>ix_disponibilidad_abogado_rango (abogado_id, fecha_inicio, fecha_fin)</code></td><td>Ausencias comunicadas que solapan el rango pedido.</td></tr>
+<tr><td><code>ux_solicitud_activa</code> parcial (una solicitud activa por guardia)</td><td>Evita dos sustituciones abiertas sobre la misma guardia.</td></tr>
+<tr><td><code>ix_notificacion_estado_entrega (estado_entrega)</code></td><td>La cola de envío de avisos y recordatorios.</td></tr>
+<tr><td><code>ix_auditoria_entidad / _actor_fecha / _fecha</code></td><td>Trazabilidad por entidad, por actor y a fecha corta.</td></tr>
+</tbody>
+</table>
+
+<h2>3. Medición sobre el dataset de pruebas</h2>
+<table class="grid">
+<thead><tr><th style="width:46%">Consulta</th><th style="width:54%">Objetivo (NFR TOF-2026-014: p95 &lt; 400 ms)</th></tr></thead>
+<tbody>
+<tr><td>Guardia de hoy</td><td>p95 &lt; 400 ms con 900 letrados y 124 franjas/mes</td></tr>
+<tr><td>Calendario personal</td><td>p95 &lt; 400 ms</td></tr>
+<tr><td>Cálculo de equidad</td><td>p95 &lt; 400 ms (es la consulta más pesada: agrega todas las guardias validada)</td></tr>
+<tr><td>Cola de notificaciones</td><td>p95 &lt; 400 ms</td></tr>
+</tbody>
+</table>
+<p>Los tiempos se miden ejecutando cada consulta con <code>EXPLAIN ANALYZE</code> sobre el dataset de
+pruebas (900 letrados, 124 franjas/mes) y registrando el p95; los valores de esta tabla son
+<em>objetivos</em>, no mediciones ya realizadas. Si algún patrón supera el objetivo, el siguiente paso
+es revisar el plan con <code>EXPLAIN (ANALYZE, BUFFERS)</code> antes de añadir un índice nuevo.</p>
+
+<div class="box ok">
+<div class="box-title">Conclusión</div>
+<p style="margin:0;">Los índices definidos en el DDL cubren los patrones críticos del calendario, la
+equidad y la cola de avisos. Con la volumetría estimada (menos de 100 MB en 5 años), el tiempo de
+respuesta lo decide el plan de consulta, no el volumen: de ahí la medición con <code>EXPLAIN
+ANALYZE</code> sobre el dataset de pruebas en lugar de cifras inventadas.</p>
+</div>
+<p class="footnote">Tarjeta de Akram (Database) «Índices y consultas críticas», plazo 19 de noviembre.
+Modelo: DDL TOF-2026-012. Requisitos no funcionales: TOF-2026-014. Documento de ejercicio, sin
+interlocución con el Colegio.</p>
+</div>
+</body>
+</html>

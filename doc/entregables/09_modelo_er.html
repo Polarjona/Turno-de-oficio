@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Del modelo entidad-relación al esquema físico</title>
+</head>
+<body>
+
+<div class="dkicker">Entregable breve · Akram (Database) · Ref. TOF-2026-012 · Tarjeta #22</div>
+<h1 class="dtitle">Del modelo entidad-relación al esquema físico</h1>
+<p class="dlead">DDL borrador de las 14 entidades de la Propuesta funcional (TOF-2026-001, caps. 21-23) en
+PostgreSQL 16: tipos, claves primarias y foráneas, restricciones, índices y diagrama físico, listo
+para que el ETL y el backend construyan contra él. Los estados coinciden literalmente con el catálogo
+vigente TOF-2026-015 (v0.4) y con el contrato de API; la restricción de exclusión por solapamiento
+(RN-04) se impone en el motor con <code>EXCLUDE USING gist</code>; la designación urgente fuera de
+cuadrante (RN-39) se representa con <code>cuadrante_id</code> nulo; y el parte no se valida sin horas ni
+actuaciones (RN-18). La guardia es el centro; a su alrededor se organizan la planificación, las
+personas, la habilitación, la movilidad y el control.</p>
+
+<h2>1. Las 14 entidades y su centro: la guardia</h2>
+
+<table class="grid">
+<thead><tr><th style="width:16%">Entidad</th><th style="width:30%">PK / FK principales</th><th style="width:54%">Papel en el modelo</th></tr></thead>
+<tbody>
+<tr><td><strong>USUARIO</strong></td><td><code>id</code> UUID PK · <code>email</code> único · <code>rol</code>, <code>estado</code></td><td>Cuenta y credenciales. <code>estado</code> manda sobre la <em>cuenta</em> (activa / bloqueada / inactiva); no decide quién está en el turno — eso lo decide <code>ABOGADO.activo</code> (RN-40).</td></tr>
+<tr><td><strong>ABOGADO</strong></td><td><code>id</code> PK · <code>usuario_id</code> FK único → USUARIO · <code>num_colegiado</code> único</td><td>Colegiado en el turno. <code>activo</code> manda sobre la <em>pertenencia al turno</em> (RN-40: «alta vigente»); <code>orden_turno</code> y <code>zona</code> alimentan la equidad.</td></tr>
+<tr><td><strong>ESPECIALIDAD</strong></td><td><code>id</code> PK · <code>codigo</code> único · <code>activa</code></td><td>Materia del turno (penal, violencia, menores…). No se borra si tiene habilitaciones.</td></tr>
+<tr><td><strong>HABILITACION</strong></td><td><code>id</code> PK · <code>abogado_id</code> → ABOGADO · <code>especialidad_id</code> → ESPECIALIDAD</td><td>Acreditación por materia con <code>fecha_habilitacion</code>, <code>caducidad</code> y <code>estado</code>. Resuelve la N:M abogado—especialidad.</td></tr>
+<tr><td><strong>TIPO_GUARDIA</strong></td><td><code>id</code> PK · <code>codigo</code> único · <code>(id, especialidad_id)</code> único · <code>especialidad_id</code> → ESPECIALIDAD</td><td>Plantilla de servicio: <code>modalidad</code>, <code>hora_inicio/fin</code>, <code>cruza_medianoche</code>, <code>letrados_previstos</code>, <code>peso_computo</code>, <code>descanso_posterior_h</code>. <code>UNIQUE (id, especialidad_id)</code> permite la FK compuesta desde guardia (la materia no puede divergir entre plantilla y guardia).</td></tr>
+<tr><td><strong>CUADRANTE</strong></td><td><code>id</code> PK · <code>anio</code> + <code>periodo</code> + <code>version</code> único · <code>publicado_por</code> → USUARIO</td><td>Versión del calendario. Estados del catálogo: <em>borrador / en_alegaciones / publicado / congelado / cerrado</em> (<code>en_alegaciones</code> = el letrado opone causa antes de publicar; <code>congelado</code> = alcanzada la antelación mínima de 10 días). Inmutable una vez publicada; los cambios son nueva versión.</td></tr>
+<tr><td><strong>GUARDIA</strong></td><td><code>id</code> PK · <code>cuadrante_id</code> → CUADRANTE nulo (RN-39) · <code>(tipo_guardia_id, especialidad_id)</code> → TIPO_GUARDIA · <code>abogado_id</code> → ABOGADO</td><td>Servicio a cubrir. Concentra designación, movilidad, incidencia y cierre. <code>estado</code> (10 estados del catálogo, ver §2), <code>origen</code> (<em>ordinaria / urgente / refuerzo</em>), <code>fin_en</code> absoluto, <code>cruza_medianoche</code> copiado al crear, <code>motivo_asignacion</code>.</td></tr>
+<tr><td><strong>DISPONIBILIDAD</strong></td><td><code>id</code> PK · <code>abogado_id</code> → ABOGADO · <code>validada_por</code> → USUARIO</td><td>Ausencia comunicada (<code>fecha_inicio/fin</code>, <code>tipo</code>, <code>estado</code>). Sin motivo clínico: RGPD art. 9.</td></tr>
+<tr><td><strong>SOLICITUD</strong></td><td><code>id</code> PK · <code>guardia_id</code> → GUARDIA · <code>solicitante_id</code> → ABOGADO · <code>sustituto_id</code> → ABOGADO nulo</td><td>Excusa, permuta o sustitución con <code>motivo</code>, <code>estado</code> del catálogo (<em>comunicada / en_revision / oferta_enviada / pendiente_validacion / estimada / desestimada</em>) y marcas transversales <code>extemporanea</code> (RN-12) y <code>sobrevenida</code>, más resolución (<code>fecha_resolucion</code>, <code>resuelta_por</code>).</td></tr>
+<tr><td><strong>INCIDENCIA</strong></td><td><code>id</code> PK · <code>guardia_id</code> → GUARDIA · <code>abierta_por</code> → USUARIO</td><td>Evento en la guardia: <code>categoria</code>, <code>gravedad</code>, <code>fecha_apertura/cierre</code>, <code>resolucion</code>. No tiene estado propio: el acuse de cierre es <code>fecha_cierre</code>.</td></tr>
+<tr><td><strong>PARTE_GUARDIA</strong></td><td><code>id</code> PK · <code>guardia_id</code> FK <strong>único</strong> → GUARDIA · <code>validado_por</code> → USUARIO</td><td>Cierre y acreditación: <code>hora_entrada/salida</code>, <code>actuaciones</code>, <code>validado</code>. 1:1 con guardia.</td></tr>
+<tr><td><strong>JUSTIFICANTE</strong></td><td><code>id</code> PK · <code>solicitud_id</code> FK nulo · <code>disponibilidad_id</code> FK nulo</td><td>Documento acreditativo: <code>referencia_fichero</code>, <code>tipo_documento</code>, <code>acceso_restringido</code>. Nunca junto a la causa clínica.</td></tr>
+<tr><td><strong>NOTIFICACION</strong></td><td><code>id</code> PK · <code>usuario_id</code> → USUARIO · <code>UNIQUE (referencia_tipo, referencia_id, usuario_id, canal)</code></td><td>Aviso y acuse: <code>tipo</code>, <code>canal</code>, <code>estado_entrega</code>, <code>fecha_envio/lectura</code>, <code>leida</code>. Referencia polimórfica <code>referencia_tipo/id</code> con clave de idempotencia evento–destinatario–canal (spike #45) e índice de cola <code>estado_entrega</code>.</td></tr>
+<tr><td><strong>AUDITORIA</strong></td><td><code>id</code> PK · <code>actor_id</code> → USUARIO · <code>entidad</code> + <code>entidad_id</code> · índices <code>(entidad, entidad_id)</code>, <code>(actor_id, fecha)</code>, <code>(fecha)</code></td><td>Registro append-only e inmutable: <code>accion</code>, <code>estado_anterior/nuevo</code>, <code>motivo</code>, <code>fecha</code>, <code>origen</code>. No se actualiza, borra ni trunca. Consultable por entidad, actor y fechas (NFR #48).</td></tr>
+<tr><td><strong>PARAMETRO</strong> (extra)</td><td><code>id</code> PK · <code>(clave, version)</code> único</td><td>Pieza aparte de las 14 entidades del cap. 21: pesos, cupos, descanso, antelación y umbrales de equidad versionados con vigencia (RN-27). Lo necesitan backend y ETL.</td></tr>
+</tbody>
+</table>
+
+<p class="small">Campos comunes de todas las tablas: <code>creado_en timestamptz</code>, <code>creado_por uuid</code>,
+<code>modificado_en timestamptz</code>, <code>version int</code>. Las claves foráneas usan sufijo <code>_id</code>. La referencia
+literal de este capítulo es la Propuesta TOF-2026-001, págs. 36-40 (anexo de este PDF).</p>
+
+<h2>2. Diagrama físico (relaciones y cardinalidades)</h2>
+
+<table class="grid">
+<thead><tr><th style="width:38%">Relación</th><th style="width:12%">Card.</th><th style="width:50%">Regla física</th></tr></thead>
+<tbody>
+<tr><td>USUARIO — ABOGADO</td><td>1:1</td><td><code>abogado.usuario_id UNIQUE NOT NULL</code>. Cuenta con rol abogado exige registro asociado.</td></tr>
+<tr><td>ABOGADO — HABILITACION — ESPECIALIDAD</td><td>1:N / N:1</td><td><code>habilitacion(abogado_id, especialidad_id)</code> compuesta; índice único parcial en <code>estado='vigente'</code>; <code>ON DELETE RESTRICT</code> en especialidad.</td></tr>
+<tr><td>ESPECIALIDAD — TIPO_GUARDIA</td><td>1:N</td><td>Toda guardia tiene materia: <code>tipo_guardia.especialidad_id NOT NULL</code>; <code>UNIQUE (id, especialidad_id)</code> + FK compuesta desde guardia, sin divergencia posible. Sin guardias genéricas.</td></tr>
+<tr><td>ABOGADO — DISPONIBILIDAD / GUARDIA</td><td>1:N</td><td>Índices de rango <code>(fecha_inicio, fecha_fin)</code>; exclusión por solapamiento impuesta por el motor: <code>EXCLUDE USING gist (abogado_id WITH =, tsrange(inicio, fin_en) WITH &amp;&amp;) WHERE (estado &lt;&gt; 'anulada' AND abogado_id IS NOT NULL)</code> (RN-04). Nada de «validación en servicio».</td></tr>
+<tr><td>CUADRANTE — GUARDIA</td><td>1:N (0:1 si <code>origen='urgente'</code>)</td><td><code>guardia.cuadrante_id</code> nulo solo si <code>origen='urgente'</code> (RN-39: fuera de cuadrante, con <code>motivo_asignacion</code> como origen/autoridad/hora registrada); en cualquier otro caso, <code>NOT NULL</code> (CHECK). El cambio de titular no saca la guardia de su cuadrante.</td></tr>
+<tr><td>GUARDIA — SOLICITUD / INCIDENCIA</td><td>1:N</td><td>Solo una solicitud activa por guardia (<code>comunicada / en_revision / oferta_enviada / pendiente_validacion</code>, índice parcial único); incidencias sin estado propio, exigen <code>categoria</code> y <code>gravedad</code>.</td></tr>
+<tr><td>GUARDIA — PARTE_GUARDIA</td><td>1:1</td><td><code>parte_guardia.guardia_id UNIQUE NOT NULL</code>, creada al cerrar la franja.</td></tr>
+<tr><td>SOLICITUD / DISPONIBILIDAD — JUSTIFICANTE</td><td>1:N opcional</td><td>Al menos uno antes de resolver si el motivo lo exige; <code>acceso_restringido</code> con control de acceso en servicio.</td></tr>
+<tr><td>USUARIO — NOTIFICACION</td><td>1:N</td><td>Destinatario, canal y estado obligatorios; <code>UNIQUE (referencia_tipo, referencia_id, usuario_id, canal)</code> (idempotencia) + índice de cola <code>(estado_entrega)</code>: un reintento no duplica el envío.</td></tr>
+<tr><td>AUDITORIA — (todas)</td><td>N:1 polimórfica</td><td><code>entidad + entidad_id</code> sin FK; tabla sin <code>UPDATE/DELETE/TRUNCATE</code> para roles de aplicación; índices <code>(entidad, entidad_id)</code>, <code>(actor_id, fecha)</code> y <code>(fecha)</code>.</td></tr>
+<tr><td>PARAMETRO — (transversal)</td><td>—</td><td><code>(clave, version)</code> único con <code>vigente_desde / vigente_hasta</code> (RN-27). Fuera de las 14 del cap. 21, pero el backend y el ETL la necesitan.</td></tr>
+</tbody>
+</table>
+
+<h2>3. DDL borrador (PostgreSQL 16)</h2>
+
+<p>Borrador listo para las migraciones del backend. Los estados de <code>guardia</code>, <code>cuadrante</code> y
+<code>solicitud</code> copian literalmente el vocabulario del catálogo TOF-2026-015 v0.4 (y del contrato #29);
+<code>gen_random_uuid()</code> es del núcleo desde PostgreSQL 13, sin extensión. La exclusión por
+solapamiento (RN-04) se impone aquí con <code>EXCLUDE USING gist</code> —la razón del ADR #33 para elegir
+PostgreSQL—; las validaciones que cruzan tablas (cupo, orden de equidad, suspensión) se refuerzan en
+servicio (cap. 23).</p>
+
+<pre style="font-family:Consolas,monospace;font-size:6.6pt;line-height:1.42;white-space:pre-wrap;background:#f4f5f9;border:1px solid #d7dbe4;padding:3mm 3.4mm;margin:2.5mm 0 4mm 0;">
+-- Campos comunes en todas: creado_en/creado_por/modificado_en/version (se omiten por línea para legibilidad)
+CREATE TABLE usuario (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre text NOT NULL, apellidos text NOT NULL,
+  email text NOT NULL UNIQUE,
+  password_hash text NOT NULL,
+  rol text NOT NULL CHECK (rol IN ('abogado','coordinacion','junta','sistema','auditoria')),
+  estado text NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo','bloqueado','inactivo')),
+  fecha_alta date NOT NULL DEFAULT CURRENT_DATE,
+  ultimo_acceso timestamptz
+);
+CREATE TABLE abogado (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id uuid NOT NULL UNIQUE REFERENCES usuario(id) ON DELETE RESTRICT,
+  num_colegiado text NOT NULL UNIQUE,
+  telefono_guardia text,
+  orden_turno int NOT NULL DEFAULT 0,
+  fecha_alta_turno date NOT NULL DEFAULT CURRENT_DATE,
+  activo boolean NOT NULL DEFAULT true,
+  zona text
+);
+CREATE TABLE especialidad (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo text NOT NULL UNIQUE,
+  nombre text NOT NULL,
+  descripcion text,
+  requiere_formacion boolean NOT NULL DEFAULT false,
+  activa boolean NOT NULL DEFAULT true
+);
+CREATE TABLE habilitacion (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  abogado_id uuid NOT NULL REFERENCES abogado(id) ON DELETE RESTRICT,
+  especialidad_id uuid NOT NULL REFERENCES especialidad(id) ON DELETE RESTRICT,
+  fecha_habilitacion date NOT NULL DEFAULT CURRENT_DATE,
+  caducidad date,
+  estado text NOT NULL DEFAULT 'vigente' CHECK (estado IN ('vigente','caducada','suspendida','pendiente')),
+  soporte text,
+  CHECK (caducidad IS NULL OR caducidad &gt;= fecha_habilitacion)
+);
+CREATE UNIQUE INDEX ux_habilitacion_vigente
+  ON habilitacion (abogado_id, especialidad_id) WHERE estado = 'vigente';
+CREATE TABLE tipo_guardia (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo text NOT NULL UNIQUE,
+  especialidad_id uuid NOT NULL REFERENCES especialidad(id) ON DELETE RESTRICT,
+  modalidad text NOT NULL CHECK (modalidad IN ('localizada','presencial','telefonica')),
+  hora_inicio time NOT NULL, hora_fin time NOT NULL,
+  cruza_medianoche boolean NOT NULL DEFAULT false,
+  letrados_previstos int NOT NULL DEFAULT 1 CHECK (letrados_previstos &gt; 0),
+  peso_computo numeric(4,2) NOT NULL DEFAULT 1.00 CHECK (peso_computo &gt;= 0),
+  descanso_posterior_h int NOT NULL DEFAULT 0 CHECK (descanso_posterior_h &gt;= 0),
+  UNIQUE (id, especialidad_id)  -- permite la FK compuesta desde guardia
+);
+CREATE TABLE cuadrante (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  anio int NOT NULL, periodo text NOT NULL, version int NOT NULL DEFAULT 1,
+  estado text NOT NULL DEFAULT 'borrador' CHECK (estado IN ('borrador','en_alegaciones','publicado','congelado','cerrado')),
+  fecha_publicacion timestamptz,
+  publicado_por uuid REFERENCES usuario(id),
+  motivo_cambio text,
+  UNIQUE (anio, periodo, version),
+  CHECK (version &gt; 0)
+);
+CREATE TABLE guardia (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  cuadrante_id uuid REFERENCES cuadrante(id) ON DELETE RESTRICT,  -- nulo solo si origen='urgente' (RN-39)
+  tipo_guardia_id uuid NOT NULL,
+  especialidad_id uuid NOT NULL,
+  abogado_id uuid REFERENCES abogado(id) ON DELETE RESTRICT,
+  fecha date NOT NULL,
+  hora_inicio time NOT NULL, hora_fin time NOT NULL,
+  inicio_en timestamptz NOT NULL DEFAULT (fecha + hora_inicio),
+  fin_en timestamptz NOT NULL,  -- absoluto: con cruza_medianoche es fecha+1, no se deriva de la plantilla
+  cruza_medianoche boolean NOT NULL DEFAULT false,  -- copiado de tipo_guardia al crear la guardia
+  estado text NOT NULL DEFAULT 'planificada' CHECK (estado IN ('planificada','propuesta','publicada','confirmada','en_revision','descubierta','en_curso','realizada','validada','anulada')),
+  origen text NOT NULL DEFAULT 'ordinaria' CHECK (origen IN ('ordinaria','urgente','refuerzo')),
+  motivo_asignacion text,  -- en origen urgente: origen/autoridad/hora de la designación (RN-39)
+  FOREIGN KEY (tipo_guardia_id, especialidad_id) REFERENCES tipo_guardia (id, especialidad_id) ON DELETE RESTRICT,
+  CHECK (fin_en &gt; inicio_en),
+  CHECK ((origen = 'urgente' AND cuadrante_id IS NULL) OR (origen &lt;&gt; 'urgente' AND cuadrante_id IS NOT NULL))
+);
+ALTER TABLE guardia ADD CONSTRAINT ux_guardia_solape EXCLUDE USING gist (
+  abogado_id WITH =, tsrange(inicio_en, fin_en) WITH &amp;&amp;
+) WHERE (estado &lt;&gt; 'anulada' AND abogado_id IS NOT NULL);
+CREATE INDEX ix_guardia_fecha_materia ON guardia (fecha, especialidad_id, estado);
+CREATE INDEX ix_guardia_abogado_fecha ON guardia (abogado_id, fecha);
+CREATE TABLE disponibilidad (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  abogado_id uuid NOT NULL REFERENCES abogado(id) ON DELETE RESTRICT,
+  fecha_inicio date NOT NULL, fecha_fin date NOT NULL,
+  tipo text NOT NULL CHECK (tipo IN ('vacaciones','baja','permiso','formacion','otros')),
+  estado text NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente','validada','rechazada','anulada')),
+  observaciones text,
+  validada_por uuid REFERENCES usuario(id),
+  CHECK (fecha_fin &gt;= fecha_inicio)
+);
+CREATE INDEX ix_disponibilidad_abogado_rango ON disponibilidad (abogado_id, fecha_inicio, fecha_fin);
+CREATE TABLE solicitud (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  guardia_id uuid NOT NULL REFERENCES guardia(id) ON DELETE RESTRICT,
+  tipo text NOT NULL CHECK (tipo IN ('excusa','permuta','sustitucion')),
+  solicitante_id uuid NOT NULL REFERENCES abogado(id) ON DELETE RESTRICT,
+  sustituto_id uuid REFERENCES abogado(id) ON DELETE RESTRICT,
+  motivo text NOT NULL CHECK (motivo IN ('enfermedad','asunto_propio','conciliacion','fuerza_mayor','otro')),  -- vocabulario unico, identico al contrato #29 (RN-23: categoria general, sin diagnostico)
+  detalle text,
+  estado text NOT NULL DEFAULT 'comunicada' CHECK (estado IN ('comunicada','en_revision','oferta_enviada','pendiente_validacion','estimada','desestimada')),
+  extemporanea boolean NOT NULL DEFAULT false,  -- RN-12: presentada fuera de plazo
+  sobrevenida boolean NOT NULL DEFAULT false,  -- indisponibilidad sobrevenida
+  fecha_solicitud timestamptz NOT NULL DEFAULT now(),
+  fecha_resolucion timestamptz,
+  resuelta_por uuid REFERENCES usuario(id),
+  motivo_resolucion text
+);
+CREATE UNIQUE INDEX ux_solicitud_activa ON solicitud (guardia_id) WHERE estado IN ('comunicada','en_revision','oferta_enviada','pendiente_validacion');
+CREATE TABLE incidencia (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  guardia_id uuid NOT NULL REFERENCES guardia(id) ON DELETE RESTRICT,
+  categoria text NOT NULL CHECK (categoria IN ('localizacion','cobertura','escalado','material','otro')),
+  gravedad text NOT NULL CHECK (gravedad IN ('baja','media','alta')),
+  descripcion text NOT NULL,
+  abierta_por uuid NOT NULL REFERENCES usuario(id),
+  fecha_apertura timestamptz NOT NULL DEFAULT now(),
+  fecha_cierre timestamptz,
+  resolucion text
+);
+CREATE TABLE parte_guardia (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  guardia_id uuid NOT NULL UNIQUE REFERENCES guardia(id) ON DELETE RESTRICT,
+  realizada boolean NOT NULL DEFAULT false,
+  hora_entrada time, hora_salida time,
+  actuaciones text, observaciones text,
+  validado boolean NOT NULL DEFAULT false,
+  validado_por uuid REFERENCES usuario(id),
+  CHECK (NOT validado OR (hora_entrada IS NOT NULL AND hora_salida IS NOT NULL AND actuaciones IS NOT NULL))
+);
+CREATE TABLE justificante (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  solicitud_id uuid REFERENCES solicitud(id) ON DELETE RESTRICT,
+  disponibilidad_id uuid REFERENCES disponibilidad(id) ON DELETE RESTRICT,
+  referencia_fichero text NOT NULL,
+  tipo_documento text NOT NULL CHECK (tipo_documento IN ('medico','formacion','colegiacion','otro')),
+  fecha_subida timestamptz NOT NULL DEFAULT now(),
+  acceso_restringido boolean NOT NULL DEFAULT true,
+  CHECK (solicitud_id IS NOT NULL OR disponibilidad_id IS NOT NULL)
+);
+CREATE TABLE notificacion (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  usuario_id uuid NOT NULL REFERENCES usuario(id) ON DELETE RESTRICT,
+  tipo text NOT NULL CHECK (tipo IN ('designacion','cambio','incidencia','cuadrante','recordatorio')),
+  referencia_tipo text NOT NULL, referencia_id uuid,
+  canal text NOT NULL CHECK (canal IN ('email','sms','in_app')),
+  estado_entrega text NOT NULL DEFAULT 'pendiente' CHECK (estado_entrega IN ('pendiente','enviada','entregada','error')),
+  fecha_envio timestamptz, fecha_lectura timestamptz,
+  leida boolean NOT NULL DEFAULT false,
+  UNIQUE (referencia_tipo, referencia_id, usuario_id, canal)  -- idempotencia evento–destinatario–canal (spike #45)
+);
+CREATE INDEX ix_notificacion_estado_entrega ON notificacion (estado_entrega);
+CREATE TABLE auditoria (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  entidad text NOT NULL, entidad_id uuid NOT NULL,
+  accion text NOT NULL CHECK (accion IN ('crear','modificar','publicar','resolver','cerrar','consultar')),
+  estado_anterior text, estado_nuevo text,
+  motivo text,
+  actor_id uuid NOT NULL REFERENCES usuario(id),
+  fecha timestamptz NOT NULL DEFAULT now(),
+  origen text NOT NULL DEFAULT 'aplicacion' CHECK (origen IN ('aplicacion','etl','migracion','manual'))
+);
+CREATE INDEX ix_auditoria_entidad ON auditoria (entidad, entidad_id);
+CREATE INDEX ix_auditoria_actor_fecha ON auditoria (actor_id, fecha);
+CREATE INDEX ix_auditoria_fecha ON auditoria (fecha);
+REVOKE UPDATE, DELETE, TRUNCATE ON auditoria FROM app_role;
+-- REVOKE UPDATE/DELETE/TRUNCATE también de los roles de aplicación en el resto de tablas (historial vía nuevas filas/versiones).
+-- Nota: app_role debe existir antes de ejecutar los REVOKE; si no existe, la migración falla aquí, no en una tabla borrada.
+CREATE TABLE parametro (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  clave text NOT NULL,  -- p. ej. 'peso_localogada', 'cupo_max', 'antelacion_minima_dias', 'umbral_equidad'
+  valor jsonb NOT NULL,
+  version int NOT NULL DEFAULT 1 CHECK (version &gt; 0),
+  vigente_desde date NOT NULL DEFAULT CURRENT_DATE,
+  vigente_hasta date,
+  UNIQUE (clave, version),
+  CHECK (vigente_hasta IS NULL OR vigente_hasta &gt;= vigente_desde)
+);
+</pre>
+
+<div class="box">
+<div class="box-title">Qué garantiza el esquema</div>
+<ul class="tight" style="margin-bottom:0;">
+<li><strong>Habilitación vigente obligatoria:</strong> ninguna guardia sin materia y ningún sustituto sin habilitación pasan la sintaxis de claves; la vigencia la protege el índice único parcial.</li>
+<li><strong>1 guardia = 1 parte, 1 solicitud activa:</strong> únicos por <code>guardia_id</code> en ambas tablas.</li>
+<li><strong>Sin solapamiento, impuesto por el motor:</strong> <code>EXCLUDE USING gist (abogado_id, tsrange(inicio_en, fin_en))</code> con <code>fin_en</code> absoluto (vale también para guardias que cruzan medianoche)</li>
+<li><strong>Estados del catálogo, sin traducción manual:</strong> guardia (10), cuadrante (5) y solicitud (6) copian el vocabulario TOF-2026-015 v0.4 e incluye <code>en_revision</code>, <code>anulada</code>, <code>realizada</code> y <code>validada</code> separadas, <code>en_alegaciones</code>/<code>congelado</code>, y el circuito de oferta (<code>oferta_enviada</code> → <code>pendiente_validacion</code>); <code>extemporanea</code> y <code>sobrevenida</code> viajan en la propia solicitud.</li>
+<li><strong>Urgente fuera de cuadrante (RN-39):</strong> <code>origen='urgente'</code> exige <code>cuadrante_id IS NULL</code>; cualquier otro origen lo exige <code>NOT NULL</code> (CHECK).</li>
+<li><strong>El parte no se valida vacío (RN-18):</strong> <code>CHECK (NOT validado OR (hora_entrada AND hora_salida AND actuaciones NOT NULL))</code>; el contrato ya usa <code>realizada → validada</code>, sin doble fuente de verdad.</li>
+<li><strong>Auditoría inmutable y consultable:</strong> polimórfica <code>entidad + entidad_id</code> sin FK; sin <code>UPDATE/DELETE/TRUNCATE</code> para la aplicación; índices <code>(entidad, entidad_id)</code>, <code>(actor_id, fecha)</code> y <code>(fecha)</code>.</li>
+<li><strong>Sin envíos duplicados:</strong> la notificación lleva <code>UNIQUE (referencia_tipo, referencia_id, usuario_id, canal)</code> e índice de cola <code>(estado_entrega)</code>.</li>
+<li><strong>Mínimo dato:</strong> la indisponibilidad no lleva causa clínica; el justificante vive con <code>acceso_restringido</code>.</li>
+</ul>
+</div>
+
+<p class="footnote">DDL borrador (no ejecutable en producción sin revisión). Revisorado tras correos del
+revisión de Yazan (17/11): enum del catálogo con mapa en comentarios, <code>fin_en</code> absoluto +
+<code>EXCLUDE USING gist</code> (RN-04), <code>cuadrante_id</code> nulo para <code>origen='urgente'</code>
+(RN-39), <code>CHECK</code> de RN-18, índices de auditoría y de cola de notificación, <code>UNIQUE</code> de
+idempotencia, FK compuesta de la materia, y tabla <code>parametro</code> versionada (RN-27). Fuente literal
+del modelo: Propuesta funcional TOF-2026-001, págs. 36-40, que se adjunta como anexo (el PDF
+completo reúne 6 páginas de contenido + 5 de anexo). Tarjeta #22 — Akram (Database), 10 h.
+Ref. TOF-2026-012. Documento de ejercicio, sin interlocución con el Colegio.</p>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Volumetría y crecimiento a 5 años</title>
+</head>
+<body>
+<div class="entregable">
+<div class="dkicker">Entregable · Akram (Database) · Modelo TOF-2026-012 · PostgreSQL 16</div>
+<h1 class="dtitle">Volumetría y crecimiento a 5 años</h1>
+<p class="dlead">Estimación de filas por tabla, tamaño en disco y ritmo de crecimiento a partir de los
+datos de partida de la tarjeta (900 letrados, 124 franjas al mes) y de las 14 entidades del modelo
+físico TOF-2026-012. Sustituye a la versión anterior: ya no existen tablas <code>Usuarios</code>,
+<code>Abogados</code>, <code>Franjas</code> ni <code>Expedientes</code>; el centro del volumen son
+<code>guardia</code>, <code>notificacion</code> y <code>auditoria</code>.</p>
+
+<h2>1. Hipótesis de cálculo (declaradas)</h2>
+<table class="grid">
+<thead><tr><th style="width:38%">Hipótesis</th><th style="width:62%">Valor usado</th></tr></thead>
+<tbody>
+<tr><td>Letrados en el turno (stock)</td><td>900 en el año 1, crecimiento neto de +50/año (altas menos bajas).</td></tr>
+<tr><td>Guardias publicadas al mes (stock de servicio)</td><td>124 filas de <code>guardia</code> al mes → 1.488/año. Hipótesis conservadora: una fila por franja de servicio; si un tipo de guardia prevé más de un letrado, el número de filas crece en la misma proporción.</td></tr>
+<tr><td>Solicitudes de sustitución</td><td>12 % de las guardias (aprox. 180/año).</td></tr>
+<tr><td>Notificaciones</td><td>4 por guardia de media (designación, cambio, recordatorio y acuse por canal): aprox. 6.000/año.</td></tr>
+<tr><td>Auditoría</td><td>8 actos auditados por guardia de media (crear, modificar, publicar, resolver, consultar): aprox. 12.000/año. Es la tabla que más crece porque es <em>append-only</em>: nunca se borra ni se actualiza.</td></tr>
+<tr><td>Tamaño medio de fila en disco</td><td>300 bytes de datos + índices (≈ 2× en disco): ~600–900 bytes por fila según tabla.</td></tr>
+</tbody>
+</table>
+<p class="small">Son hipótesis de dimensionamiento, no mediciones. El volumen real deberá confirmarse con
+la carga inicial del ETL y con el dataset de pruebas.</p>
+
+<h2>2. Filas por tabla y crecimiento anual</h2>
+<table class="grid">
+<thead><tr><th style="width:26%">Tabla (modelo TOF-2026-012)</th><th style="width:22%">Stock año 1</th><th style="width:24%">Filas nuevas / año</th><th style="width:28%">Tamaño estimado / año</th></tr></thead>
+<tbody>
+<tr><td><code>usuario</code> + <code>abogado</code></td><td>900 + 900</td><td>+50 +50</td><td>0,2 MB</td></tr>
+<tr><td><code>especialidad</code>, <code>tipo_guardia</code>, <code>cuadrante</code></td><td>catálogo fijo</td><td>≈ 12 cuadrantes + plantillas</td><td>despreciable</td></tr>
+<tr><td><code>guardia</code></td><td>1.488/año</td><td>1.488/año</td><td>1–1,5 MB</td></tr>
+<tr><td><code>parte_guardia</code></td><td>≈ 1.488/año</td><td>≈ 1.488/año</td><td>0,5 MB</td></tr>
+<tr><td><code>solicitud</code></td><td>≈ 180/año</td><td>≈ 180/año</td><td>0,2 MB</td></tr>
+<tr><td><code>disponibilidad</code>, <code>incidencia</code></td><td>&lt; 100/año</td><td>&lt; 100/año</td><td>0,1 MB</td></tr>
+<tr><td><code>justificante</code></td><td>≈ 100/año</td><td>≈ 100/año</td><td>referencia a fichero; no cuenta con el binario</td></tr>
+<tr><td><code>notificacion</code></td><td>≈ 6.000/año</td><td>≈ 6.000/año</td><td>3–4 MB</td></tr>
+<tr><td><code>auditoria</code> (append-only)</td><td>≈ 12.000/año</td><td>≈ 12.000/año</td><td>5–8 MB</td></tr>
+</tbody>
+</table>
+
+<h2>3. Total y crecimiento acumulado</h2>
+<table class="grid">
+<thead><tr><th style="width:25%">Año</th><th style="width:25%">Datos nuevos</th><th style="width:25%">Acumulado</th><th style="width:25%">Comentario</th></tr></thead>
+<tbody>
+<tr><td>Año 1</td><td>≈ 15 MB</td><td>≈ 15 MB</td><td>con la carga inicial del ETL</td></tr>
+<tr><td>Año 2</td><td>≈ 15 MB</td><td>≈ 30 MB</td><td>+50 letrados</td></tr>
+<tr><td>Año 3</td><td>≈ 15 MB</td><td>≈ 45 MB</td><td>—</td></tr>
+<tr><td>Año 4</td><td>≈ 15 MB</td><td>≈ 60 MB</td><td>—</td></tr>
+<tr><td>Año 5</td><td>≈ 15 MB</td><td>≈ 75 MB</td><td>audit + notificaciones ≈ 70 % del volumen</td></tr>
+</tbody>
+</table>
+<div class="box ok">
+<div class="box-title">Conclusión para la decisión del motor</div>
+<p style="margin:0;">El crecimiento es moderado y lineal: <strong>menos de 100 MB en 5 años</strong> en
+operación normal. Incluso con el escenario de estrés (×3 filas), el volumen sigue muy por debajo
+de lo que PostgreSQL gestiona sin esfuerzo. El cuello de botella del sistema no será el disco,
+sino la concurrencia (25 usuarios simultáneos de referencia, NFR TOF-2026-014) y los tiempos de
+respuesta p95 &lt; 400 ms. Esta volumetría dimensiona correctamente el almacenamiento y apoya la
+elección de un motor relacional gestionado, sin exigir alta disponibilidad pesada.</p>
+</div>
+<p class="footnote">Tarjeta de Akram (Database) «Volumetría y crecimiento a 5 años», plazo 16 de noviembre.
+Datos de partida de la tarjeta: 900 letrados y 124 franjas al mes. Modelo: DDL TOF-2026-012
+(USUARIO, ABOGADO, ESPECIALIDAD, HABILITACION, TIPO_GUARDIA, CUADRANTE, GUARDIA, DISPONIBILIDAD,
+SOLICITUD, INCIDENCIA, PARTE_GUARDIA, JUSTIFICANTE, NOTIFICACION, AUDITORIA + PARAMETRO).
+Documento de ejercicio, sin interlocución con el Colegio.</p>
+</div>
+</body>
+</html>

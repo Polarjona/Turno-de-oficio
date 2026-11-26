@@ -1,0 +1,749 @@
+E N T R E G A B L E · A K R A M ( D A T A B A S E ) · T A R J E T A # 2 7 · M O D E L O T O F - 2 0 2 6 - 0 1 2
+Diccionario de datos y validaciones
+Diccionario campo a campo de las 14 entidades del modelo físico corregido (PostgreSQL 16):
+para cada campo, tipo, nulidad, dominio o clave foránea y ejemplo. Cierra con las reglas de
+validación derivadas de las reglas de negocio (RN) y del catálogo de estados TOF-2026-015
+v0.4. Sustituye a la versión anterior: los identificadores son uuid (no enteros), los roles son los del
+contrato de API y no existen tablas EXPEDIENTE ni ASIGNACION en el modelo.
+0. Campos comunes a todas las tablas
+Campo
+Tipo
+Nulo
+Dominio / ejemplo
+id
+uuid
+No
+Clave primaria, generada con gen_random_uuid()
+(núcleo desde PostgreSQL 13). Ej.: 9f1c…c41a.
+creado_en
+timestamptz
+No
+Momento de creación de la fila. Ej.: 2026-11-17
+09:41:12+01.
+creado_por
+uuid
+No
+Usuario que creó la fila (auditoría de borrado lógico y
+origen en el ETL).
+modificado_en
+timestamptz
+Sí
+Última modificación; nulo si nunca se modificó.
+version
+int
+No
+Control de concurrencia optimista; empieza en 1 y se
+incrementa por edición.
+Todas las foráneas usan ON DELETE RESTRICT: no se borra lo referenciado. Las columnas text con CHECK materializan
+los enums; los estados copian literalmente el catálogo TOF-2026-015 v0.4 y el contrato de API (#29).
+1. USUARIO — cuenta y credenciales
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+nombre,
+apellidos
+text
+No
+Nombre y apellidos tal como constan en la colegiación. Ej.:
+«Marta», «Serra Vidal».
+email
+text
+No
+Único, con formato de correo válido. Ej.: m.serra@ejemplo.es.
+password_hash
+text
+No
+Hash de la contraseña; nunca la contraseña en claro.
+rol
+text
+No
+abogado | coordinacion | junta | sistema | auditoria. Ej.:
+abogado.
+estado
+text
+No
+activo | bloqueado | inactivo (defecto activo). Manda sobre la
+cuenta, no sobre el turno (RN-40, ver ABOGADO).
+fecha_alta
+date
+No
+Fecha de alta de la cuenta. Ej.: 2026-01-15.
+ultimo_acceso
+timestamptz
+Sí
+Último acceso registrado; nulo si nunca entró.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+1 / 8
+
+2. ABOGADO — colegiado en el turno
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+usuario_id
+uuid
+No
+FK → USUARIO, único: un usuario con rol abogado tiene un
+único registro de abogado. Ej.: 9f1c…c41a.
+num_colegiado
+text
+No
+Número de colegiado, único. Ej.: 12345.
+telefono_guardia
+text
+Sí
+Teléfono de guardia. Ej.: +34612345678.
+orden_turno
+int
+No
+Posición en el orden del turno; alimenta la equidad (por
+defecto 0). Ej.: 7.
+fecha_alta_turno
+date
+No
+Alta en el turno de oficio. Ej.: 2024-03-01.
+activo
+boolean
+No
+Manda sobre la pertenencia al turno (RN-40 «alta vigente»):
+por defecto true.
+zona
+text
+Sí
+Zona de ejercicio. Ej.: Tarragona ciudad.
+La especialidad no es un campo de ABOGADO: se acredita por HABILITACION (la N:M abogado–especialidad).
+3. ESPECIALIDAD — materia del turno
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+codigo
+text
+No
+Código único y estable. Ej.: PENAL, VG, MEN.
+nombre
+text
+No
+Nombre para mostrar. Ej.: «Violencia de género».
+descripcion
+text
+Sí
+Descripción libre.
+requiere_formacion
+boolean
+No
+Si la materia exige acreditación formativa (por defecto
+false).
+activa
+boolean
+No
+Si sigue admitiendo habilitaciones (por defecto true); no se
+borra si tiene habilitaciones.
+4. HABILITACION — acreditación por materia
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+abogado_id
+uuid
+No
+FK → ABOGADO.
+especialidad_id
+uuid
+No
+FK → ESPECIALIDAD.
+fecha_habilitacion
+date
+No
+Fecha de la acreditación. Ej.: 2023-05-20.
+caducidad
+date
+Sí
+Fecha de caducidad; si existe, ≥ fecha_habilitacion.
+estado
+text
+No
+vigente | caducada | suspendida | pendiente (defecto
+vigente). Índice único parcial: una sola vigente por
+(abogado, especialidad).
+soporte
+text
+Sí
+Referencia al documento acreditativo. Ej.: «Título de
+especialización, reg. 112».
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+2 / 8
+
+5. TIPO_GUARDIA — plantilla de servicio
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+codigo
+text
+No
+Código único. Ej.: PEN-24.
+especialidad_id
+uuid
+No
+FK → ESPECIALIDAD: toda guardia de esta plantilla tiene
+materia.
+modalidad
+text
+No
+localizada | presencial | telefonica.
+hora_inicio / hora_fin
+time
+No
+Franja horaria de la plantilla. Ej.: 08:00 / 20:00.
+cruza_medianoche
+boolean
+No
+true si la franja termina al día siguiente (por defecto
+false).
+letrados_previstos
+int
+No
+Letrados previstos por franja; > 0 (por defecto 1).
+peso_computo
+numeric(4,2)
+No
+Peso de la franja en el cómputo de equidad; ≥ 0 (por
+defecto 1,00).
+descanso_posterior_h
+int
+No
+Horas de descanso exigidas después; ≥ 0 (por defecto 0).
+UNIQUE (id, especialidad_id) permite la FK compuesta desde GUARDIA: la materia no puede divergir entre plantilla
+y guardia.
+6. CUADRANTE — versión del calendario
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+anio / periodo /
+version
+int / text / int
+No
+Tripla única: un cuadrante por (año, periodo, versión).
+version > 0. Ej.: 2027, «marzo», 2.
+estado
+text
+No
+Catálogo: borrador | en_alegaciones | publicado |
+congelado | cerrado (defecto borrador). en_alegaciones =
+el letrado opone causa antes de publicar; congelado =
+alcanzada la antelación mínima (RN-22/RN-27).
+fecha_publicacion
+timestamptz
+Sí
+Cuándo se publicó; nulo en borrador.
+publicado_por
+uuid
+Sí
+FK → USUARIO que publicó.
+motivo_cambio
+text
+Sí
+Motivo de la nueva versión. Ej.: «Sustitución validada EX-
+2027-0311».
+7. GUARDIA — servicio a cubrir (centro del modelo)
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+cuadrante_id
+uuid
+Sí*
+FK → CUADRANTE. Nulo solo si origen = 'urgente' (RN-39); en
+cualquier otro caso, obligatorio (CHECK).
+tipo_guardia_id +
+especialidad_id
+uuid
+No
+FK compuesta → TIPO_GUARDIA (id, especialidad_id): la
+guardia hereda la materia de su plantilla.
+abogado_id
+uuid
+Sí
+FK → ABOGADO: titular. Nulo en planificada y descubierta.
+fecha
+date
+No
+Día de la guardia. Ej.: 2027-03-17.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+3 / 8
+
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+hora_inicio /
+hora_fin
+time
+No
+Franja de la plantilla. Ej.: 08:00 / 08:00 (24 h).
+inicio_en / fin_en
+timestamptz
+No
+Instantes absolutos: fin_en > inicio_en. Con
+cruza_medianoche, fin_en es fecha+1 — no se deriva de la
+plantilla, queda guardado.
+cruza_medianoche
+boolean
+No
+Copia de la plantilla al crear la guardia (no cambia si se
+edita la plantilla después).
+estado
+text
+No
+Catálogo (10): planificada | propuesta | publicada |
+confirmada | en_revision | descubierta | en_curso |
+realizada | validada | anulada (defecto planificada).
+en_revision mantiene al titular como responsable (RN-
+13/15); solo validada cuenta para certificación y estadísticas
+(RN-19); anulada lleva motivo (RN-31).
+origen
+text
+No
+ordinaria | urgente | refuerzo (defecto ordinaria).
+motivo_asignacion
+text
+Sí
+En origen = 'urgente': origen, autoridad y hora de la
+designación fuera de cuadrante (RN-39).
+Restricción del motor (RN-04): EXCLUDE USING gist (abogado_id WITH =, tsrange(inicio_en, fin_en) WITH &&)
+WHERE (estado <> 'anulada' AND abogado_id IS NOT NULL) — un mismo abogado no puede tener dos guardias
+solapadas.
+8. DISPONIBILIDAD — ausencia comunicada
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+abogado_id
+uuid
+No
+FK → ABOGADO.
+fecha_inicio /
+fecha_fin
+date
+No
+Rango con fecha_fin ≥ fecha_inicio. Ej.: 2027-03-10 a 2027-03-
+14.
+tipo
+text
+No
+vacaciones | baja | permiso | formacion | otros. Categoría,
+nunca causa clínica (RGPD art. 9).
+estado
+text
+No
+pendiente | validada | rechazada | anulada (defecto
+pendiente).
+observaciones
+text
+Sí
+Texto libre, sin datos de salud.
+validada_por
+uuid
+Sí
+FK → USUARIO que validó.
+9. SOLICITUD — excusa, permuta o sustitución
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+guardia_id
+uuid
+No
+FK → GUARDIA. Solo una solicitud activa por guardia (índice
+parcial único).
+tipo
+text
+No
+excusa | permuta | sustitucion.
+solicitante_id /
+sustituto_id
+uuid
+No / Sí
+FK → ABOGADO. El sustituto es obligatorio en permuta (doble
+conformidad, RN-16) y en sustitución con candidato
+propuesto.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+4 / 8
+
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+motivo
+text
+No
+enfermedad | asunto_propio | conciliacion | fuerza_mayor |
+otro — vocabulario único de solicitud.motivo, idéntico al
+contrato #29. Categoría general, sin diagnósticos ni datos
+clínicos (RN-23).
+detalle
+text
+Sí
+Detalle libre, sin diagnósticos ni datos clínicos (RN-23).
+estado
+text
+No
+Catálogo: comunicada | en_revision | oferta_enviada |
+pendiente_validacion | estimada | desestimada (defecto
+comunicada). Activas: las cuatro primeras.
+extemporanea
+boolean
+No
+Presentada fuera de plazo (RN-12); por defecto false.
+sobrevenida
+boolean
+No
+Indisponibilidad sobrevenida; por defecto false.
+fecha_solicitud
+timestamptz
+No
+Momento de la solicitud (defecto now()).
+fecha_resolucion
+/ resuelta_por
+timestamptz /
+uuid
+Sí
+Cuándo y quién resolvió; nulos hasta la resolución.
+motivo_resolucion
+text
+Sí
+Motivación obligatoria de la decisión (RN-13/37); se muestra
+también en la notificación al letrado.
+10. INCIDENCIA — evento en la guardia
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+guardia_id
+uuid
+No
+FK → GUARDIA.
+categoria
+text
+No
+localizacion | cobertura | escalado | material | otro.
+gravedad
+text
+No
+baja | media | alta.
+descripcion
+text
+No
+Qué ocurrió. Ej.: «No localizable tras dos llamadas».
+abierta_por
+uuid
+No
+FK → USUARIO que la abrió.
+fecha_apertura
+/ fecha_cierre
+timestamptz
+No / Sí
+Apertura (defecto now()); el acuse de cierre es fecha_cierre —
+la incidencia no tiene estado propio.
+resolucion
+text
+Sí
+Cómo se resolvió.
+11. PARTE_GUARDIA — cierre y acreditación (1:1 con guardia)
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+guardia_id
+uuid
+No
+FK → GUARDIA, único: un parte por guardia.
+realizada
+boolean
+No
+Si el servicio se realizó (por defecto false).
+hora_entrada
+/ hora_salida
+time
+Sí
+Horas reales; obligatorias para validar (RN-18).
+actuaciones
+text
+Sí
+Actuaciones realizadas; obligatorias para validar (RN-18).
+observaciones
+text
+Sí
+Texto libre.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+5 / 8
+
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+validado
+boolean
+No
+CHECK (NOT validado OR (hora_entrada AND hora_salida AND
+actuaciones NOT NULL)): el parte no se valida vacío.
+validado_por
+uuid
+Sí
+FK → USUARIO que validó.
+12. JUSTIFICANTE — documento acreditativo
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+solicitud_id /
+disponibilidad_id
+uuid
+Sí
+FK → SOLICITUD / DISPONIBILIDAD. CHECK: al menos uno de
+los dos no nulo.
+referencia_fichero
+text
+No
+Ruta o referencia al fichero. Ej.: justificantes/2027/0311.pdf.
+tipo_documento
+text
+No
+medico | formacion | colegiacion | otro.
+fecha_subida
+timestamptz
+No
+Momento de la subida (defecto now()).
+acceso_restringido
+boolean
+No
+Acceso limitado por rol (por defecto true); nunca se
+muestra junto a la causa clínica.
+13. NOTIFICACION — aviso y acuse
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+usuario_id
+uuid
+No
+FK → USUARIO destinatario.
+tipo
+text
+No
+designacion | cambio | incidencia | cuadrante | recordatorio.
+referencia_tipo
+/ referencia_id
+text / uuid
+No / Sí
+Referencia polimórfica (sin FK) al hecho notificado. Ej.: guardia
+/ 9f1c…c41a.
+canal
+text
+No
+email | sms | in_app.
+estado_entrega
+text
+No
+pendiente | enviada | entregada | error (defecto pendiente).
+Índice de cola por este campo.
+fecha_envio /
+fecha_lectura
+timestamptz
+Sí
+Envío y lectura; en correo, la lectura no es prueba (spike #45).
+leida
+boolean
+No
+Leída en la aplicación (por defecto false).
+UNIQUE (referencia_tipo, referencia_id, usuario_id, canal): idempotencia evento–destinatario–canal — un
+reintento no duplica el envío.
+14. AUDITORIA — registro append-only e inmutable
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+entidad /
+entidad_id
+text / uuid
+No
+Referencia polimórfica sin FK. Índices (entidad, entidad_id),
+(actor_id, fecha) y (fecha).
+accion
+text
+No
+crear | modificar | publicar | resolver | cerrar | consultar.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+6 / 8
+
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+estado_anterior
+/ estado_nuevo
+text
+Sí
+Estados del catálogo antes y después. Ej.: publicada →
+confirmada.
+motivo
+text
+Sí
+Motivo del cambio (obligatorio en anulaciones y resoluciones).
+actor_id
+uuid
+No
+FK → USUARIO que actuó.
+fecha
+timestamptz
+No
+Momento del acto (defecto now()).
+origen
+text
+No
+aplicacion | etl | migracion | manual (defecto aplicacion).
+Sin UPDATE, DELETE ni TRUNCATE para los roles de aplicación (REVOKE sobre app_role, que debe existir antes de ejecutar
+la migración).
+15. PARAMETRO — pieza aparte (fuera de las 14 del cap. 21)
+Campo
+Tipo
+Nulo
+Dominio / FK · ejemplo
+clave
+text
+No
+Nombre del parámetro. Ej.: antelacion_minima_dias,
+peso_localizada, umbral_equidad.
+valor
+jsonb
+No
+Valor versionado (RN-27). Ej.: 10.
+version
+int
+No
+> 0; (clave, version) único: el histórico no se sobrescribe.
+vigente_desde
+/
+vigente_hasta
+date
+No / Sí
+Vigencia; si hay hasta, ≥ vigente_desde. Ej.: 2027-01-01 → 2027-
+06-30.
+16. Reglas de validación derivadas de las reglas de negocio
+Regla
+Qué exige
+Dónde se garantiza
+RN-02
+Solo se asigna a quien tiene habilitación
+vigente en la materia.
+FK compuesta por la materia + índice único
+parcial de habilitación vigente; comprobación
+de servicio al asignar.
+RN-04
+Un abogado no puede tener dos guardias
+solapadas.
+EXCLUDE USING gist sobre tsrange(inicio_en,
+fin_en) en el motor.
+RN-10
+El acuse no condiciona los efectos de la
+designación.
+La designación se publica sin esperar el acuse;
+estado_entrega de NOTIFICACION es
+independiente.
+RN-11
+Sin acuse hay escalado a coordinación.
+GUARDIA confirmada vs. sin acuse +
+recordatorios de NOTIFICACION (72 h / 24 h).
+RN-12
+La excusa fuera de plazo se admite pero se
+registra como extemporánea.
+solicitud.extemporanea; una sola solicitud
+activa por guardia.
+RN-13 /
+RN-15
+En revisión, el titular sigue siendo responsable
+hasta la validación del Colegio.
+GUARDIA en_revision y SOLICITUD en_revision; la
+titularidad no cambia hasta estimada.
+RN-16
+La permuta exige doble conformidad.
+SOLICITUD pendiente_validacion antes de
+estimada, con sustituto_id obligatorio.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+7 / 8
+
+Regla
+Qué exige
+Dónde se garantiza
+RN-18
+El parte no cierra sin horas y actuaciones.
+CHECK en PARTE_GUARDIA: validado exige horas
+y actuaciones.
+RN-19
+Solo los partes validados cuentan para
+certificación y estadísticas.
+GUARDIA realizada ≠ validada; las consultas
+agregan solo validada.
+RN-21 /
+RN-22
+Publicado inmutable; los cambios son nueva
+versión; antelación mínima de 10 días.
+(anio, periodo, version) único + CUADRANTE
+congelado y parámetros versionados (RN-27).
+RN-23
+Ninguna comunicación lleva datos de salud ni
+documentación clínica.
+DISPONIBILIDAD sin causa clínica; plantillas de
+NOTIFICACION con contenido mínimo;
+JUSTIFICANTE con acceso_restringido.
+RN-27
+Pesos, cupos, descanso, antelación y
+umbrales versionados con vigencia.
+Tabla PARAMETRO (clave, version) con
+vigente_desde/hasta.
+RN-31
+La guardia anulada se registra con motivo.
+GUARDIA anulada + motivo_asignacion;
+excluida del solapamiento.
+RN-32 /
+RN-22
+El histórico no puede cambiar si se edita la
+plantilla.
+fin_en y cruza_medianoche copiados en la
+guardia al crearla.
+RN-39
+La designación urgente por violencia de
+género se registra fuera del cuadrante, con
+origen, autoridad y hora.
+origen = 'urgente' exige cuadrante_id IS NULL; el
+registro va en motivo_asignacion.
+RN-40
+«Alta vigente en el turno».
+abogado.activo manda sobre el turno;
+usuario.estado, sobre la cuenta.
+Qué garantiza el esquema
+Una sola interpretación por campo: tipo, nulidad y dominio están cerrados en el diccionario; los
+estados son los del catálogo, sin traducciones manuales.
+Integridad en el motor, no en el servicio: unicidades, FK con RESTRICT, CHECK de RN-18 y
+exclusión por solapamiento se imponen en PostgreSQL.
+Sin datos clínicos: la indisponibilidad guarda la categoría, no la causa; los avisos llevan el
+contenido mínimo.
+Auditoría inmutable y consultable por entidad, actor y fechas, sin UPDATE/DELETE/TRUNCATE para
+la aplicación.
+Diccionario de la versión corregida del modelo TOF-2026-012 (DDL con estados del catálogo,
+fin_en + EXCLUDE USING gist, cuadrante_id nulo para origen='urgente' y CHECK de RN-18). Fuente
+literal del modelo: Propuesta funcional TOF-2026-001, págs. 36-40. Tarjeta #27 — Akram
+(Database). Documento de ejercicio, sin interlocución con el Colegio.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-012   |   Diccionario de datos y validaciones
+Classification: Internal
+8 / 8

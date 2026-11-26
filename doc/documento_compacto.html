@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Gestión del Turno de Oficio · Diseño funcional</title>
+<style>/* ============================================================
+   Documento funcional · Gestión del Turno de Oficio
+   Plantilla corporativa Inetum 2026 · maquetación A4 impresa
+   ============================================================ */
+
+@font-face { font-family: "Poppins"; font-weight: 300; font-style: normal;
+  src: url("fonts/Poppins-Light.ttf"); }
+@font-face { font-family: "Poppins"; font-weight: 400; font-style: normal;
+  src: url("fonts/Poppins-Regular.ttf"); }
+@font-face { font-family: "Poppins"; font-weight: 500; font-style: normal;
+  src: url("fonts/Poppins-Medium.ttf"); }
+@font-face { font-family: "Poppins"; font-weight: 600; font-style: normal;
+  src: url("fonts/Poppins-SemiBold.ttf"); }
+@font-face { font-family: "Poppins"; font-weight: 700; font-style: normal;
+  src: url("fonts/Poppins-Bold.ttf"); }
+@font-face { font-family: "Poppins"; font-weight: 400; font-style: italic;
+  src: url("fonts/Poppins-Italic.ttf"); }
+
+@page {
+  size: A4;
+  margin: 27.5mm 25mm 25mm 25mm;
+}
+
+/* La portada ocupa la hoja completa, sin márgenes ni áreas de texto. */
+@page cover {
+  size: A4;
+  margin: 0;
+}
+
+:root {
+  --navy: #232d4b;
+  --navy-deep: #171d33;
+  --navy-soft: #3a4767;
+  --gold: #da1984;            /* acento magenta de marca */
+  --gold-soft: #f9f78c;       /* amarillo pálido */
+  --lemon: #f5f340;           /* amarillo de marca */
+  --pink: #e9449f;
+  --ink: #232d4b;
+  --muted: #5f6a85;
+  --line: #d7dbe4;
+  --line-soft: #e8ebf1;
+  --bg-soft: #f4f5f9;
+  --bg-blue: #eceff6;
+  --ok: #232d4b;
+  --ok-bg: #f8f7d9;
+  --warn: #a81468;
+  --warn-bg: #fce8f2;
+  --bad: #b5126b;
+  --bad-bg: #fce4ef;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: "Poppins", "Segoe UI", Tahoma, sans-serif;
+  font-size: 9.2pt;
+  line-height: 1.5;
+  color: var(--ink);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  text-rendering: geometricPrecision;
+}
+
+p { margin: 0 0 2.8mm 0; text-align: justify; }
+ul, ol { margin: 0 0 3mm 0; padding-left: 5.4mm; }
+li { margin-bottom: 1.2mm; }
+strong { color: var(--navy); font-weight: 600; }
+em { font-style: italic; }
+a { color: var(--gold); text-decoration: none; }
+
+/* ---------- Portada ---------- */
+
+/* La portada se compone en PDF (doc/theme.py): aquí solo reserva su página. */
+.cover {
+  page: cover;
+  height: 297mm;
+  break-after: page;
+  page-break-after: always;
+}
+
+/* ---------- Estructura de capítulos ---------- */
+
+h1.chapter {
+  break-before: page;
+  page-break-before: always;
+  font-family: "Poppins", sans-serif;
+  font-size: 19pt;
+  font-weight: 300;
+  line-height: 1.16;
+  color: var(--navy);
+  margin: 0 0 1.5mm 0;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: baseline;
+  gap: 4.6mm;
+}
+.chnum {
+  flex: 0 0 auto;
+  font-size: 19pt;
+  font-weight: 300;
+  color: #98a1b8;
+  letter-spacing: 0;
+  margin: 0;
+}
+h1.toc-title {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 26pt;
+}
+.chlead {
+  font-size: 9.6pt;
+  color: var(--navy-soft);
+  line-height: 1.55;
+  margin: 3.5mm 0 0 0;
+  padding-bottom: 4mm;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+h2 {
+  font-family: "Poppins", sans-serif;
+  font-size: 11.6pt;
+  font-weight: 600;
+  color: var(--gold);
+  margin: 6.5mm 0 2.2mm 0;
+  line-height: 1.3;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+h3 {
+  font-family: "Poppins", sans-serif;
+  font-size: 9.8pt;
+  font-weight: 600;
+  color: var(--gold);
+  margin: 4.6mm 0 1.6mm 0;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+h2 + p, h3 + p { margin-top: 0; }
+
+.lead-in { margin-top: 4.5mm; }
+
+/* ---------- Tablas ---------- */
+
+table.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 7.8pt;
+  line-height: 1.42;
+  margin: 3mm 0 4mm 0;
+}
+table.grid caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 7.4pt;
+  color: var(--muted);
+  padding-bottom: 1.6mm;
+  font-style: italic;
+}
+table.grid th {
+  background: var(--navy);
+  color: var(--lemon);
+  text-align: left;
+  font-weight: 600;
+  font-size: 7.2pt;
+  letter-spacing: 0.3px;
+  padding: 1.9mm 2mm;
+  border: 1px solid var(--navy);
+}
+table.grid td {
+  padding: 1.6mm 2mm;
+  border: 1px solid var(--line);
+  vertical-align: top;
+}
+table.grid tbody tr:nth-child(even) td { background: #f7f8fb; }
+table.grid tr { break-inside: avoid; page-break-inside: avoid; }
+table.grid td.c, table.grid th.c { text-align: center; }
+table.grid td.narrow { white-space: nowrap; }
+table.grid code, .mono {
+  font-family: "Poppins", Consolas, monospace;
+  font-size: 7.4pt;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.2px;
+}
+
+/* ---------- Cajas ---------- */
+
+.box {
+  background: var(--navy);
+  color: #fff;
+  padding: 4mm 4.4mm;
+  margin: 3.6mm 0;
+  font-size: 8.6pt;
+  line-height: 1.5;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.box .box-title {
+  font-weight: 600;
+  font-style: italic;
+  color: var(--lemon);
+  font-size: 8.6pt;
+  letter-spacing: 0.2px;
+  margin-bottom: 1.8mm;
+}
+.box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+.box strong { color: var(--lemon); }
+.box em { color: #dfe3ee; }
+.box a { color: var(--lemon); }
+.box .mono { color: var(--lemon); }
+
+.box.legal { background: var(--bg-soft); color: var(--ink); border-left: 1.4mm solid var(--gold); }
+.box.legal .box-title { color: var(--gold); }
+.box.legal strong { color: var(--navy); }
+.box.legal .mono { color: var(--gold); }
+
+.box.warn { background: var(--warn-bg); color: var(--ink); border-left: 1.4mm solid var(--pink); }
+.box.warn .box-title { color: var(--warn); }
+.box.warn strong { color: var(--navy); }
+
+.box.ok { background: var(--ok-bg); color: var(--ink); border-left: 1.4mm solid var(--lemon); }
+.box.ok .box-title { color: var(--navy); }
+.box.ok strong { color: var(--navy); }
+
+.box.rule { background: var(--gold); color: #fff; }
+.box.rule .box-title { color: var(--lemon); }
+.box.rule strong { color: var(--lemon); }
+
+/* ---------- Chips y etiquetas ---------- */
+
+.chip {
+  display: inline-block;
+  font-size: 7pt;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0.7mm 2.2mm;
+  border-radius: 2mm;
+  background: var(--navy);
+  color: #fff;
+  margin: 0 0.8mm 0.8mm 0;
+  white-space: nowrap;
+}
+.chip.g { background: var(--lemon); color: var(--navy); }
+.chip.a { background: var(--gold-soft); color: var(--navy); }
+.chip.r { background: var(--gold); color: #fff; }
+
+.eyebrow {
+  font-size: 7.2pt;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 5.4mm 0 1.6mm 0;
+}
+
+/* ---------- Índice ---------- */
+
+.toc { margin-top: 5mm; }
+.toc-row {
+  display: flex;
+  align-items: baseline;
+  gap: 2.5mm;
+  padding: 1.6mm 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 9pt;
+}
+.toc-row .n {
+  width: 8mm;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 8.4pt;
+  flex: 0 0 auto;
+}
+.toc-row .t { flex: 0 1 auto; }
+.toc-row .d {
+  flex: 1 1 auto;
+  border-bottom: 1px dotted #b9c0cf;
+  margin: 0 1mm 0.9mm 1mm;
+  min-width: 6mm;
+}
+.toc-row .p { flex: 0 0 auto; color: var(--muted); font-size: 8.4pt; }
+.toc-row.sub .t { color: var(--muted); }
+.toc-row.sub { padding-left: 9mm; }
+
+/* ---------- Diagramas de flujo ---------- */
+
+.flow { margin: 4mm 0; break-inside: avoid; page-break-inside: avoid; }
+.flow-steps { display: flex; gap: 1.6mm; align-items: stretch; }
+.flow-step {
+  flex: 1 1 0;
+  border: 1px solid var(--line);
+  border-top: 2.2px solid var(--gold);
+  background: #fff;
+  padding: 2.4mm 2.6mm;
+  font-size: 7.8pt;
+  line-height: 1.42;
+}
+.flow-step .sn {
+  font-size: 6.8pt;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 0.8mm;
+}
+.flow-step b { display: block; font-size: 8.2pt; margin-bottom: 0.8mm; color: var(--navy); }
+.flow-step .who {
+  display: block;
+  margin-top: 1.2mm;
+  font-size: 6.6pt;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+.flow-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--gold);
+  font-size: 10pt;
+  padding: 0 0.4mm;
+  flex: 0 0 auto;
+}
+
+/* Cadena vertical de estados */
+.chain { margin: 3.5mm 0; }
+.chain-item {
+  border: 1px solid var(--line);
+  border-left: 1.2mm solid var(--navy);
+  background: #fff;
+  padding: 2.2mm 3mm;
+  font-size: 8.4pt;
+}
+.chain-item b { color: var(--navy); }
+.chain-sep { text-align: center; color: var(--gold); font-size: 9pt; line-height: 1; padding: 1mm 0; }
+.chain-item.g { border-left-color: var(--lemon); }
+.chain-item.r { border-left-color: var(--gold); }
+.chain-item.a { border-left-color: var(--pink); }
+
+/* ---------- Wireframes ---------- */
+
+.wf-grid { display: flex; gap: 4mm; margin: 4mm 0; align-items: flex-start; }
+.wf-col { flex: 1 1 0; }
+
+.wf-window {
+  border: 1px solid #c8cedb;
+  border-radius: 1.6mm;
+  overflow: hidden;
+  background: #fff;
+  font-size: 7.2pt;
+}
+.wf-bar {
+  background: var(--navy);
+  color: #fff;
+  padding: 1.8mm 2.4mm;
+  font-size: 7pt;
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 0.3px;
+}
+.wf-bar span:last-child { color: var(--gold-soft); }
+.wf-body { padding: 2.4mm; }
+.wf-caption { font-size: 7pt; color: var(--muted); margin-top: 1.6mm; line-height: 1.45; }
+
+.wf-phone {
+  width: 52mm;
+  margin: 0 auto;
+  border: 1.4px solid var(--navy);
+  border-radius: 4mm;
+  padding: 2mm 1.6mm 2.6mm 1.6mm;
+  background: #fbfcfd;
+  font-size: 6.6pt;
+}
+.wf-phone .notch { width: 16mm; height: 1.2mm; background: var(--navy); border-radius: 1mm; margin: 0 auto 1.6mm auto; }
+.wf-phone .ph-bar {
+  background: var(--navy); color: #fff; font-size: 6.6pt;
+  padding: 1.2mm 1.8mm; border-radius: 1mm; margin-bottom: 1.6mm;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.wf-phone .ph-bar span:last-child { color: var(--gold-soft); }
+.wf-phone .ph-h { font-size: 8.2pt; font-weight: 600; color: var(--navy); margin: 0.6mm 0 1mm 0; }
+.wf-phone .ph-sub { font-size: 6.2pt; color: var(--muted); margin-bottom: 1.6mm; }
+.wf-phone .ph-card {
+  border: 1px solid #dcdfe8; border-radius: 1mm; background: #fff;
+  padding: 1.4mm 1.6mm; margin-bottom: 1.2mm;
+}
+.wf-phone .ph-card b { color: var(--navy); font-size: 6.8pt; }
+.wf-phone .ph-row { display: flex; justify-content: space-between; gap: 1mm; }
+.ph-btn { background: var(--navy); color: #fff; text-align: center; padding: 1.3mm; border-radius: 1mm; font-size: 6.4pt; margin-top: 1.4mm; }
+.ph-btn.ghost { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
+.wf-phone .ph-tag {
+  display: inline-block; font-size: 5.9pt; padding: 0.3mm 1.2mm;
+  border-radius: 0.8mm; background: var(--lemon); color: var(--navy); font-weight: 600;
+}
+.wf-phone .ph-tag.a { background: var(--gold-soft); }
+.wf-phone .ph-tag.r { background: var(--gold); color: #fff; }
+.wf-phone .ph-nav {
+  display: flex; justify-content: space-around; border-top: 1px solid #dcdfe8;
+  padding-top: 1.2mm; margin-top: 2mm; font-size: 5.8pt; color: var(--muted);
+}
+
+/* Cuadrante / calendario */
+table.cuadrante { width: 100%; border-collapse: collapse; font-size: 6.6pt; table-layout: fixed; }
+table.cuadrante th {
+  background: var(--navy); color: var(--lemon);
+  border: 1px solid var(--navy);
+  padding: 1.3mm 0.6mm; font-size: 6.2pt; font-weight: 600;
+}
+table.cuadrante td {
+  border: 1px solid #e2e5ec; padding: 0.9mm 0.7mm;
+  height: 9.6mm; vertical-align: top; line-height: 1.18;
+}
+table.cuadrante td.rowhead {
+  background: var(--bg-soft); font-weight: 600; color: var(--navy);
+  font-size: 6.2pt; text-align: left; padding-left: 1.4mm;
+}
+table.cuadrante .ini { display: block; font-weight: 600; }
+table.cuadrante .ok { background: #f8f7d9; }
+table.cuadrante .pend { background: #fce8f2; }
+table.cuadrante .hueco { background: var(--gold); color: #fff; font-weight: 600; }
+table.cuadrante .na { background: #f3f4f7; color: #aab1c0; }
+
+.wf-kpis { display: flex; gap: 2mm; margin-bottom: 2.6mm; }
+.wf-kpi {
+  flex: 1 1 0;
+  border: 1px solid var(--line);
+  border-top: 1.8px solid var(--gold);
+  background: #fff;
+  padding: 1.8mm 2mm;
+}
+.wf-kpi .k { font-size: 6pt; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); }
+.wf-kpi .v { font-family: "Poppins", sans-serif; font-weight: 300; font-size: 14pt; color: var(--navy); line-height: 1.1; margin-top: 0.6mm; }
+.wf-kpi .s { font-size: 6pt; color: var(--muted); }
+
+.bars { margin-top: 1mm; }
+.bar-row { display: flex; align-items: center; gap: 1.6mm; font-size: 6.4pt; margin-bottom: 1mm; }
+.bar-row .lbl { width: 24mm; flex: 0 0 auto; color: var(--navy); }
+.bar-track { flex: 1 1 auto; height: 2.6mm; background: #eceef4; border-radius: 1.3mm; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--navy); }
+.bar-fill.gold { background: var(--gold); }
+.bar-row .num { width: 7mm; text-align: right; color: var(--muted); flex: 0 0 auto; }
+
+/* ER: ficha de entidad */
+.er-grid { display: flex; flex-wrap: wrap; gap: 3mm; }
+.er-card {
+  flex: 1 1 48%;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 7.4pt;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.er-card .er-h {
+  background: var(--navy); color: #fff;
+  padding: 1.4mm 2mm; font-size: 7.4pt; font-weight: 600; letter-spacing: 0.4px;
+}
+.er-card .er-h small { font-weight: 400; color: var(--gold-soft); letter-spacing: 0; }
+.er-card table { width: 100%; border-collapse: collapse; }
+.er-card td { padding: 0.75mm 2mm; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+.er-card td:first-child { font-family: "Poppins", Consolas, monospace; font-size: 7pt; color: var(--navy); white-space: nowrap; }
+.er-card td:last-child { color: var(--muted); font-size: 7pt; text-align: right; }
+.er-card .pk { color: var(--gold); font-weight: 700; }
+
+.fig { margin: 3mm 0; break-inside: avoid; page-break-inside: avoid; }
+.fig > svg { width: 100%; max-width: 160mm; height: auto; display: block; margin: 0 auto; }
+.fig-cap { font-size: 7pt; color: var(--muted); margin-top: 2mm; text-align: center; font-style: italic; }
+
+.two-col { column-count: 2; column-gap: 7mm; }
+.two-col p, .two-col li { text-align: left; }
+
+.kv { display: flex; gap: 3mm; margin: 2.8mm 0; }
+.kv > div { flex: 1 1 0; border-top: 2.2px solid var(--gold); padding-top: 2.2mm; }
+.kv .kt { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.9px; color: var(--gold); font-weight: 600; margin-bottom: 1mm; }
+.kv .kd { font-size: 8.4pt; line-height: 1.48; }
+
+.tight li { margin-bottom: 0.6mm; }
+.small { font-size: 7.8pt; color: var(--muted); }
+.nowrap { white-space: nowrap; }
+.avoid { break-inside: avoid; page-break-inside: avoid; }
+
+/* ---------- Entregables de una o dos páginas ---------- */
+
+.dkicker {
+  font-size: 7.2pt; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold); font-weight: 600; margin-bottom: 3mm;
+}
+h1.dtitle {
+  font-family: "Poppins", sans-serif; font-size: 20pt; font-weight: 300;
+  line-height: 1.16; color: var(--navy); margin: 0 0 2mm 0; letter-spacing: -0.3px;
+}
+.dlead {
+  font-size: 9.4pt; color: var(--navy-soft); line-height: 1.5;
+  margin: 0 0 3mm 0; padding-bottom: 3.6mm;
+  border-bottom: 1.6px solid var(--gold); text-align: left;
+}
+.dmeta { display: flex; gap: 6mm; font-size: 6.8pt; color: var(--muted); margin: 0 0 4mm 0; text-transform: uppercase; letter-spacing: 0.6px; }
+.dmeta b { color: var(--navy); font-weight: 600; }
+.pagebreak { break-before: page; page-break-before: always; }
+.foot-note { font-size: 6.8pt; color: var(--muted); margin-top: 2mm; line-height: 1.5; }
+
+/* ---------- Entregable breve: densidad ajustada ---------- */
+
+.entregable { font-size: 8.4pt; line-height: 1.44; }
+.entregable p { margin-bottom: 2.2mm; }
+.entregable table.grid { font-size: 6.9pt; line-height: 1.34; table-layout: fixed; margin: 2.2mm 0 3mm 0; }
+.entregable table.grid td, .entregable table.grid th { padding: 0.95mm 1.3mm; }
+.entregable table.grid th { font-size: 6.4pt; }
+.entregable table.grid.rules td:first-child { color: var(--gold); font-weight: 700; }
+.entregable table.grid.rules td:nth-child(3) { color: var(--muted); font-size: 6.2pt; }
+.entregable .box { font-size: 7.9pt; padding: 2.6mm 3.2mm; margin: 2.8mm 0; }
+.entregable .box .box-title { font-size: 8pt; margin-bottom: 1.2mm; }
+.entregable h1.dtitle { font-size: 17pt; }
+.entregable h2 { font-size: 9.8pt; margin: 3.6mm 0 1.4mm 0; }
+.entregable .dlead { font-size: 8.5pt; margin-bottom: 2.4mm; padding-bottom: 2.6mm; }
+.entregable .dkicker { font-size: 6.8pt; margin-bottom: 2.2mm; }
+.entregable .foot-note { font-size: 6.4pt; }
+.entregable ul.tight li { margin-bottom: 0.3mm; }
+</style>
+</head>
+<body>
+<!-- ================= PORTADA (se compone en PDF) ================= -->
+<section class="cover"></section>
+
+<!-- ================= ÍNDICE ================= -->
+<section>
+  <h1 class="chapter toc-title" style="break-before:auto;page-break-before:auto;">Índice</h1>
+
+  <div class="toc">
+    <div class="toc-row"><span class="n">1</span><span class="t">La aplicación en una página</span><span class="d"></span><span class="p">3</span></div>
+<div class="toc-row"><span class="n">2</span><span class="t">Qué se digitaliza exactamente</span><span class="d"></span><span class="p">4</span></div>
+<div class="toc-row"><span class="n">3</span><span class="t">Base normativa del diseño</span><span class="d"></span><span class="p">5</span></div>
+<div class="toc-row"><span class="n">4</span><span class="t">Roles y permisos</span><span class="d"></span><span class="p">6</span></div>
+<div class="toc-row"><span class="n">5</span><span class="t">Tipología de guardias</span><span class="d"></span><span class="p">7</span></div>
+<div class="toc-row"><span class="n">6</span><span class="t">El ciclo del cuadrante</span><span class="d"></span><span class="p">8</span></div>
+<div class="toc-row"><span class="n">7</span><span class="t">Asignación de guardias</span><span class="d"></span><span class="p">9</span></div>
+<div class="toc-row"><span class="n">8</span><span class="t">Ciclo de vida y estados</span><span class="d"></span><span class="p">11</span></div>
+<div class="toc-row"><span class="n">9</span><span class="t">Calendarios</span><span class="d"></span><span class="p">12</span></div>
+<div class="toc-row"><span class="n">10</span><span class="t">Disponibilidad y habilitación</span><span class="d"></span><span class="p">13</span></div>
+<div class="toc-row"><span class="n">11</span><span class="t">Sustituciones, permutas y excusas</span><span class="d"></span><span class="p">14</span></div>
+<div class="toc-row"><span class="n">12</span><span class="t">Modo guardia e incidencias</span><span class="d"></span><span class="p">15</span></div>
+<div class="toc-row"><span class="n">13</span><span class="t">Comunicaciones y trazabilidad</span><span class="d"></span><span class="p">16</span></div>
+<div class="toc-row"><span class="n">14</span><span class="t">Panel e indicadores</span><span class="d"></span><span class="p">17</span></div>
+<div class="toc-row"><span class="n">15</span><span class="t">Reglas de negocio</span><span class="d"></span><span class="p">18</span></div>
+<div class="toc-row"><span class="n">16</span><span class="t">Modelo de datos</span><span class="d"></span><span class="p">20</span></div>
+<div class="toc-row"><span class="n">17</span><span class="t">Diagrama entidad-relación</span><span class="d"></span><span class="p">22</span></div>
+<div class="toc-row"><span class="n">18</span><span class="t">Seguridad y protección de datos</span><span class="d"></span><span class="p">23</span></div>
+<div class="toc-row sub"><span class="n">A</span><span class="t">Pantallas de referencia</span><span class="d"></span><span class="p">24</span></div>
+  </div>
+
+  <div class="box legal" style="margin-top:7mm;">
+    <div class="box-title">Qué encontrarás y qué no</div>
+    <p style="margin-bottom:1.4mm;">El documento describe el funcionamiento de la aplicación en el orden en que se
+    usa: qué se digitaliza, quién hace qué, cómo se construye el cuadrante, cómo se cubre una guardia, qué ocurre
+    cuando alguien no puede acudir y cómo se mide el resultado. Termina con las reglas de negocio numeradas y el
+    modelo de datos.</p>
+    <p style="margin-bottom:0;">No incluye presupuesto, plazos de proveedor ni decisiones de tecnología. Tampoco
+    interpreta la normativa: describe cómo la aplicación se adapta a ella sin sustituir ninguna decisión del
+    Colegio.</p>
+  </div>
+
+  <div class="box">
+    <div class="box-title">La regla que ordena todo el diseño</div>
+    <p style="margin-bottom:0;">La plataforma <strong>no decide</strong>: propone, comprueba, documenta y avisa. La
+    designación, la estimación de una excusa y la validación de una sustitución son actos del Colegio, adoptados por
+    la persona competente dentro de la aplicación. De ahí que ninguna función automática publique ni notifique por sí
+    misma.</p>
+  </div>
+</section>
+
+<!-- ============ CAPÍTULO 1 ============ -->
+<h1 class="chapter"><span class="chnum">1</span>La aplicación en una página</h1>
+<p class="chlead">Cada año el Colegio coloca a cerca de un centenar de profesionales en más de un millar de franjas de
+guardia, respetando especialidades, ausencias, descansos y un reparto equitativo que debe poder explicarse. Hoy ese
+trabajo vive en correos y hojas de cálculo. La propuesta lo convierte en un procedimiento único y trazable.</p>
+
+<p class="lead-in">La aplicación no se organiza alrededor de un calendario, sino de una unidad de trabajo distinta:
+la <strong>guardia</strong>, entendida como una franja de cobertura que debe estar atendida por un profesional
+habilitado, con una modalidad concreta y un responsable identificable en todo momento. Todo lo demás —disponibilidad,
+especialidades, sustituciones, incidencias, estadísticas— gira alrededor de esa entidad.</p>
+
+<p>Digitaliza el ciclo completo: definición del calendario anual, comunicación de disponibilidad, generación y
+validación del cuadrante, designación, acuse, gestión de sustituciones, registro de incidencias, cierre del parte y
+certificación de lo realizado, con constancia de quién decidió qué y cuándo.</p>
+
+<div class="kv">
+  <div><div class="kt">Cobertura</div><div class="kd">El 100 % de las franjas planificadas, con alerta automática
+  ante cualquier hueco.</div></div>
+  <div><div class="kt">Equidad</div><div class="kd">Criterio publicado y aplicado igual para todos, con el cómputo
+  de cada letrado a la vista.</div></div>
+  <div><div class="kt">Constancia</div><div class="kd">Cada cambio con autor, fecha, motivo; el histórico no se
+  reescribe.</div></div>
+  <div><div class="kt">Continuidad</div><div class="kd">Vía manual de designación siempre disponible, también si el
+  sistema falla.</div></div>
+</div>
+
+<h2>Qué cambia para el Colegio</h2>
+<ul>
+  <li><strong>Se acaban los huecos invisibles.</strong> Un semáforo único por materia y día distingue cubierta,
+  pendiente de acuse y descubierta.</li>
+  <li><strong>El reparto deja de ser opinable.</strong> Cada designación se justifica con la carga previa del letrado
+  y su posición en el turno.</li>
+  <li><strong>Las sustituciones salen de la mensajería privada.</strong> Entran en un circuito con candidatos
+  elegibles y resolución expresa.</li>
+  <li><strong>La retribución se documenta sola.</strong> El parte cerrado y validado es la base de la certificación
+  trimestral.</li>
+</ul>
+
+<h2>Lo que la aplicación no hace</h2>
+<p>No gestiona expedientes judiciales, no sustituye las comunicaciones con juzgados ni con la Comisión de Asistencia
+Jurídica Gratuita, no calcula retribuciones y no decide sobre la procedencia de una excusa. Cada una de esas
+funciones permanece donde la ley y las normas colegiales la sitúan.</p>
+
+<!-- ============ CAPÍTULO 2 ============ -->
+<h1 class="chapter"><span class="chnum">2</span>Qué se digitaliza exactamente</h1>
+<p class="chlead">La mayoría de los errores en proyectos como este nace de mezclar cuatro cosas que el lenguaje
+cotidiano confunde: la guardia, el turno, la designación y la sustitución.</p>
+
+<div class="kv">
+  <div><div class="kt">Guardia</div><div class="kd">Franja que debe cubrirse. Existe aunque nadie la cubra: por eso
+  puede estar <em>descubierta</em>.</div></div>
+  <div><div class="kt">Turno</div><div class="kd">Lista ordenada de habilitados en una materia. Fija la prelación y
+  el cómputo de equidad.</div></div>
+  <div><div class="kt">Designación</div><div class="kd">Acto colegial que atribuye la guardia a un letrado. Produce
+  obligaciones.</div></div>
+  <div><div class="kt">Sustitución</div><div class="kd">Cambio de titular validado por el Colegio, que conserva la
+  historia de la guardia.</div></div>
+</div>
+
+<p class="lead-in">La distinción tiene consecuencias inmediatas. Si guardia y designación se modelan como una sola
+cosa, el sistema no puede representar una franja vacía y, por tanto, no puede avisar de un hueco. Y si la designación
+se confunde con la aceptación del letrado, se le atribuye una facultad que no tiene —decidir si cubre o no— y un
+deber profesional se convierte en una invitación.</p>
+
+<div class="flow">
+  <div class="flow-steps">
+    <div class="flow-step"><span class="sn">01</span><b>Calendario</b>Tipos y franjas del año.
+      <span class="who">Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">02</span><b>Guardias</b>Franjas creadas, sin titular.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">03</span><b>Propuesta</b>Reparto elegible y equilibrado.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">04</span><b>Designación</b>Validación y publicación.
+      <span class="who">Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">05</span><b>Acuse</b>El letrado confirma que la conoce.
+      <span class="who">Abogado</span></div>
+  </div>
+</div>
+
+<h2>El problema que se resuelve</h2>
+<table class="grid">
+  <thead><tr><th style="width:30%">Situación actual</th><th style="width:34%">Efecto sobre el servicio</th>
+  <th style="width:36%">Respuesta de la aplicación</th></tr></thead>
+  <tbody>
+    <tr><td>El cuadrante vive en varias copias</td><td>Nadie puede afirmar qué franjas están cubiertas</td><td>Estado único y semáforo de cobertura por franja</td></tr>
+    <tr><td>Siempre cubren los mismos</td><td>Agravio comparativo y bajas del turno</td><td>Cómputo ponderado y prelación publicada</td></tr>
+    <tr><td>Cambios por mensajería</td><td>El Colegio se entera cuando ya cambió el titular</td><td>Circuito con candidatos, acuse y resolución</td></tr>
+    <tr><td>El aviso no deja rastro</td><td>Discusiones sobre si se comunicó</td><td>Notificación con envío, entrega y lectura</td></tr>
+    <tr><td>Partes dispersos</td><td>Certificación lenta y con errores</td><td>Parte validado que alimenta la certificación</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 3 ============ -->
+<h1 class="chapter"><span class="chnum">3</span>Base normativa del diseño</h1>
+<p class="chlead">La organización de la guardia es competencia colegial y la relación con el letrado designado está
+regulada. De esa regla se derivan decisiones muy concretas del producto.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:27%">Referencia</th><th style="width:36%">Qué impone</th>
+  <th style="width:37%">Decisión en la aplicación</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Ley 1/1996</strong>, art. 22</td><td>Los Colegios organizan el servicio mediante sus Juntas de
+      Gobierno y garantizan su prestación continuada.</td><td>La aplicación es instrumento de apoyo: existe siempre
+      una vía manual de designación.</td></tr>
+    <tr><td><strong>Ley 1/1996</strong>, art. 24</td><td>Distribución objetiva y equitativa, pública y consultable;
+      la excusa se formula en plazo desde la notificación.</td><td>Los criterios son visibles para todo el turno y la
+      renuncia se modela como excusa con plazo y resolución.</td></tr>
+    <tr><td><strong>RD 141/2021</strong> (Reglamento de asistencia jurídica gratuita; deroga el RD 996/2003)</td>
+      <td>Designación de oficio, turnos especializados y actuación inmediata en supuestos urgentes.</td>
+      <td>Admite designaciones urgentes fuera del cuadrante, conservando su origen y su autorización.</td></tr>
+    <tr><td><strong>RD 135/2021</strong> (Estatuto General de la Abogacía, cap. VI)</td><td>Deber profesional del
+      designado, sin derivación libre de la asistencia a otro letrado.</td><td>La sustitución requiere sustituto
+      habilitado y validación colegial: no es un acuerdo privado.</td></tr>
+    <tr><td><strong>RGPD</strong> y <strong>LO 3/2018</strong></td><td>Datos de salud como categoría especial;
+      minimización y protección desde el diseño.</td><td>Se registra la indisponibilidad, no el diagnóstico; el
+      justificante queda en espacio restringido y auditado.</td></tr>
+    <tr><td><strong>RGPD</strong>, art. 22</td><td>Derecho a no ser objeto de decisiones individuales
+      automatizadas.</td><td>El cálculo de reparto es una propuesta sin efectos hasta la validación humana.</td></tr>
+    <tr><td><strong>Normas de la Junta de Gobierno</strong></td><td>Fijan plazos de excusa, cupos y criterios de
+      equidad.</td><td>Todos los parámetros son configuración versionada, no código.</td></tr>
+  </tbody>
+</table>
+
+<h2>Tres principios que no se negocian</h2>
+<ol>
+  <li><strong>Nada se publica sin acto colegial.</strong> La automatización comprueba, ordena y avisa; nunca designa.</li>
+  <li><strong>Nada se borra.</strong> Las correcciones se hacen por nuevo estado; la historia del cuadrante se puede
+  reconstruir.</li>
+  <li><strong>La continuidad prevalece.</strong> Ante un fallo, un bloqueo o un dato contradictorio hay una vía de
+  excepción, y también queda registrada.</li>
+</ol>
+
+<!-- ============ CAPÍTULO 4 ============ -->
+<h1 class="chapter"><span class="chnum">4</span>Roles y permisos</h1>
+<p class="chlead">Cinco roles, con una separación deliberada: quien propone no aprueba y la información sensible no
+circula por la vista equivocada.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:19%">Rol</th><th style="width:26%">Quién</th><th style="width:55%">Qué puede hacer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Abogado/a</strong></td><td>Colegiado inscrito en el turno</td><td>Ver el cuadrante y sus guardias;
+      comunicar disponibilidad; acusar recibo; solicitar excusa o permuta; registrar incidencias; cerrar su parte;
+      descargar su certificación.</td></tr>
+    <tr><td><strong>Coordinación del Turno</strong></td><td>Personal administrativo del Colegio</td><td>Gestionar
+      letrados, especialidades y tipos; generar y publicar el cuadrante; asignar; resolver excusas y sustituciones;
+      gestionar incidencias; obtener informes.</td></tr>
+    <tr><td><strong>Junta de Gobierno</strong></td><td>Órgano de gobierno</td><td>Aprobar criterios, plazos y cupos;
+      resolver recursos; consultar cualquier expediente.</td></tr>
+    <tr><td><strong>Administración técnica</strong></td><td>Servicio informático</td><td>Altas, credenciales,
+      parámetros y copias. Sin acceso al contenido de guardias ni a la auditoría.</td></tr>
+    <tr><td><strong>Auditoría y datos</strong></td><td>Responsable designado</td><td>Consultar accesos y cambios;
+      atender derechos de las personas. Sin capacidad de modificar nada.</td></tr>
+  </tbody>
+</table>
+
+<h2>Matriz de permisos</h2>
+<table class="grid">
+  <caption>C = consulta · E = edita · A = aprueba · — = sin acceso</caption>
+  <thead><tr><th style="width:40%">Función</th><th class="c">Abogado</th><th class="c">Coordinación</th><th class="c">Junta</th><th class="c">Técnica</th><th class="c">Auditoría</th></tr></thead>
+  <tbody>
+    <tr><td>Ver cuadrante publicado</td><td class="c">C</td><td class="c">C</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Comunicar disponibilidad</td><td class="c">E</td><td class="c">E</td><td class="c">—</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Validar disponibilidad</td><td class="c">—</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Generar propuesta de cuadrante</td><td class="c">—</td><td class="c">E</td><td class="c">—</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Publicar o modificar cuadrante</td><td class="c">—</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Solicitar excusa o permuta</td><td class="c">E</td><td class="c">E</td><td class="c">—</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Resolver excusa o sustitución</td><td class="c">—</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Cerrar / validar parte</td><td class="c">E</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Ver justificante de salud</td><td class="c">Propio</td><td class="c">C</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Aprobar criterios y plazos</td><td class="c">—</td><td class="c">—</td><td class="c">A</td><td class="c">—</td><td class="c">C</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 5 ============ -->
+<h1 class="chapter"><span class="chnum">5</span>Tipología de guardias</h1>
+<p class="chlead">Una guardia de asistencia al detenido no cuesta lo mismo al letrado que una disponibilidad telefónica
+de civil. Tratarlas como equivalentes falsea la equidad.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:20%">Tipo</th><th style="width:14%">Modalidad</th><th style="width:14%">Franja</th>
+  <th style="width:10%" class="c">Cómputo</th><th style="width:42%">Particularidad operativa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Asistencia al detenido</strong></td><td>Localizada con comparecencia</td><td>24 h o turnos de 8 h</td><td class="c">1,00</td>
+      <td>Máxima exigencia: el escalado por falta de respuesta debe resolverse en minutos.</td></tr>
+    <tr><td><strong>Guardia penal</strong></td><td>Presencial en sede</td><td>08:00–20:00</td><td class="c">0,75</td>
+      <td>Juicios rápidos y diligencias urgentes; presencia física y coordinación con el juzgado.</td></tr>
+    <tr><td><strong>Violencia de género</strong></td><td>Localizada</td><td>24 h</td><td class="c">1,00</td>
+      <td>Turno especializado: habilitación vigente y formación acreditada.</td></tr>
+    <tr><td><strong>Menores</strong></td><td>Localizada</td><td>24 h</td><td class="c">0,90</td>
+      <td>Coordinación con fiscalía y equipo técnico; registro de comparecencias.</td></tr>
+    <tr><td><strong>Extranjería e interior</strong></td><td>Localizada</td><td>Según sede</td><td class="c">0,60</td>
+      <td>Asistencias en frontera o dependencias policiales; control de tiempos de espera.</td></tr>
+    <tr><td><strong>Civil, social y contencioso</strong></td><td>Localizada</td><td>Mañana / tarde</td><td class="c">0,50</td>
+      <td>Carga concentrada en señalamientos; refuerzo por volumen previsto.</td></tr>
+    <tr><td><strong>Refuerzo e incidencias</strong></td><td>Según necesidad</td><td>Variable</td><td class="c">0,50</td>
+      <td>Se activa sobre una guardia existente; designación urgente y motivada.</td></tr>
+  </tbody>
+</table>
+
+<p class="small">Los pesos son una configuración inicial; los fija la Junta y el sistema conserva la versión aplicada
+en cada periodo, de modo que un cambio de criterio no altera estadísticas ya publicadas.</p>
+
+<h3>Cada tipo se define una vez</h3>
+<p>La plantilla de guardia contiene lo necesario para que la franja sea inequívoca: denominación y código, materia
+requerida, modalidad y sede, horario —con indicación de si cruza la medianoche—, número de letrados previstos, unidad
+de cómputo y regla de descanso posterior. Una guardia de 24 horas pertenece a una sola fecha de servicio, no a dos:
+así el reparto, los descansos y las estadísticas se calculan sobre una única unidad.</p>
+
+<!-- ============ CAPÍTULO 6 ============ -->
+<h1 class="chapter"><span class="chnum">6</span>El ciclo del cuadrante</h1>
+<p class="chlead">El cuadrante no se publica de golpe: se construye en cinco fases con responsables distintos. Ninguna
+puede saltarse, porque de ello depende que el letrado haya podido comunicar sus circunstancias antes de ser designado.</p>
+
+<div class="flow">
+  <div class="flow-steps">
+    <div class="flow-step"><span class="sn">FASE 1</span><b>Definición</b>Tipos, franjas, sedes y cupos.
+      <span class="who">Coordinación · aprueba Junta</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 2</span><b>Disponibilidad</b>Vacaciones y ausencias.
+      <span class="who">Abogados · valida Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 3</span><b>Propuesta</b>Reparto por elegibilidad y equidad.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 4</span><b>Alegaciones</b>Causa justificada.
+      <span class="who">Abogados · resuelve Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 5</span><b>Publicación</b>Versión vigente.
+      <span class="who">Coordinación</span></div>
+  </div>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:16%">Fase</th><th style="width:44%">Qué ocurre</th><th style="width:22%">Plazo orientativo</th><th style="width:18%">Resultado</th></tr></thead>
+  <tbody>
+    <tr><td>Definición</td><td>Se fija qué días hay guardia, de qué tipo y con qué modalidad.</td><td>60 días antes</td><td>Calendario marco</td></tr>
+    <tr><td>Disponibilidad</td><td>Los letrados comunican vacaciones, ausencias y formación; se validan.</td><td>Cierre 45 días antes</td><td>Mapa de indisponibilidades</td></tr>
+    <tr><td>Propuesta</td><td>El sistema cruza elegibilidad, ausencias y cómputo y justifica cada asignación.</td><td>35 días antes</td><td>Borrador justificado</td></tr>
+    <tr><td>Alegaciones</td><td>El letrado consulta su propuesta y opone causa si procede; se resuelve cada una.</td><td>Ventana de 10 días</td><td>Expediente resuelto</td></tr>
+    <tr><td>Publicación</td><td>Se publica la versión vigente y se notifica; empiezan los plazos de excusa.</td><td>20 días antes</td><td>Cuadrante v1</td></tr>
+  </tbody>
+</table>
+
+<h2>Estados del cuadrante</h2>
+<table class="grid">
+  <thead><tr><th style="width:22%">Estado</th><th style="width:44%">Significado</th><th style="width:34%">Consecuencia</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip">Borrador</span></td><td>Solo visible para coordinación; cambios libres.</td><td>Sin efectos para el letrado</td></tr>
+    <tr><td><span class="chip a">En alegaciones</span></td><td>Publicado internamente para el afectado.</td><td>Puede oponer causa; no es designación</td></tr>
+    <tr><td><span class="chip g">Publicado</span></td><td>Versión vigente, notificada y consultable.</td><td>Produce designaciones y abre plazos</td></tr>
+    <tr><td><span class="chip">Congelado</span></td><td>Alcanzada la antelación mínima fijada por la Junta.</td><td>Solo cambia por sustitución o permuta validada</td></tr>
+    <tr><td><span class="chip">Cerrado</span></td><td>Periodo terminado y partes validados.</td><td>Pasa al histórico y a la certificación</td></tr>
+  </tbody>
+</table>
+
+<p class="small">La publicidad del criterio no es un gesto de transparencia: el art. 24 de la Ley 1/1996 exige que el
+sistema de distribución sea objetivo, equitativo y consultable. En la aplicación eso es una pantalla concreta,
+«Cómo se reparten las guardias», con los criterios vigentes, los pesos y la fecha del acuerdo que los aprobó.</p>
+
+<!-- ============ CAPÍTULO 7 ============ -->
+<h1 class="chapter"><span class="chnum">7</span>Asignación de guardias</h1>
+<p class="chlead">Tres vías conviven: la asignación manual para casos singulares, la propuesta asistida para el grueso
+del cuadrante y la designación urgente para lo que no admite espera. Las tres terminan igual: un acto del Colegio,
+registrado.</p>
+
+<h2>Quién es elegible</h2>
+<p>Siete filtros acumulativos descartan a quien no puede cubrir la guardia; cada descarte queda registrado con su
+motivo, lo que permite explicar por qué una persona concreta no fue propuesta.</p>
+<table class="grid">
+  <thead><tr><th style="width:6%" class="c">#</th><th style="width:26%">Filtro</th><th style="width:68%">Comprobación</th></tr></thead>
+  <tbody>
+    <tr><td class="c">1</td><td>Alta en el turno</td><td>Activo en el turno correspondiente a la materia.</td></tr>
+    <tr><td class="c">2</td><td>Habilitación vigente</td><td>Acreditación en la especialidad, no caducada. Bloqueo duro.</td></tr>
+    <tr><td class="c">3</td><td>Disponibilidad</td><td>Sin indisponibilidad validada que cubra la franja.</td></tr>
+    <tr><td class="c">4</td><td>Solapamiento</td><td>Sin otra guardia que se solape total o parcialmente.</td></tr>
+    <tr><td class="c">5</td><td>Descanso</td><td>Se respeta la regla de descanso posterior, si está configurada.</td></tr>
+    <tr><td class="c">6</td><td>Cupos</td><td>No ha alcanzado el máximo del mes, del año o del periodo.</td></tr>
+    <tr><td class="c">7</td><td>Excusas</td><td>No está en periodo de exclusión por excusa estimada, si la norma lo prevé.</td></tr>
+  </tbody>
+</table>
+
+<h2>Cómo se elige entre los elegibles</h2>
+<ol>
+  <li><strong>Menor cómputo acumulado</strong> en el periodo, ponderado por modalidad. Es el criterio principal porque
+  es el que hace efectiva la equidad.</li>
+  <li><strong>Mayor antigüedad en el turno</strong>, que actúa como memoria histórica cuando el cómputo se iguala.</li>
+  <li><strong>Menor carga reciente</strong> (guardias de los últimos 30 días).</li>
+  <li><strong>Menor número de excusas estimadas</strong> en el periodo.</li>
+  <li><strong>Desempate aleatorio reproducible</strong>, con semilla registrada junto a la propuesta.</li>
+</ol>
+
+<table class="grid">
+  <caption>Ejemplo: guardia de penal del 15 de marzo, con cuatro elegibles (24 h = 1,00; presencial = 0,75; localizada = 0,50)</caption>
+  <thead><tr><th>Letrado</th><th class="c">Cómputo previo</th><th class="c">Último mes</th><th class="c">Excusas</th><th class="c">Orden</th><th>Resultado</th></tr></thead>
+  <tbody>
+    <tr><td>A. Ferrer</td><td class="c">3,25</td><td class="c">2</td><td class="c">0</td><td class="c">1</td><td><span class="chip g">Propuesto</span> menor carga acumulada</td></tr>
+    <tr><td>M. Serra</td><td class="c">4,00</td><td class="c">3</td><td class="c">0</td><td class="c">2</td><td>Alternativa inmediata</td></tr>
+    <tr><td>J. Roca</td><td class="c">5,50</td><td class="c">1</td><td class="c">1</td><td class="c">3</td><td>No propuesto por cómputo</td></tr>
+    <tr><td>N. Vidal</td><td class="c">6,75</td><td class="c">4</td><td class="c">0</td><td class="c">4</td><td>No propuesto por cómputo</td></tr>
+  </tbody>
+</table>
+
+<p>La pantalla muestra esta tabla junto al nombre propuesto. La coordinación puede aceptarla o apartarse de ella: si
+se aparta, el sistema exige un <strong>motivo tipificado</strong> (continuidad, conocimiento del asunto, indicación
+del juzgado, situación excepcional) y lo incorpora al expediente. No existe la posibilidad de asignar «sin más».</p>
+
+<div class="box warn">
+  <div class="box-title">La propuesta nunca publica sola</div>
+  <p style="margin-bottom:0;">El cálculo no genera designaciones ni notificaciones: su resultado es un borrador que
+  adquiere eficacia solo con la publicación del cuadrante. Es la garantía de que no hay decisión automatizada con
+  efectos jurídicos y de que el Colegio conserva la dirección efectiva del reparto.</p>
+</div>
+
+<h3>Designación urgente</h3>
+<p>Cuando la guardia debe cubrirse de inmediato, la coordinación designa sin esperar al ciclo ordinario. La guardia
+conserva su identificador y añade origen (urgente, refuerzo o cobertura de hueco), autoridad y hora, motivo y resultado
+de la comunicación. Se reflejan en el panel como indicador propio: un volumen alto de urgencias suele significar que
+la planificación previa no funciona.</p>
+
+<!-- ============ CAPÍTULO 8 ============ -->
+<h1 class="chapter"><span class="chnum">8</span>Ciclo de vida y estados</h1>
+<p class="chlead">Saber en qué estado está una guardia es lo que permite detectar a tiempo un problema y distinguir
+entre «no ha confirmado» y «no va a acudir», que son situaciones muy distintas.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:20%">Estado</th><th style="width:44%">Significado</th><th style="width:36%">Qué hace el sistema</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip">Planificada</span></td><td>Franja creada, sin titular.</td><td>Cuenta como pendiente en cobertura</td></tr>
+    <tr><td><span class="chip">Propuesta</span></td><td>Titular propuesto, aún sin publicar.</td><td>No notifica; admite cambios</td></tr>
+    <tr><td><span class="chip a">Publicada</span></td><td>Designación vigente y notificada.</td><td>Abre plazo de excusa y de acuse</td></tr>
+    <tr><td><span class="chip g">Confirmada</span></td><td>El letrado ha acusado recibo.</td><td>Registra fecha y hora; mantiene avisos</td></tr>
+    <tr><td><span class="chip a">En revisión</span></td><td>Excusa o permuta pendiente de resolución.</td><td>El titular sigue siendo responsable</td></tr>
+    <tr><td><span class="chip r">Descubierta</span></td><td>Sin titular efectivo.</td><td>Alerta máxima y bolsa de urgencia</td></tr>
+    <tr><td><span class="chip">En curso</span></td><td>La franja ha comenzado.</td><td>Activa el modo guardia</td></tr>
+    <tr><td><span class="chip g">Realizada</span></td><td>Franja terminada y parte cerrado.</td><td>Pendiente de validación</td></tr>
+    <tr><td><span class="chip g">Validada</span></td><td>Parte validado por el Colegio.</td><td>Entra en certificación y estadística definitiva</td></tr>
+    <tr><td><span class="chip">Anulada</span></td><td>La franja deja de existir por decisión colegial.</td><td>Exige motivo y recalcula cobertura</td></tr>
+  </tbody>
+</table>
+
+<h2>Transiciones principales</h2>
+<table class="grid">
+  <thead><tr><th style="width:26%">Desde</th><th style="width:26%">Evento</th><th style="width:48%">Resultado y condición</th></tr></thead>
+  <tbody>
+    <tr><td>Planificada</td><td>Se asigna titular</td><td>Propuesta; requiere superar los siete filtros</td></tr>
+    <tr><td>Propuesta</td><td>Se publica el cuadrante</td><td>Publicada + notificación con plazo de excusa</td></tr>
+    <tr><td>Publicada</td><td>Acuse del letrado</td><td>Confirmada; sin acuse no hay cambio ni pérdida de la guardia</td></tr>
+    <tr><td>Publicada / Confirmada</td><td>Solicitud de excusa o permuta</td><td>En revisión; el titular continúa como responsable</td></tr>
+    <tr><td>En revisión</td><td>Resolución con sustituto validado</td><td>Publicada con nuevo titular; se conserva el anterior</td></tr>
+    <tr><td>En revisión</td><td>Resolución sin sustituto</td><td>Descubierta + incidencia + bolsa de urgencia</td></tr>
+    <tr><td>En curso</td><td>Cierre del parte</td><td>Realizada; exige horas y actuaciones descritas</td></tr>
+    <tr><td>Realizada</td><td>Validación del parte</td><td>Validada; pasa a certificación</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Dos distinciones que evitan errores de interpretación</div>
+  <p><strong>Publicada no es confirmada.</strong> La designación produce efectos desde que el Colegio la comunica; el
+  acuse solo documenta el conocimiento. Un letrado que no pulsa «confirmar» no queda libre: genera una alerta.</p>
+  <p style="margin-bottom:0;"><strong>Descubierta no es anulada.</strong> Una guardia descubierta sigue existiendo y
+  sigue exigiendo cobertura. Es la señal más grave del sistema y por eso tiene tratamiento visual y escalado propios.</p>
+</div>
+
+<!-- ============ CAPÍTULO 9 ============ -->
+<h1 class="chapter"><span class="chnum">9</span>Calendarios</h1>
+<p class="chlead">El mismo cuadrante se mira de cuatro maneras según quién consulta y para qué. La coordinación
+necesita ver de un golpe dónde falta cobertura; el letrado, saber cuándo le toca.</p>
+
+<div class="kv">
+  <div><div class="kt">Vista anual</div><div class="kd">Doce meses con densidad de guardias y huecos en rojo.</div></div>
+  <div><div class="kt">Vista cuadrante</div><div class="kd">Días en filas, materias en columnas, titular y estado.</div></div>
+  <div><div class="kt">Vista personal</div><div class="kd">«Mis guardias»: calendario y lista con vacaciones y avisos.</div></div>
+  <div><div class="kt">Vista de día</div><div class="kd">Quién cubre cada materia, cómo localizarlo y qué incidencias hay.</div></div>
+</div>
+
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Cuadrante · Semana del 15 al 21 de marzo de 2027 · v3 (publicada)</span><span>Penal · Violencia · Menores · Civil</span></div>
+    <div class="wf-body" style="padding:0;">
+      <table class="cuadrante">
+        <thead>
+          <tr><th style="width:13%">Día</th><th>Asistencia detenido</th><th>Penal</th><th>Violencia género</th><th>Menores</th><th>Civil</th><th>Extranjería</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rowhead">L 15</td><td class="ok"><span class="ini">Ferrer</span>24 h · conf.</td><td class="ok"><span class="ini">Serra</span>08–20</td><td class="ok"><span class="ini">Roca</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Vidal</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">M 16</td><td class="pend"><span class="ini">Ferrer</span>sin acuse</td><td class="ok"><span class="ini">Roca</span>08–20</td><td class="ok"><span class="ini">Serra</span>24 h · conf.</td><td class="ok"><span class="ini">Mas</span>Localizada</td><td class="ok"><span class="ini">Vidal</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">X 17</td><td class="hueco"><span class="ini">DESCUBIERTA</span>excusa pendiente</td><td class="ok"><span class="ini">Vidal</span>08–20</td><td class="ok"><span class="ini">Roca</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Serra</span>Mañana</td><td class="ok"><span class="ini">Puig</span>Tarde</td></tr>
+          <tr><td class="rowhead">J 18</td><td class="ok"><span class="ini">Mas</span>24 h · conf.</td><td class="ok"><span class="ini">Ferrer</span>08–20</td><td class="ok"><span class="ini">Vidal</span>24 h · conf.</td><td class="ok"><span class="ini">Puig</span>Localizada</td><td class="ok"><span class="ini">Roca</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">V 19</td><td class="ok"><span class="ini">Mas</span>24 h · conf.</td><td class="ok"><span class="ini">Serra</span>08–20</td><td class="ok"><span class="ini">Ferrer</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Vidal</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">S 20</td><td class="ok"><span class="ini">Puig</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Serra</span>24 h · conf.</td><td class="na">—</td><td class="na">—</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">D 21</td><td class="ok"><span class="ini">Puig</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Serra</span>24 h · conf.</td><td class="na">—</td><td class="na">—</td><td class="na">—</td></tr>
+        </tbody>
+      </table>
+      <div style="padding:2.2mm; display:flex; gap:2.5mm; font-size:6.5pt;">
+        <span class="chip g">Cubierta y confirmada</span>
+        <span class="chip a">Cubierta sin acuse</span>
+        <span class="chip r">Descubierta</span>
+        <span class="chip">Sin servicio previsto</span>
+      </div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 9.1 — Vista cuadrante. La franja descubierta enlaza al expediente de la excusa que la
+  ha provocado.</div>
+</div>
+
+<div class="fig">
+  <div class="wf-window" style="max-width:132mm;">
+    <div class="wf-bar"><span>Marzo 2027 · Mis guardias</span><span>3 guardias · 1 sin acuse</span></div>
+    <div class="wf-body">
+      <table class="cuadrante">
+        <thead><tr><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th></tr></thead>
+        <tbody>
+          <tr><td class="na">1</td><td class="na">2</td><td class="na">3</td><td class="na">4</td><td class="na">5</td><td class="na">6</td><td class="na">7</td></tr>
+          <tr><td class="na">8</td><td class="na">9</td><td class="na">10</td><td class="na">11</td><td class="na">12</td><td class="na">13</td><td class="na">14</td></tr>
+          <tr><td class="ok"><span class="ini">15</span>Penal</td><td class="na">16</td><td class="na">17</td><td class="ok"><span class="ini">18</span>Violencia</td><td class="na">19</td><td class="na">20</td><td class="na">21</td></tr>
+          <tr><td class="na">22</td><td class="pend"><span class="ini">23</span>Vacaciones</td><td class="pend">24</td><td class="pend">25</td><td class="pend">26</td><td class="na">27</td><td class="na">28</td></tr>
+          <tr><td class="na">29</td><td class="na">30</td><td class="ok"><span class="ini">31</span>Penal</td><td class="na"></td><td class="na"></td><td class="na"></td><td class="na"></td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex; gap:4mm; margin-top:2mm; font-size:6.6pt; color:var(--muted);">
+        <span><strong>15</strong> Penal · 08:00–20:00 · confirmada</span>
+        <span><strong>18</strong> Violencia · 24 h</span>
+        <span><strong>31</strong> Penal · sin acuse</span>
+      </div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 9.2 — Calendario personal. De los compañeros solo se muestra nombre y materia: la
+  privacidad es una condición del diseño, no un añadido.</div>
+</div>
+
+<h3>Versiones y cambios</h3>
+<p>El cuadrante no se reescribe: es una secuencia de versiones. Cada publicación crea una versión con fecha, autor y
+lista de cambios; la consulta muestra la vigente y permite ver la anterior con las diferencias resaltadas. Se exporta
+en PDF con sello de versión, se suscribe al calendario personal del letrado en solo lectura y alimenta la
+certificación de guardias.</p>
+
+<!-- ============ CAPÍTULO 10 ============ -->
+<h1 class="chapter"><span class="chnum">10</span>Disponibilidad y habilitación</h1>
+<p class="chlead">La disponibilidad no es un sí o un no: es información con categoría, plazo y consecuencia. Y no
+cualquier letrado puede cubrir cualquier guardia: la habilitación es un bloqueo efectivo, no una recomendación.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Tipo</th><th style="width:30%">Qué comunica</th><th style="width:26%">Efecto</th><th style="width:22%">Documentación</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vacaciones</strong></td><td>Periodo previsto, dentro de cupo y plazo.</td><td>Bloquea en el periodo validado</td><td>No; sí validación colegial</td></tr>
+    <tr><td><strong>No disponible</strong></td><td>Fecha o franja concreta.</td><td>Bloquea si está validada</td><td>No; motivación breve</td></tr>
+    <tr><td><strong>Formación</strong></td><td>Curso o actividad con fecha.</td><td>Bloquea si se valida</td><td>Certificado, opcional</td></tr>
+    <tr><td><strong>Baja médica</strong></td><td>Periodo de incapacidad, sin detalle clínico.</td><td>Bloquea y revisa guardias ya asignadas</td><td>Parte, en espacio restringido</td></tr>
+    <tr><td><strong>Deber inexcusable</strong></td><td>Comparecencia o causa análoga.</td><td>Bloquea y genera propuesta de sustitución</td><td>Cuando proceda</td></tr>
+  </tbody>
+</table>
+
+<p>El circuito es siempre el mismo: el letrado comunica, el sistema comprueba plazos, cupos y solapamientos, la
+coordinación valida o rechaza con motivo, y la validación bloquea la asignación. Validar una baja médica no deja la
+guardia huérfana: abre automáticamente una propuesta de sustitución con los candidatos elegibles.</p>
+
+<h2>Habilitación por materia</h2>
+<p>Cada habilitación relaciona un letrado con una materia y tiene fecha de inicio, caducidad y estado —vigente,
+suspendida, caducada o revocada—. Solo «vigente» permite asignar. Al caducar, el sistema avisa con antelación a la
+coordinación y al letrado, y marca para revisión las guardias ya asignadas.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:26%">Materia</th><th class="c">Habilitados</th><th class="c">Disponibles</th><th class="c">Media de guardias</th><th>Lectura</th></tr></thead>
+  <tbody>
+    <tr><td>Penal</td><td class="c">64</td><td class="c">58</td><td class="c">6,4</td><td><span class="chip g">Suficiente</span></td></tr>
+    <tr><td>Violencia de género</td><td class="c">31</td><td class="c">27</td><td class="c">8,1</td><td><span class="chip a">Vigilar carga</span></td></tr>
+    <tr><td>Menores</td><td class="c">22</td><td class="c">19</td><td class="c">5,2</td><td><span class="chip g">Suficiente</span></td></tr>
+    <tr><td>Civil</td><td class="c">48</td><td class="c">41</td><td class="c">4,8</td><td><span class="chip g">Suficiente</span></td></tr>
+    <tr><td>Extranjería</td><td class="c">14</td><td class="c">9</td><td class="c">9,6</td><td><span class="chip r">Riesgo de hueco</span></td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">La excepción también se documenta</div>
+  <p style="margin-bottom:0;">Cuando la Junta dispensa motivadamente un requisito, la dispensa se registra con su
+  fundamento, alcance y vigencia. La aplicación no permite saltarse un filtro sin rastro: permite ejercer una
+  excepción y documentarla. Es la diferencia entre flexibilidad y ausencia de control.</p>
+</div>
+
+<!-- ============ CAPÍTULO 11 ============ -->
+<h1 class="chapter"><span class="chnum">11</span>Sustituciones, permutas y excusas</h1>
+<p class="chlead">Este es el capítulo que decide si la aplicación sirve. Las guardias cambian constantemente, y cómo
+se gestionan esos cambios es exactamente lo que distingue un servicio ordenado de uno que se sostiene sobre llamadas.</p>
+
+<div class="kv">
+  <div><div class="kt">Excusa</div><div class="kd">El titular pide no cubrir, por causa tipificada y en plazo. La
+  guardia sigue siendo suya hasta la resolución.</div></div>
+  <div><div class="kt">Sustitución</div><div class="kd">Otro letrado habilitado la asume. Precisarlo no libera al
+  titular hasta la validación.</div></div>
+  <div><div class="kt">Permuta</div><div class="kd">Dos letrados intercambian guardias; requiere conformidad de ambos
+  y validación.</div></div>
+  <div><div class="kt">Refuerzo</div><div class="kd">Se añade un letrado a una guardia cubierta. No sustituye a
+  nadie.</div></div>
+</div>
+
+<div class="flow">
+  <div class="flow-steps">
+    <div class="flow-step"><span class="sn">01</span><b>Solicita</b>Motivo tipificado y observaciones.
+      <span class="who">Abogado</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">02</span><b>Comprueba</b>Plazo y documentación.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">03</span><b>Candidatos</b>Elegibles por materia, disponibilidad y
+      equidad. <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">04</span><b>Acepta</b>Queda pendiente de validación.
+      <span class="who">Sustituto</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">05</span><b>Resuelve</b>Aprueba o deniega con motivación.
+      <span class="who">Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">06</span><b>Publica</b>Nueva versión y aviso a ambos.
+      <span class="who">Sistema</span></div>
+  </div>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:15%">Figura</th><th style="width:17%">Quién inicia</th><th style="width:30%">Requisitos</th><th style="width:38%">Efecto</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Excusa</strong></td><td>Titular</td><td>Motivo tipificado, dentro del plazo fijado por la Junta
+      (referencia al plazo legal de tres días desde la notificación) y documentación si procede.</td>
+      <td>Si se estima con sustituto, cambia el titular; sin sustituto, queda descubierta; si se desestima, continúa
+      el titular.</td></tr>
+    <tr><td><strong>Sustitución</strong></td><td>Titular o coordinación</td><td>Sustituto habilitado, disponible y sin
+      solapamiento.</td><td>Cambio de titular conservando el histórico de la guardia.</td></tr>
+    <tr><td><strong>Permuta</strong></td><td>Cualquiera de los dos</td><td>Misma materia, compatibilidad de ambas y
+      conformidad de los dos.</td><td>Intercambio; ambas guardias conservan su identificador y expediente.</td></tr>
+    <tr><td><strong>Refuerzo</strong></td><td>Coordinación</td><td>Guardia cubierta, causa de carga o incidencia.</td>
+      <td>Cobertura múltiple registrada; el titular no se sustituye.</td></tr>
+  </tbody>
+</table>
+
+<h2>Plazos y escalado</h2>
+<ul class="tight">
+  <li><strong>Al registrarse:</strong> se comprueba plazo y documentación y se calculan candidatos.</li>
+  <li><strong>Sin respuesta en el plazo de oferta:</strong> la oferta pasa al siguiente candidato del orden.</li>
+  <li><strong>Sin candidato tras una vuelta completa:</strong> la guardia se marca descubierta provisional y se abre
+  incidencia con aviso destacado.</li>
+  <li><strong>Menos de 24 horas:</strong> modo urgencia, designación directa y notificación inmediata.</li>
+</ul>
+
+<div class="box rule">
+  <div class="box-title">Lo que el sistema no permite</div>
+  <p style="margin-bottom:0;">Que dos letrados acuerden un cambio y lo ejecuten por su cuenta. Aunque exista acuerdo,
+  el cambio no se refleja en el cuadrante hasta la validación colegial: hasta ese momento el titular sigue siendo el
+  designado y el Colegio sigue respondiendo por esa designación. La aplicación hace visible esta regla en el propio
+  flujo, no en un manual aparte.</p>
+</div>
+
+<!-- ============ CAPÍTULO 12 ============ -->
+<h1 class="chapter"><span class="chnum">12</span>Modo guardia e incidencias</h1>
+<p class="chlead">Durante la guardia la aplicación deja de ser un calendario y se convierte en herramienta de trabajo.
+Lo que ocurre en esas horas es lo que después permite cerrar el parte y acreditar el servicio.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:24%">Acción del letrado</th><th style="width:44%">Para qué sirve</th><th style="width:32%">Qué registra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Estoy operativo</strong></td><td>Confirma que está localizable al inicio de la franja.</td><td>Hora de activación y dispositivo</td></tr>
+    <tr><td><strong>Registrar actuación</strong></td><td>Anota una comparecencia sin esperar al cierre.</td><td>Tipo, hora, órgano y observaciones</td></tr>
+    <tr><td><strong>Necesito refuerzo</strong></td><td>Solicita apoyo por volumen o complejidad.</td><td>Motivo y hora; avisa a coordinación</td></tr>
+    <tr><td><strong>No puedo acudir</strong></td><td>Imposibilidad sobrevenida con la franja iniciada.</td><td>Abre incidencia grave y escalado</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Incidencia</th><th style="width:10%" class="c">Gravedad</th><th style="width:68%">Respuesta del sistema</th></tr></thead>
+  <tbody>
+    <tr><td>No localizable</td><td class="c">Alta</td><td>Escalado al siguiente del turno con marcas de hora</td></tr>
+    <tr><td>No comparece</td><td class="c">Alta</td><td>Aviso a coordinación, cobertura y constancia en el expediente</td></tr>
+    <tr><td>Error de asignación</td><td class="c">Media</td><td>Corrección motivada, reasignación y revisión del criterio</td></tr>
+    <tr><td>Falta de medios en sede</td><td class="c">Media</td><td>Registro y acumulación para informe al Colegio</td></tr>
+    <tr><td>Conflicto deontológico</td><td class="c">Alta</td><td>Bloqueo y aviso reservado a coordinación</td></tr>
+  </tbody>
+</table>
+
+<h2>Escalado por falta de localización</h2>
+<p>Es el supuesto más delicado: afecta a un derecho fundamental y no admite espera. La secuencia queda registrada con
+marcas de tiempo.</p>
+
+<div class="chain">
+  <div class="chain-item a"><b>00:00 — Aviso al letrado designado.</b> Notificación con acuse y llamada al teléfono de guardia.</div>
+  <div class="chain-sep">▼</div>
+  <div class="chain-item a"><b>00:05 — Sin respuesta.</b> Segundo aviso y aviso preventivo a la coordinación.</div>
+  <div class="chain-sep">▼</div>
+  <div class="chain-item r"><b>00:10 — Sin respuesta.</b> Se considera no localizable: se avisa al siguiente letrado y se abre incidencia grave.</div>
+  <div class="chain-sep">▼</div>
+  <div class="chain-item g"><b>Cobertura efectiva.</b> Se registra quién acudió y a qué hora, conservando el nombre del designado inicial.</div>
+</div>
+
+<p class="small">Los intervalos son configurables: para guardias con comparecencia inmediata deben ser cortos; para
+guardias localizadas, más amplios.</p>
+
+<h3>Cierre del parte</h3>
+<p>Al terminar, el letrado cierra su parte con hora de entrada y salida, actuaciones y observaciones. No es un
+formulario administrativo: es la pieza que acredita el servicio y sostiene la certificación. Por eso no se cierra sin
+actuaciones descritas ni se da por bueno sin validación de la coordinación.</p>
+
+<!-- ============ CAPÍTULO 13 ============ -->
+<h1 class="chapter"><span class="chnum">13</span>Comunicaciones y trazabilidad</h1>
+<p class="chlead">Avisar no es notificar. Una notificación sirve cuando puede demostrarse que se produjo, cuándo y con
+qué contenido. Todo el sistema de avisos se construye sobre esa idea.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:34%">Evento</th><th style="width:20%">Destinatario</th><th style="width:24%">Canal</th><th style="width:22%">Constancia</th></tr></thead>
+  <tbody>
+    <tr><td>Nueva guardia asignada</td><td>Letrado</td><td>Aplicación + correo</td><td>Envío, entrega y lectura</td></tr>
+    <tr><td>Recordatorio de guardia</td><td>Letrado</td><td>Aplicación</td><td>Envío y lectura</td></tr>
+    <tr><td>Guardia sin acuse</td><td>Letrado y coordinación</td><td>Aplicación + correo</td><td>Envío con marca de hora</td></tr>
+    <tr><td>Oferta de sustitución</td><td>Candidatos</td><td>Aplicación + correo</td><td>Envío y plazo de respuesta</td></tr>
+    <tr><td>Cambio validado o denegado</td><td>Afectados</td><td>Aplicación + correo</td><td>Envío, entrega y motivación</td></tr>
+    <tr><td>Guardia descubierta</td><td>Coordinación</td><td>Aplicación + aviso destacado</td><td>Envío y acuse de coordinación</td></tr>
+  </tbody>
+</table>
+
+<ul class="tight">
+  <li><strong>Sin acuse hay recordatorio:</strong> el silencio no se interpreta como aceptación ni como renuncia;
+  genera aviso y, si procede, escalado.</li>
+  <li><strong>Sin datos sensibles:</strong> ninguna comunicación incluye información clínica ni documentación adjunta
+  sensible; solo indica que hay una novedad y dirige a la aplicación.</li>
+  <li><strong>Con terceros, otros cauces:</strong> las comunicaciones con juzgados, Comisión de Asistencia Jurídica
+  Gratuita o Administración no se realizan desde la aplicación.</li>
+</ul>
+
+<h2>El expediente de la guardia</h2>
+<p>Reúne en orden cronológico todo lo ocurrido con una guardia: creación, designación, notificación, acuse,
+solicitudes, resoluciones, incidencias, parte y validación. Es lo primero que se consulta ante una queja.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:18%">Fecha y hora</th><th style="width:20%">Actor</th><th style="width:28%">Hecho</th><th style="width:34%">Detalle</th></tr></thead>
+  <tbody>
+    <tr><td>20/02 10:12</td><td>Coordinación</td><td>Publicación del cuadrante</td><td>v1; designación notificada</td></tr>
+    <tr><td>20/02 18:40</td><td>J. Roca</td><td>Acuse de recibo</td><td>Guardia del 17/03 confirmada</td></tr>
+    <tr><td>01/03 09:05</td><td>J. Roca</td><td>Solicitud de excusa</td><td>Deber inexcusable; con justificante</td></tr>
+    <tr><td>02/03 11:30</td><td>M. Serra</td><td>Aceptación de sustitución</td><td>Pendiente de validación colegial</td></tr>
+    <tr><td>02/03 12:15</td><td>Coordinación</td><td>Resolución estimatoria</td><td>Cambio validado; cuadrante v2</td></tr>
+  </tbody>
+</table>
+
+<p>El registro no se edita ni se elimina: las correcciones se hacen añadiendo un asiento que indica qué se corrige y
+por qué. Ni la administración técnica puede alterar la historia. El acceso a la información también se registra, lo
+que permite detectar usos indebidos antes de que se conviertan en un incidente.</p>
+
+<!-- ============ CAPÍTULO 14 ============ -->
+<h1 class="chapter"><span class="chnum">14</span>Panel e indicadores</h1>
+<p class="chlead">El panel es el instrumento con el que la Junta justifica ante el colectivo que el reparto es
+equitativo y que el servicio está cubierto.</p>
+
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Panel de control · Marzo 2027</span><span>Coordinación · datos a 31/03</span></div>
+    <div class="wf-body">
+      <div class="wf-kpis">
+        <div class="wf-kpi"><div class="k">Cobertura</div><div class="v">98,4 %</div><div class="s">2 de 124 franjas</div></div>
+        <div class="wf-kpi"><div class="k">Sin acuse</div><div class="v">6</div><div class="s">de 124 designaciones</div></div>
+        <div class="wf-kpi"><div class="k">Solicitudes</div><div class="v">11</div><div class="s">3 pendientes</div></div>
+        <div class="wf-kpi"><div class="k">Equidad</div><div class="v">0,12</div><div class="s">límite 0,15</div></div>
+        <div class="wf-kpi"><div class="k">Incidencias</div><div class="v">4</div><div class="s">1 grave, cerrada</div></div>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><span class="lbl">Penal</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">6,4</span></div>
+        <div class="bar-row"><span class="lbl">Violencia género</span><span class="bar-track"><span class="bar-fill" style="width:78%"></span></span><span class="num">5,1</span></div>
+        <div class="bar-row"><span class="lbl">Menores</span><span class="bar-track"><span class="bar-fill" style="width:64%"></span></span><span class="num">4,2</span></div>
+        <div class="bar-row"><span class="lbl">Civil</span><span class="bar-track"><span class="bar-fill" style="width:58%"></span></span><span class="num">3,8</span></div>
+        <div class="bar-row"><span class="lbl">Extranjería</span><span class="bar-track"><span class="bar-fill" style="width:96%; background:#b5762a;"></span></span><span class="num">6,9</span></div>
+      </div>
+      <div style="font-size:6.4pt; color:var(--muted); margin-top:1.4mm;">Guardias medias por letrado habilitado y
+      materia. El ámbar señala carga por encima de la media del turno.</div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 14.1 — Panel de la coordinación con los cinco indicadores de seguimiento.</div>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Indicador</th><th style="width:36%">Cálculo</th><th style="width:42%">Lectura</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cobertura</strong></td><td>Guardias con titular validado ÷ guardias planificadas.</td><td>Por debajo del 100 % hay un problema concreto que debe poder nombrarse; se listan las franjas.</td></tr>
+    <tr><td><strong>Equidad</strong></td><td>(Cómputo máximo − mínimo) ÷ cómputo medio, por materia.</td><td>Mide dispersión, no media: identifica concentración.</td></tr>
+    <tr><td><strong>Acuse</strong></td><td>Guardias con acuse ÷ notificadas.</td><td>Un valor bajo suele indicar un problema de comunicación, no de cumplimiento.</td></tr>
+    <tr><td><strong>Tasa de excusas</strong></td><td>Excusas estimadas ÷ guardias designadas.</td><td>Detecta materias o periodos con dificultad estructural.</td></tr>
+    <tr><td><strong>Tiempo de respuesta</strong></td><td>Desde el aviso hasta la confirmación de comparecencia.</td><td>Crítico en asistencia al detenido; se analiza por franja y sede.</td></tr>
+  </tbody>
+</table>
+
+<p>Los informes derivados son cinco: cobertura mensual con las franjas descubiertas y su causa, equidad por letrado y
+periodo, movilidad con tiempos de resolución, certificación de guardias realizadas y memoria anual. Ninguno muestra
+causas clínicas ni el detalle de las ausencias: la equidad se explica con números de carga, que es lo que el colectivo
+necesita para confiar en el reparto.</p>
+
+<!-- ============ CAPÍTULO 15 ============ -->
+<h1 class="chapter"><span class="chnum">15</span>Reglas de negocio</h1>
+<p class="chlead">Se numeran para que puedan citarse en el pliego, en las pruebas y en las actas. Cada una indica si
+impide la operación (bloqueante) o solo advierte.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:9%">ID</th><th style="width:72%">Regla</th><th style="width:19%">Tipo</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">RN-01</td><td>Toda guardia planificada debe tener titular efectivo antes de iniciarse la franja.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-02</td><td>No puede designarse a un letrado sin habilitación vigente en la materia.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-03</td><td>No puede designarse a quien tenga indisponibilidad validada en la franja.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-04</td><td>No puede designarse a quien tenga otra guardia solapada.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-05</td><td>Debe respetarse la regla de descanso posterior fijada por la Junta.</td><td>Bloqueante si se configura</td></tr>
+    <tr><td class="mono">RN-06</td><td>Deben respetarse los cupos máximos por mes, trimestre y año.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-07</td><td>La propuesta automática no publica ni notifica por sí misma.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-08</td><td>Toda asignación que se aparte del criterio de equidad exige motivo tipificado.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-09</td><td>Publicar un cuadrante exige cobertura completa o justificación de cada hueco.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-10</td><td>El acuse no es condición para que la designación produzca efectos.</td><td>Informativa</td></tr>
+    <tr><td class="mono">RN-11</td><td>La falta de acuse en plazo genera recordatorio y aviso a coordinación.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-12</td><td>La excusa se presenta en el plazo fijado por la Junta; fuera de plazo se registra como extemporánea.</td><td>Bloqueante parcial</td></tr>
+    <tr><td class="mono">RN-13</td><td>La excusa no libera al titular hasta la resolución del Decano o del órgano en quien delegue.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-14</td><td>Toda sustitución requiere sustituto habilitado, disponible y sin solapamiento.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-15</td><td>Toda sustitución o permuta requiere validación expresa del Colegio.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-16</td><td>Una permuta exige misma materia y conformidad de ambos letrados.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-17</td><td>Una guardia descubierta genera alerta máxima y propuesta de cobertura inmediata.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-18</td><td>El parte no puede cerrarse sin horas de entrada y salida ni actuaciones descritas.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-19</td><td>Solo los partes validados cuentan para certificación y estadística definitiva.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-20</td><td>No puede modificarse ni eliminarse un asiento de auditoría.</td><td>Bloqueante absoluto</td></tr>
+    <tr><td class="mono">RN-21</td><td>Toda modificación de una guardia publicada genera nueva versión del cuadrante.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-22</td><td>Las versiones anteriores se conservan y son consultables.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-23</td><td>Ninguna comunicación contiene datos de salud ni documentación clínica.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-24</td><td>El justificante de salud solo es accesible a roles autorizados y su acceso se registra.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-25</td><td>Un letrado solo ve de sus compañeros el nombre y la materia de la guardia.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-26</td><td>Los criterios de reparto vigentes son consultables por cualquier colegiado del turno.</td><td>Obligatoria</td></tr>
+    <tr><td class="mono">RN-27</td><td>Plazos y cupos se versionan; se conserva la versión aplicada en cada periodo.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-28</td><td>Debe existir un procedimiento manual de designación si el sistema no está disponible.</td><td>Obligatoria</td></tr>
+    <tr><td class="mono">RN-29</td><td>Toda designación manual de excepción se registra con causa y autoridad.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-30</td><td>La habilitación caducada impide nuevas designaciones y marca para revisión las existentes.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-31</td><td>Una guardia anulada exige motivo y notificación a los afectados.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-32</td><td>El identificador de la guardia no cambia nunca, aunque cambie de titular.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-33</td><td>Un refuerzo no sustituye al titular: se añade y consta como cobertura múltiple.</td><td>Bloqueante</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 16 ============ -->
+<h1 class="chapter"><span class="chnum">16</span>Modelo de datos</h1>
+<p class="chlead">Catorce entidades sostienen toda la funcionalidad. La guardia es el centro; a su alrededor se
+organizan la planificación, las personas, la habilitación, la movilidad y el control.</p>
+
+<p class="small">Todas las entidades incorporan además los campos comunes de auditoría:
+<span class="mono">creado_en</span>, <span class="mono">creado_por</span>, <span class="mono">modificado_en</span> y
+<span class="mono">version</span>. Las claves principales se marcan en color; las ajenas llevan el sufijo
+<span class="mono">_id</span>.</p>
+
+<div class="er-grid">
+  <div class="er-card">
+    <div class="er-h">USUARIO <small>· cuenta</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>nombre / apellidos</td><td>texto</td></tr>
+      <tr><td>email</td><td>texto · único</td></tr>
+      <tr><td>password_hash</td><td>hash</td></tr>
+      <tr><td>rol</td><td>enum</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">ABOGADO <small>· colegiado del turno</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>usuario_id</td><td>FK · único</td></tr>
+      <tr><td>num_colegiado</td><td>texto · único</td></tr>
+      <tr><td>telefono_guardia</td><td>texto</td></tr>
+      <tr><td>orden_turno</td><td>entero</td></tr>
+      <tr><td>activo</td><td>booleano</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">ESPECIALIDAD <small>· materia</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>codigo</td><td>texto · único</td></tr>
+      <tr><td>nombre</td><td>texto</td></tr>
+      <tr><td>requiere_formacion</td><td>booleano</td></tr>
+      <tr><td>activa</td><td>booleano</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">HABILITACION <small>· acreditación</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>fecha_habilitacion</td><td>fecha</td></tr>
+      <tr><td>caducidad</td><td>fecha · nulo</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">TIPO_GUARDIA <small>· plantilla</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>modalidad</td><td>enum</td></tr>
+      <tr><td>hora_inicio / fin</td><td>hora</td></tr>
+      <tr><td>peso_computo</td><td>decimal</td></tr>
+      <tr><td>letrados_previstos</td><td>entero</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">CUADRANTE <small>· versión</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>anio / periodo</td><td>entero / texto</td></tr>
+      <tr><td>version</td><td>entero</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>fecha_publicacion</td><td>fecha-hora</td></tr>
+      <tr><td>publicado_por</td><td>FK · USUARIO</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">GUARDIA <small>· servicio a cubrir</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>cuadrante_id</td><td>FK · CUADRANTE</td></tr>
+      <tr><td>tipo_guardia_id</td><td>FK · TIPO_GUARDIA</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>fecha / horario</td><td>fecha / hora</td></tr>
+      <tr><td>estado / origen</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">DISPONIBILIDAD <small>· ausencia</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>fecha_inicio / fin</td><td>fecha</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>validada_por</td><td>FK · USUARIO</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">SOLICITUD <small>· excusa / permuta</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · GUARDIA</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>solicitante_id / sustituto_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>motivo · detalle</td><td>enum / texto</td></tr>
+      <tr><td>estado / resuelta_por</td><td>enum / FK</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">INCIDENCIA <small>· evento</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · GUARDIA</td></tr>
+      <tr><td>categoria / gravedad</td><td>enum</td></tr>
+      <tr><td>abierta_por</td><td>FK · USUARIO</td></tr>
+      <tr><td>fecha_apertura / cierre</td><td>fecha-hora</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">PARTE_GUARDIA <small>· cierre</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · único</td></tr>
+      <tr><td>realizada</td><td>booleano</td></tr>
+      <tr><td>hora_entrada / salida</td><td>hora</td></tr>
+      <tr><td>actuaciones</td><td>texto</td></tr>
+      <tr><td>validado / validado_por</td><td>bool / FK</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">JUSTIFICANTE <small>· documento</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>solicitud_id</td><td>FK · nulo</td></tr>
+      <tr><td>disponibilidad_id</td><td>FK · nulo</td></tr>
+      <tr><td>referencia_fichero</td><td>texto</td></tr>
+      <tr><td>acceso_restringido</td><td>booleano</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">NOTIFICACION <small>· aviso y acuse</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>usuario_id</td><td>FK · USUARIO</td></tr>
+      <tr><td>tipo / canal</td><td>enum</td></tr>
+      <tr><td>referencia_tipo / id</td><td>texto</td></tr>
+      <tr><td>estado_entrega / leida</td><td>enum / bool</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">AUDITORIA <small>· registro inmutable</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>entidad / entidad_id</td><td>texto / UUID</td></tr>
+      <tr><td>accion</td><td>enum</td></tr>
+      <tr><td>estado_anterior / nuevo</td><td>texto</td></tr>
+      <tr><td>actor_id / fecha</td><td>FK / fecha-hora</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>Relaciones principales</h2>
+<table class="grid">
+  <thead><tr><th style="width:38%">Relación</th><th style="width:14%" class="c">Cardinalidad</th><th style="width:48%">Regla de integridad</th></tr></thead>
+  <tbody>
+    <tr><td>USUARIO — ABOGADO</td><td class="c">1 : 1</td><td>No hay abogado sin cuenta ni cuenta de abogado sin su registro.</td></tr>
+    <tr><td>ABOGADO — HABILITACION</td><td class="c">1 : N</td><td>Varias materias; no se repite la misma con estado vigente.</td></tr>
+    <tr><td>ABOGADO — GUARDIA</td><td class="c">1 : N</td><td>Varias guardias, nunca solapadas; se comprueba al asignar y al publicar.</td></tr>
+    <tr><td>CUADRANTE — GUARDIA</td><td class="c">1 : N</td><td>El cambio de titular no saca la guardia de su cuadrante.</td></tr>
+    <tr><td>GUARDIA — SOLICITUD</td><td class="c">1 : N</td><td>Varias históricas; solo una abierta a la vez.</td></tr>
+    <tr><td>GUARDIA — PARTE_GUARDIA</td><td class="c">1 : 1</td><td>Un parte por guardia, creado al cerrar la franja.</td></tr>
+    <tr><td>AUDITORIA — (todas)</td><td class="c">N : 1</td><td>Polimórfica por <span class="mono">entidad</span> + <span class="mono">entidad_id</span>; sin actualización ni borrado.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 17 ============ -->
+<h1 class="chapter"><span class="chnum">17</span>Diagrama entidad-relación</h1>
+<p class="chlead">Las relaciones y cardinalidades del modelo, en una sola vista. Se representan los campos
+identificativos; el detalle completo figura en el capítulo anterior.</p>
+
+<div class="fig" style="text-align:center; margin-top:1mm;">
+  <svg viewBox="0 0 486 467" xmlns="http://www.w3.org/2000/svg" font-family="Poppins, Segoe UI, sans-serif">
+<line x1="0" y1="0" x2="0" y2="0" stroke="none"/>
+<path d="M149.0,46.0 L172.5,46.0" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="152.0" y="38.2" width="8" height="7.2" fill="#ffffff"/>
+<text x="156.0" y="43.8" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="161.5" y="38.2" width="8" height="7.2" fill="#ffffff"/>
+<text x="165.5" y="43.8" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<path d="M243.0,87.6 L243.0,107.6" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="233.0" y="90.0" width="8" height="7.2" fill="#ffffff"/>
+<text x="237.0" y="95.6" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="233.0" y="99.0" width="8" height="7.2" fill="#ffffff"/>
+<text x="237.0" y="104.6" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M313.5,129.6 L325.2,129.6 L325.2,40.0 L337.0,40.0" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="315.5" y="121.5" width="8" height="7.2" fill="#ffffff"/>
+<text x="319.5" y="127.1" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<rect x="327.0" y="31.9" width="8" height="7.2" fill="#ffffff"/>
+<text x="331.0" y="37.5" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<path d="M407.5,68.4 L407.5,107.6" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="397.5" y="70.8" width="8" height="7.2" fill="#ffffff"/>
+<text x="401.5" y="76.4" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="397.5" y="99.0" width="8" height="7.2" fill="#ffffff"/>
+<text x="401.5" y="104.6" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M172.5,66.0 L160.8,66.0 L160.8,133.6 L149.0,133.6" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="162.5" y="57.9" width="8" height="7.2" fill="#ffffff"/>
+<text x="166.5" y="63.5" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="151.0" y="125.5" width="8" height="7.2" fill="#ffffff"/>
+<text x="155.0" y="131.1" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M149.0,163.6 L160.8,163.6 L160.8,223.2 L172.5,223.2" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="151.0" y="155.5" width="8" height="7.2" fill="#ffffff"/>
+<text x="155.0" y="161.1" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="162.5" y="215.1" width="8" height="7.2" fill="#ffffff"/>
+<text x="166.5" y="220.7" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M407.5,185.2 L407.5,195.2 L272.5,195.2 L272.5,205.2" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="409.5" y="187.6" width="8" height="7.2" fill="#ffffff"/>
+<text x="413.5" y="193.2" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="274.5" y="195.6" width="8" height="7.2" fill="#ffffff"/>
+<text x="278.5" y="201.2" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M337.0,251.2 L313.5,251.2" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="327.0" y="243.1" width="8" height="7.2" fill="#ffffff"/>
+<text x="331.0" y="248.7" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="315.5" y="243.1" width="8" height="7.2" fill="#ffffff"/>
+<text x="319.5" y="248.7" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M172.5,265.2 L149.0,265.2" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="162.5" y="257.1" width="8" height="7.2" fill="#ffffff"/>
+<text x="166.5" y="262.7" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="151.0" y="257.1" width="8" height="7.2" fill="#ffffff"/>
+<text x="155.0" y="262.7" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M243.0,282.8 L243.0,302.8" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="233.0" y="285.2" width="8" height="7.2" fill="#ffffff"/>
+<text x="237.0" y="290.8" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="233.0" y="294.2" width="8" height="7.2" fill="#ffffff"/>
+<text x="237.0" y="299.8" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<path d="M313.5,245.2 L325.2,245.2 L325.2,328.8 L337.0,328.8" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="315.5" y="237.1" width="8" height="7.2" fill="#ffffff"/>
+<text x="319.5" y="242.7" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="327.0" y="320.7" width="8" height="7.2" fill="#ffffff"/>
+<text x="331.0" y="326.3" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M52.0,282.8 L52.0,302.8" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="42.0" y="285.2" width="8" height="7.2" fill="#ffffff"/>
+<text x="46.0" y="290.8" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">1</text>
+<rect x="42.0" y="294.2" width="8" height="7.2" fill="#ffffff"/>
+<text x="46.0" y="299.8" font-size="5.6" fill="#232d4b" text-anchor="middle" font-weight="700">N</text>
+<path d="M8.0,20.0 L3.2,20.0 L3.2,430.8 L8.0,430.8" fill="none" stroke="#9aa3b8" stroke-width="0.9"/>
+<rect x="8.0" y="10.0" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M8.0,26.0 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M10.5,10.0 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="13.0" y="19.2" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">USUARIO</text>
+<text x="13.0" y="24.4" font-size="5.4" fill="#f9f78c">cuenta y credenciales</text>
+<text x="13.0" y="33.4" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="144.0" y="33.4" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="13.0" y="43.0" font-size="6.2" fill="#171d33" font-weight="400">nombre</text>
+<text x="144.0" y="43.0" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="13.0" y="52.6" font-size="6.2" fill="#171d33" font-weight="400">email</text>
+<text x="144.0" y="52.6" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="13.0" y="62.2" font-size="6.2" fill="#171d33" font-weight="400">rol</text>
+<text x="144.0" y="62.2" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="13.0" y="71.8" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="144.0" y="71.8" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="13.0" y="81.4" font-size="6.2" fill="#171d33" font-weight="400">fecha_alta</text>
+<text x="144.0" y="81.4" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<rect x="172.5" y="10.0" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M172.5,26.0 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M175.0,10.0 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="177.5" y="19.2" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">ABOGADO</text>
+<text x="177.5" y="24.4" font-size="5.4" fill="#f9f78c">colegiado del turno</text>
+<text x="177.5" y="33.4" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="308.5" y="33.4" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="177.5" y="43.0" font-size="6.2" fill="#171d33" font-weight="400">usuario_id</text>
+<text x="308.5" y="43.0" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="52.6" font-size="6.2" fill="#171d33" font-weight="400">num_colegiado</text>
+<text x="308.5" y="52.6" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="177.5" y="62.2" font-size="6.2" fill="#171d33" font-weight="400">orden_turno</text>
+<text x="308.5" y="62.2" font-size="5.6" fill="#5f6a85" text-anchor="end">entero</text>
+<text x="177.5" y="71.8" font-size="6.2" fill="#171d33" font-weight="400">fecha_alta_turno</text>
+<text x="308.5" y="71.8" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<text x="177.5" y="81.4" font-size="6.2" fill="#171d33" font-weight="400">activo</text>
+<text x="308.5" y="81.4" font-size="5.6" fill="#5f6a85" text-anchor="end">bool</text>
+<rect x="337.0" y="10.0" width="141.0" height="58.4" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M337.0,26.0 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M339.5,10.0 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="342.0" y="19.2" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">ESPECIALIDAD</text>
+<text x="342.0" y="24.4" font-size="5.4" fill="#f9f78c">materia del turno</text>
+<text x="342.0" y="33.4" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="473.0" y="33.4" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="342.0" y="43.0" font-size="6.2" fill="#171d33" font-weight="400">codigo</text>
+<text x="473.0" y="43.0" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="342.0" y="52.6" font-size="6.2" fill="#171d33" font-weight="400">nombre</text>
+<text x="473.0" y="52.6" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="342.0" y="62.2" font-size="6.2" fill="#171d33" font-weight="400">requiere_formacion</text>
+<text x="473.0" y="62.2" font-size="5.6" fill="#5f6a85" text-anchor="end">bool</text>
+<rect x="8.0" y="107.6" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M8.0,123.6 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M10.5,107.6 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="13.0" y="116.8" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">DISPONIBILIDAD</text>
+<text x="13.0" y="122.0" font-size="5.4" fill="#f9f78c">ausencia comunicada</text>
+<text x="13.0" y="131.0" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="144.0" y="131.0" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="13.0" y="140.6" font-size="6.2" fill="#171d33" font-weight="400">abogado_id</text>
+<text x="144.0" y="140.6" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="150.2" font-size="6.2" fill="#171d33" font-weight="400">fecha_inicio</text>
+<text x="144.0" y="150.2" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<text x="13.0" y="159.8" font-size="6.2" fill="#171d33" font-weight="400">fecha_fin</text>
+<text x="144.0" y="159.8" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<text x="13.0" y="169.4" font-size="6.2" fill="#171d33" font-weight="400">tipo</text>
+<text x="144.0" y="169.4" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="13.0" y="179.0" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="144.0" y="179.0" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="172.5" y="107.6" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M172.5,123.6 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M175.0,107.6 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="177.5" y="116.8" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">HABILITACION</text>
+<text x="177.5" y="122.0" font-size="5.4" fill="#f9f78c">acreditación vigente</text>
+<text x="177.5" y="131.0" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="308.5" y="131.0" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="177.5" y="140.6" font-size="6.2" fill="#171d33" font-weight="400">abogado_id</text>
+<text x="308.5" y="140.6" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="150.2" font-size="6.2" fill="#171d33" font-weight="400">especialidad_id</text>
+<text x="308.5" y="150.2" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="159.8" font-size="6.2" fill="#171d33" font-weight="400">fecha_habilitacion</text>
+<text x="308.5" y="159.8" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<text x="177.5" y="169.4" font-size="6.2" fill="#171d33" font-weight="400">caducidad</text>
+<text x="308.5" y="169.4" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<text x="177.5" y="179.0" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="308.5" y="179.0" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="337.0" y="107.6" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M337.0,123.6 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M339.5,107.6 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="342.0" y="116.8" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">TIPO_GUARDIA</text>
+<text x="342.0" y="122.0" font-size="5.4" fill="#f9f78c">plantilla de servicio</text>
+<text x="342.0" y="131.0" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="473.0" y="131.0" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="342.0" y="140.6" font-size="6.2" fill="#171d33" font-weight="400">especialidad_id</text>
+<text x="473.0" y="140.6" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="342.0" y="150.2" font-size="6.2" fill="#171d33" font-weight="400">modalidad</text>
+<text x="473.0" y="150.2" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="342.0" y="159.8" font-size="6.2" fill="#171d33" font-weight="400">hora_inicio</text>
+<text x="473.0" y="159.8" font-size="5.6" fill="#5f6a85" text-anchor="end">hora</text>
+<text x="342.0" y="169.4" font-size="6.2" fill="#171d33" font-weight="400">peso_computo</text>
+<text x="473.0" y="169.4" font-size="5.6" fill="#5f6a85" text-anchor="end">decimal</text>
+<text x="342.0" y="179.0" font-size="6.2" fill="#171d33" font-weight="400">letrados</text>
+<text x="473.0" y="179.0" font-size="5.6" fill="#5f6a85" text-anchor="end">entero</text>
+<rect x="8.0" y="205.2" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M8.0,221.2 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M10.5,205.2 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="13.0" y="214.4" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">SOLICITUD</text>
+<text x="13.0" y="219.6" font-size="5.4" fill="#f9f78c">excusa / permuta</text>
+<text x="13.0" y="228.6" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="144.0" y="228.6" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="13.0" y="238.2" font-size="6.2" fill="#171d33" font-weight="400">guardia_id</text>
+<text x="144.0" y="238.2" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="247.8" font-size="6.2" fill="#171d33" font-weight="400">tipo</text>
+<text x="144.0" y="247.8" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="13.0" y="257.4" font-size="6.2" fill="#171d33" font-weight="400">solicitante_id</text>
+<text x="144.0" y="257.4" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="267.0" font-size="6.2" fill="#171d33" font-weight="400">sustituto_id</text>
+<text x="144.0" y="267.0" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="276.6" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="144.0" y="276.6" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="172.5" y="205.2" width="141.0" height="77.6" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M172.5,221.2 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M175.0,205.2 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="177.5" y="214.4" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">GUARDIA</text>
+<text x="177.5" y="219.6" font-size="5.4" fill="#f9f78c">servicio a cubrir</text>
+<text x="177.5" y="228.6" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="308.5" y="228.6" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="177.5" y="238.2" font-size="6.2" fill="#171d33" font-weight="400">cuadrante_id</text>
+<text x="308.5" y="238.2" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="247.8" font-size="6.2" fill="#171d33" font-weight="400">tipo_guardia_id</text>
+<text x="308.5" y="247.8" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="257.4" font-size="6.2" fill="#171d33" font-weight="400">abogado_id</text>
+<text x="308.5" y="257.4" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="267.0" font-size="6.2" fill="#171d33" font-weight="400">fecha</text>
+<text x="308.5" y="267.0" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha</text>
+<text x="177.5" y="276.6" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="308.5" y="276.6" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="337.0" y="205.2" width="141.0" height="68.0" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M337.0,221.2 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M339.5,205.2 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="342.0" y="214.4" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">CUADRANTE</text>
+<text x="342.0" y="219.6" font-size="5.4" fill="#f9f78c">versión publicada</text>
+<text x="342.0" y="228.6" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="473.0" y="228.6" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="342.0" y="238.2" font-size="6.2" fill="#171d33" font-weight="400">anio</text>
+<text x="473.0" y="238.2" font-size="5.6" fill="#5f6a85" text-anchor="end">entero</text>
+<text x="342.0" y="247.8" font-size="6.2" fill="#171d33" font-weight="400">periodo</text>
+<text x="473.0" y="247.8" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="342.0" y="257.4" font-size="6.2" fill="#171d33" font-weight="400">version</text>
+<text x="473.0" y="257.4" font-size="5.6" fill="#5f6a85" text-anchor="end">entero</text>
+<text x="342.0" y="267.0" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="473.0" y="267.0" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="8.0" y="302.8" width="141.0" height="58.4" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M8.0,318.8 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M10.5,302.8 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="13.0" y="312.0" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">JUSTIFICANTE</text>
+<text x="13.0" y="317.2" font-size="5.4" fill="#f9f78c">documento acreditativo</text>
+<text x="13.0" y="326.2" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="144.0" y="326.2" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="13.0" y="335.8" font-size="6.2" fill="#171d33" font-weight="400">solicitud_id</text>
+<text x="144.0" y="335.8" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="345.4" font-size="6.2" fill="#171d33" font-weight="400">disponibilidad_id</text>
+<text x="144.0" y="345.4" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="355.0" font-size="6.2" fill="#171d33" font-weight="400">fecha_subida</text>
+<text x="144.0" y="355.0" font-size="5.6" fill="#5f6a85" text-anchor="end">fecha-hora</text>
+<rect x="172.5" y="302.8" width="141.0" height="68.0" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M172.5,318.8 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M175.0,302.8 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="177.5" y="312.0" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">PARTE_GUARDIA</text>
+<text x="177.5" y="317.2" font-size="5.4" fill="#f9f78c">cierre del servicio</text>
+<text x="177.5" y="326.2" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="308.5" y="326.2" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="177.5" y="335.8" font-size="6.2" fill="#171d33" font-weight="400">guardia_id</text>
+<text x="308.5" y="335.8" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="177.5" y="345.4" font-size="6.2" fill="#171d33" font-weight="400">realizada</text>
+<text x="308.5" y="345.4" font-size="5.6" fill="#5f6a85" text-anchor="end">bool</text>
+<text x="177.5" y="355.0" font-size="6.2" fill="#171d33" font-weight="400">hora_entrada</text>
+<text x="308.5" y="355.0" font-size="5.6" fill="#5f6a85" text-anchor="end">hora</text>
+<text x="177.5" y="364.6" font-size="6.2" fill="#171d33" font-weight="400">validado</text>
+<text x="308.5" y="364.6" font-size="5.6" fill="#5f6a85" text-anchor="end">bool</text>
+<rect x="337.0" y="302.8" width="141.0" height="68.0" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M337.0,318.8 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M339.5,302.8 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="342.0" y="312.0" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">INCIDENCIA</text>
+<text x="342.0" y="317.2" font-size="5.4" fill="#f9f78c">evento en guardia</text>
+<text x="342.0" y="326.2" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="473.0" y="326.2" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="342.0" y="335.8" font-size="6.2" fill="#171d33" font-weight="400">guardia_id</text>
+<text x="473.0" y="335.8" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="342.0" y="345.4" font-size="6.2" fill="#171d33" font-weight="400">categoria</text>
+<text x="473.0" y="345.4" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="342.0" y="355.0" font-size="6.2" fill="#171d33" font-weight="400">gravedad</text>
+<text x="473.0" y="355.0" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="342.0" y="364.6" font-size="6.2" fill="#171d33" font-weight="400">estado</text>
+<text x="473.0" y="364.6" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="8.0" y="390.8" width="141.0" height="68.0" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M8.0,406.8 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M10.5,390.8 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="13.0" y="400.0" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">NOTIFICACION</text>
+<text x="13.0" y="405.2" font-size="5.4" fill="#f9f78c">aviso y acuse</text>
+<text x="13.0" y="414.2" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="144.0" y="414.2" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="13.0" y="423.8" font-size="6.2" fill="#171d33" font-weight="400">usuario_id</text>
+<text x="144.0" y="423.8" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+<text x="13.0" y="433.4" font-size="6.2" fill="#171d33" font-weight="400">tipo</text>
+<text x="144.0" y="433.4" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="13.0" y="443.0" font-size="6.2" fill="#171d33" font-weight="400">canal</text>
+<text x="144.0" y="443.0" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<text x="13.0" y="452.6" font-size="6.2" fill="#171d33" font-weight="400">estado_entrega</text>
+<text x="144.0" y="452.6" font-size="5.6" fill="#5f6a85" text-anchor="end">enum</text>
+<rect x="172.5" y="390.8" width="141.0" height="68.0" rx="2.5" fill="#ffffff" stroke="#232d4b" stroke-width="0.9"/>
+<path d="M172.5,406.8 h141.0" stroke="#232d4b" stroke-width="0.7"/>
+<path d="M175.0,390.8 h136.0 a2.5,2.5 0 0 1 2.5,2.5 v13.5 h-141.0 v-13.5 a2.5,2.5 0 0 1 2.5,-2.5 z" fill="#232d4b"/>
+<text x="177.5" y="400.0" font-size="7.2" font-weight="700" fill="#ffffff" letter-spacing="0.25">AUDITORIA</text>
+<text x="177.5" y="405.2" font-size="5.4" fill="#f9f78c">registro inmutable (*)</text>
+<text x="177.5" y="414.2" font-size="6.2" fill="#da1984" font-weight="700">id</text>
+<text x="308.5" y="414.2" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="177.5" y="423.8" font-size="6.2" fill="#171d33" font-weight="400">entidad</text>
+<text x="308.5" y="423.8" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="177.5" y="433.4" font-size="6.2" fill="#171d33" font-weight="400">entidad_id</text>
+<text x="308.5" y="433.4" font-size="5.6" fill="#5f6a85" text-anchor="end">UUID</text>
+<text x="177.5" y="443.0" font-size="6.2" fill="#171d33" font-weight="400">accion</text>
+<text x="308.5" y="443.0" font-size="5.6" fill="#5f6a85" text-anchor="end">texto</text>
+<text x="177.5" y="452.6" font-size="6.2" fill="#171d33" font-weight="400">actor_id</text>
+<text x="308.5" y="452.6" font-size="5.6" fill="#5f6a85" text-anchor="end">FK</text>
+</svg>
+  <div class="fig-cap">Figura 17.1 — Modelo entidad-relación. La guardia concentra la designación, la movilidad,
+  la incidencia y el cierre del servicio.</div>
+</div>
+
+<div class="box" style="margin-top:2mm;">
+  <div class="box-title">Cómo leerlo</div>
+  <ul class="tight">
+    <li><strong>1 : N</strong> — un registro del origen se relaciona con varios del destino: un abogado, con muchas
+    guardias a lo largo del tiempo.</li>
+    <li><strong>1 : 1</strong> — relación única en ambos sentidos: cada guardia tiene un único parte.</li>
+    <li><strong>N : M resuelto</strong> — abogado y especialidad se relacionan mediante
+    <span class="mono">HABILITACION</span>, que conserva fecha y estado de la acreditación.</li>
+    <li><strong>Polimórfica</strong> — <span class="mono">AUDITORIA</span> referencia cualquier entidad por el par
+    <span class="mono">entidad</span> + <span class="mono">entidad_id</span>; sin aristas para no sobrecargar el
+    dibujo.</li>
+  </ul>
+</div>
+
+<!-- ============ CAPÍTULO 18 ============ -->
+<h1 class="chapter"><span class="chnum">18</span>Seguridad y protección de datos</h1>
+<p class="chlead">La aplicación trata datos de profesionales y, en un caso concreto, datos de salud. Esa circunstancia
+condiciona el diseño y obliga a formalizar responsabilidades antes del primer día de uso.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:26%">Cuestión</th><th style="width:74%">Planteamiento</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Responsable</strong></td><td>El Colegio, como titular del servicio y de la organización del turno.</td></tr>
+    <tr><td><strong>Encargado</strong></td><td>El proveedor, con contrato de encargo que fija finalidad, duración,
+      medidas de seguridad y prohibición de uso para fines propios.</td></tr>
+    <tr><td><strong>Base jurídica</strong></td><td>Organización del servicio de asistencia jurídica gratuita y
+      cumplimiento de obligaciones legales; los datos de salud se limitan a constatar la indisponibilidad.</td></tr>
+    <tr><td><strong>Minimización</strong></td><td>Sin diagnóstico, sin informe clínico y sin dato biométrico. Solo el
+      periodo de indisponibilidad y, si la norma lo exige, el parte en espacio restringido.</td></tr>
+    <tr><td><strong>Conservación</strong></td><td>Calendario aprobado por el Colegio, alineado con los plazos de
+      prescripción; al vencer, bloqueo de acceso y eliminación.</td></tr>
+    <tr><td><strong>Derechos</strong></td><td>Canal definido para acceso, rectificación, supresión y limitación, con
+      plazo de respuesta y constancia.</td></tr>
+    <tr><td><strong>Evaluación de impacto</strong></td><td>Recomendable por el tratamiento de datos de salud a escala
+      del colectivo; se documenta antes de la puesta en producción.</td></tr>
+  </tbody>
+</table>
+
+<h2>Medidas de seguridad</h2>
+<div class="two-col">
+  <ul class="tight">
+    <li>Acceso nominal, sin cuentas compartidas.</li>
+    <li>Mínimo privilegio por rol; la administración técnica no accede al contenido.</li>
+    <li>Doble factor para roles con capacidad de resolución.</li>
+    <li>Cifrado en tránsito y en reposo, con claves gestionadas aparte.</li>
+    <li>Copias de seguridad con prueba de restauración documentada.</li>
+    <li>Registro de accesos a información sensible, con alerta ante patrones anómalos.</li>
+    <li>Procedimiento de incidentes con plazos y responsable identificado.</li>
+    <li>Plan de continuidad: vía manual de designación durante una caída.</li>
+  </ul>
+</div>
+
+<h2>Uso real y accesibilidad</h2>
+<p>La aplicación se usará de pie, en un pasillo de juzgado, con una mano y a veces sin cobertura. De ahí tres
+requisitos que no son cosméticos: contraste y tamaños legibles a la intemperie, navegación que no dependa solo del
+color y funcionamiento degradado que conserve lo esencial —mi guardia de hoy, el teléfono de la sede y el registro de
+una actuación— cuando la conexión falla. El objetivo es el nivel AA de las pautas WCAG en las pantallas principales.</p>
+
+<!-- ============ ANEXO A ============ -->
+<h1 class="chapter"><span class="chnum">A</span>Pantallas de referencia</h1>
+<p class="chlead">Tres pantallas resumen la experiencia del letrado: saber qué le toca hoy, consultar lo que viene y
+resolver un imprevisto. Ninguna requiere más de dos toques para llegar a la acción principal.</p>
+
+<div class="wf-grid" style="gap:5mm; margin-top:5mm;">
+  <div class="wf-col">
+    <div class="wf-phone">
+      <div class="notch"></div>
+      <div class="ph-bar"><span>Mi guardia</span><span>hoy</span></div>
+      <div class="ph-h">Penal · 24 h</div>
+      <div class="ph-sub">Martes 16 de marzo · localizada</div>
+      <div class="ph-card">
+        <div class="ph-row"><b>Estado</b><span class="ph-tag">Confirmada</span></div>
+        <div class="ph-row" style="margin-top:0.8mm;"><span>Inicio</span><b>08:00</b></div>
+        <div class="ph-row"><span>Fin</span><b>08:00 (17/03)</b></div>
+      </div>
+      <div class="ph-card">
+        <b>Juzgado de guardia</b><br>
+        <span style="color:var(--muted);">Tarragona · 977 000 000</span>
+      </div>
+      <div class="ph-btn">Estoy operativo</div>
+      <div class="ph-btn ghost">Registrar actuación</div>
+      <div class="ph-btn ghost">Necesito refuerzo</div>
+      <div class="ph-nav"><span>Hoy</span><span>Mis guardias</span><span>Avisos</span><span>Perfil</span></div>
+    </div>
+    <div class="wf-caption"><strong>A.1 · Mi guardia de hoy.</strong> La pantalla que se abre al comenzar la franja;
+    la acción principal es confirmar disponibilidad.</div>
+  </div>
+
+  <div class="wf-col">
+    <div class="wf-phone">
+      <div class="notch"></div>
+      <div class="ph-bar"><span>Mis guardias</span><span>marzo</span></div>
+      <div class="ph-card">
+        <div class="ph-row"><b>15 mar</b><span class="ph-tag">Confirmada</span></div>
+        <span style="color:var(--muted);">Penal · 08:00–20:00</span>
+      </div>
+      <div class="ph-card">
+        <div class="ph-row"><b>18 mar</b><span class="ph-tag">Confirmada</span></div>
+        <span style="color:var(--muted);">Violencia de género · 24 h</span>
+      </div>
+      <div class="ph-card">
+        <div class="ph-row"><b>31 mar</b><span class="ph-tag a">Sin acuse</span></div>
+        <span style="color:var(--muted);">Penal · 08:00–20:00</span>
+        <div class="ph-btn" style="margin-top:1.2mm;">Confirmar</div>
+      </div>
+      <div class="ph-card" style="background:#f7f9fb;">
+        <div class="ph-row"><b>23–26 mar</b><span class="ph-tag">Vacaciones</span></div>
+        <span style="color:var(--muted);">Validadas por el Colegio</span>
+      </div>
+      <div class="ph-btn ghost">Comunicar indisponibilidad</div>
+      <div class="ph-nav"><span>Hoy</span><span>Mis guardias</span><span>Avisos</span><span>Perfil</span></div>
+    </div>
+    <div class="wf-caption"><strong>A.2 · Mis guardias.</strong> Lista cronológica con el estado de cada designación y
+    el acuse pendiente a un toque.</div>
+  </div>
+
+  <div class="wf-col">
+    <div class="wf-phone">
+      <div class="notch"></div>
+      <div class="ph-bar"><span>Solicitar sustitución</span><span>1 de 3</span></div>
+      <div class="ph-h">Guardia del 17 de marzo</div>
+      <div class="ph-sub">Penal · 24 h · titular: J. Roca</div>
+      <div class="ph-card">
+        <b>Motivo</b>
+        <div style="margin-top:1mm;"><span class="ph-tag">Deber inexcusable</span></div>
+        <div style="margin-top:1mm; color:var(--muted);">Enfermedad · fallecimiento · formación · otro</div>
+      </div>
+      <div class="ph-card">
+        <b>Observaciones</b><br>
+        <span style="color:var(--muted);">Comparecencia citada por el juzgado…</span>
+      </div>
+      <div class="ph-card" style="background:#fbf7ef; border-color:#e6d3ab;">
+        <b>Ten en cuenta</b><br>
+        <span style="color:var(--muted);">La guardia sigue siendo tuya hasta que el Colegio valide el cambio.</span>
+      </div>
+      <div class="ph-btn">Continuar</div>
+      <div class="ph-nav"><span>Hoy</span><span>Mis guardias</span><span>Avisos</span><span>Perfil</span></div>
+    </div>
+    <div class="wf-caption"><strong>A.3 · Solicitud de sustitución.</strong> El aviso legal aparece en la propia
+    pantalla, no en condiciones que nadie lee.</div>
+  </div>
+</div>
+
+<h2>Pantalla de resolución para la coordinación</h2>
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Expediente de solicitud · EX-2027-0311</span><span>Guardia 17/03 · Penal 24 h</span></div>
+    <div class="wf-body">
+      <div style="display:flex; gap:4mm;">
+        <div style="flex:1.1;">
+          <div style="font-size:7pt; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:1.2mm;">Solicitante</div>
+          <div style="font-size:9pt; color:var(--navy); font-weight:600;">J. Roca</div>
+          <div style="font-size:7pt; color:var(--muted); margin-bottom:2.6mm;">Motivo: deber inexcusable · dentro de plazo</div>
+          <div style="font-size:7pt; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:1.2mm;">Sustituto propuesto</div>
+          <div style="font-size:9pt; color:var(--navy); font-weight:600;">M. Serra</div>
+          <div style="font-size:7pt; color:var(--muted);">Habilitación vigente · disponible · cómputo 4,00</div>
+        </div>
+        <div style="flex:1; border-left:1px solid var(--line); padding-left:4mm;">
+          <div style="font-size:7pt; text-transform:uppercase; letter-spacing:0.7px; color:var(--muted); margin-bottom:1.2mm;">Comprobaciones</div>
+          <div style="font-size:7pt; line-height:1.7;">
+            <div><span class="chip g">Plazo</span> presentada 3 días antes</div>
+            <div><span class="chip g">Habilitación</span> vigente en la materia</div>
+            <div><span class="chip g">Solapamiento</span> sin conflicto</div>
+            <div><span class="chip a">Cómputo</span> el sustituto queda por encima de la media</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:2mm; margin-top:3mm;">
+        <div class="ph-btn" style="flex:1; margin:0;">Aprobar y publicar v2</div>
+        <div class="ph-btn ghost" style="flex:1; margin:0;">Denegar con motivación</div>
+        <div class="ph-btn ghost" style="flex:1; margin:0;">Devolver al solicitante</div>
+      </div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura A.4 — Expediente de resolución: las comprobaciones automáticas se muestran antes de
+  decidir y la decisión, sea cual sea, exige motivación.</div>
+</div>
+
+</body>
+</html>

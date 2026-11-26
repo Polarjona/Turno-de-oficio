@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo · Circuito de sustitución de guardia</title>
+<!-- Sin fuentes externas: el prototipo debe funcionar sin conexión (demo en sala). -->
+<style>
+:root{
+  --surface:#FFFFFF;--surface-alt:#F3F5F8;--ink:#14202E;--ink-muted:#46515F;--primary:#16263F;--on-primary:#FFFFFF;
+  --border-control:#6B7686;--border-subtle:#CBD2DC;--info:#1F4E9C;--focus:#1F4E9C;
+  --ok-ink:#0F4C81;--ok-bg:#E3EEF8;--warn-ink:#7A3F00;--warn-bg:#FFE9C7;--danger-ink:#8B1022;--danger-bg:#FBE3E6;
+  --review-ink:#43388A;--review-bg:#ECE9F8;--legal-bg:#EDEFF3;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-alt);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.5}
+button,input,textarea{font-family:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.top{background:var(--primary);color:var(--on-primary);padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between}
+.top h1{margin:0;font-size:20px;line-height:26px;font-weight:800}
+.top p{margin:0;font-size:14px;color:#D3DDEC}
+.layout{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:24px;padding:24px;max-width:1360px;margin:0 auto}
+@media (max-width:900px){.layout{grid-template-columns:1fr;padding:16px}}
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:2px solid var(--ink);border-radius:var(--radius-md);padding:16px}
+.card h2{margin:0 0 8px;font-size:20px;line-height:26px;font-weight:800}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;gap:12px;align-items:flex-start;font-size:16px;line-height:22px}
+.dotn{flex:none;width:28px;height:28px;border-radius:14px;border:2px solid var(--ink);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;background:var(--surface)}
+.steps li.done .dotn{background:var(--primary);color:var(--on-primary)}
+.steps li.now .dotn{border-width:4px}
+.steps small{display:block;font-size:14px;line-height:20px;color:var(--ink-muted);font-weight:500}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;border:2px solid var(--border-control);border-radius:var(--radius-md);background:var(--surface);color:var(--ink);font-size:16px;line-height:22px;font-weight:700;cursor:pointer;text-align:center}
+.btn.p{background:var(--primary);border-color:var(--primary);color:var(--on-primary);min-height:56px;font-size:18px}
+.btn.d{border-color:var(--danger-ink);color:var(--danger-ink)}
+.btn.sm{min-height:44px;font-size:14px;padding:0 12px}
+.btn[disabled]{border-style:dashed;color:var(--ink-muted);cursor:not-allowed}
+.who{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.who .btn{flex:1 1 150px;min-height:48px}
+.who .btn[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.stage{display:flex;flex-direction:column;gap:16px;min-width:0}
+.hint{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--legal-bg);border:2px solid var(--border-control);border-radius:var(--radius-md);padding:12px 16px;font-size:16px;line-height:24px}
+.devwrap{display:flex;justify-content:center}
+.phone{width:390px;max-width:100%;min-height:780px;background:var(--surface);border:2px solid var(--ink);border-radius:28px;display:flex;flex-direction:column;overflow:hidden}
+.scr{flex:1;padding:18px;display:flex;flex-direction:column;gap:14px}
+.scr h2{margin:0;font-size:24px;line-height:30px;font-weight:800}
+.scr h2:focus{outline:none}
+.k{font-size:14px;line-height:20px;color:var(--ink-muted);font-weight:500}
+.nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:2px solid var(--ink)}
+.nav button{min-height:64px;border:0;background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;padding:0 4px}
+.nav button[aria-current="page"]{font-weight:800;background:var(--surface-alt);box-shadow:inset 0 -3px 0 var(--ink)}
+.nav button:focus-visible{outline-offset:-5px}
+.item{border:2px solid var(--border-control);border-radius:var(--radius-md);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.item .r{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.item b{font-size:16px;line-height:22px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 12px;border-radius:var(--radius-lg);font-size:16px;line-height:22px;font-weight:700}
+.b-ok{border:2px solid var(--ok-ink);background:var(--ok-bg);color:var(--ok-ink)}
+.b-sa{border:3px dashed var(--warn-ink);background:var(--warn-bg);color:var(--warn-ink)}
+.b-rv{border:3px dotted var(--review-ink);background:var(--review-bg);color:var(--review-ink)}
+.b-ds{border:4px double var(--danger-ink);background:var(--danger-bg);color:var(--danger-ink)}
+.b-nt{border:2px solid var(--border-control);background:var(--surface);color:var(--ink)}
+.legal{border:2px solid var(--border-control);border-radius:var(--radius-md);background:var(--legal-bg);padding:12px 14px;font-size:16px;line-height:24px}
+.legal b{display:block;font-size:16px;line-height:22px;margin-bottom:2px}
+fieldset{margin:0;padding:0;border:0}
+legend{padding:0 0 4px;font-size:16px;line-height:22px;font-weight:600}
+.opt{display:flex;align-items:center;gap:12px;min-height:48px;font-size:18px;cursor:pointer}
+.opt input{flex:none;width:24px;height:24px;margin:0;accent-color:var(--primary)}
+label.f{display:block;font-size:16px;font-weight:600;margin-bottom:4px}
+textarea{width:100%;min-height:90px;padding:10px 12px;border:2px solid var(--border-control);border-radius:var(--radius-md);font-size:16px;line-height:24px;color:var(--ink);background:var(--surface)}
+.prog{display:flex;gap:6px}
+.prog i{flex:1;height:8px;border-radius:4px;border:2px solid var(--ink);background:var(--surface)}
+.prog i.d{background:var(--ink)}
+.sum{display:flex;flex-direction:column;gap:6px;border:2px solid var(--ink);border-radius:var(--radius-md);padding:10px 14px;background:var(--surface)}
+.sum div{display:flex;justify-content:space-between;gap:12px;font-size:16px}
+.sum div span:first-child{color:var(--ink-muted);font-size:14px}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.tl li{display:flex;gap:12px;font-size:16px;line-height:22px;align-items:flex-start}
+.tl .m{flex:none;width:24px;height:24px;border:2px solid var(--ink);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+.tl li.done .m{background:var(--ink);color:var(--surface)}
+.msg{border:2px solid var(--ink);border-radius:var(--radius-md);padding:12px 14px;background:var(--surface)}
+.msg h3{margin:0 0 6px;font-size:16px;line-height:22px;font-weight:800}
+.msg p{margin:0;font-size:16px;line-height:24px}
+.desk{width:100%;max-width:960px;background:var(--surface);border:2px solid var(--ink);border-radius:var(--radius-md);overflow:hidden}
+.deskbar{background:var(--surface);border-bottom:2px solid var(--ink);padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;align-items:center}
+.deskbar b{font-size:18px}
+.deskbar span{font-size:15px;font-weight:600}
+.deskbar span.on{font-weight:800;border-bottom:3px solid var(--ink)}
+.deskbody{padding:20px;display:flex;flex-direction:column;gap:16px}
+.deskbody h2{margin:0;font-size:24px;line-height:30px;font-weight:800}
+.deskbody h2:focus{outline:none}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.chk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.chk li{font-size:16px;line-height:22px;display:flex;gap:8px}
+.acts{display:flex;flex-wrap:wrap;gap:12px}
+.err{color:var(--danger-ink);font-size:16px;font-weight:700}
+.test .side,.test .hint{display:none}
+.test .layout{grid-template-columns:1fr}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<header class="top">
+<h1>Prototipo · Circuito de sustitución de guardia</h1>
+<p>Datos de ejemplo. Turno de Oficio · Colegio de la Abogacía de Tarragona <button class="btn sm" id="testbtn" aria-pressed="false" style="display:inline-flex;margin-left:12px;vertical-align:middle">Modo test</button></p>
+</header>
+<div class="layout">
+<aside class="side" aria-label="Guion del prototipo">
+<section class="card">
+<h2>Recorrido</h2>
+<ol class="steps" id="steps"></ol>
+</section>
+<section class="card">
+<h2>Qué demuestra</h2>
+<p class="k" style="margin:0">La guardia sigue siendo del titular hasta que el Colegio valida el cambio. Un acuerdo entre dos letrados no cambia el cuadrante. Toda resolución lleva motivación.</p>
+<p class="k" style="margin:10px 0 0"><b>Estados (catálogo TOF-2026-015 / contrato #29):</b> <em>oferta_enviada</em> = oferta esperando respuesta · <em>pendiente_validacion</em> = aceptada, esperando al Colegio · <em>estimada</em> = validada · <em>desestimada</em> = denegada. <em>Devuelta</em> no es estado final: al reenviarse, la solicitud vuelve a <em>en_revision</em>.</p>
+<div style="margin-top:12px"><button class="btn" data-a="reset" style="width:100%">Reiniciar prototipo</button></div>
+</section>
+</aside>
+<main class="stage">
+<div class="who" id="who" role="group" aria-label="Ver como"></div>
+<div class="hint" id="hint"></div>
+<div class="devwrap" id="dev"></div>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+</main>
+</div>
+<script>
+(function(){
+function setTest(on){document.body.classList.toggle('test',on);var b=document.getElementById('testbtn');b.setAttribute('aria-pressed',on);b.textContent=on?'Modo test: activado':'Modo test';}
+document.getElementById('testbtn').addEventListener('click',function(){setTest(!document.body.classList.contains('test'));});
+if(/[?&]test\b/.test(location.search))setTest(true);
+var NAMES=['M. Serra','A. Ferrer','N. Vidal'];
+var S;
+function init(){
+  S={persona:'roca',
+     roca:{screen:'home',motivo:'Fuerza mayor',obs:'',quien:'companero',cand:'M. Serra',seen:false},
+     serra:{screen:'avisos',seen:false},
+     coord:{screen:'inbox',motiv:'',err:''},
+     req:{status:'none',reason:''},
+     live:'',focus:''};
+}
+init();
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function cand(){return S.roca.quien==='colegio'?'M. Serra':S.roca.cand;}
+function resolved(){return ['aprobada','denegada','devuelta'].indexOf(S.req.status)>-1;}
+function badge(k){
+  var m={ok:['b-ok','✓ Confirmada'],sa:['b-sa','! Sin acuse'],rv:['b-rv','↻ En revisión'],ds:['b-ds','✕ Descubierta'],nt:['b-nt','Sustituida'],of:['b-sa','! Oferta enviada · oferta_enviada'],pv:['b-rv','↻ Pendiente de validación · pendiente_validacion'],es:['b-ok','✓ Validada · estimada'],de:['b-ds','✕ Desestimada'],dv:['b-sa','↩ Devuelta (vuelve a en_revision)']};
+  return '<span class="badge '+m[k][0]+'">'+m[k][1]+'</span>';
+}
+function legal(t,b){return '<div class="legal" role="note"><b>'+(t||'Ten en cuenta')+'</b>'+b+'</div>';}
+function nav(p,cur){
+  var items=[['hoy','Hoy'],['guardias','Mis guardias'],['avisos','Avisos'+(unread(p)?' (1)':'')],['perfil','Perfil']];
+  return '<nav class="nav" aria-label="Principal">'+items.map(function(i){
+    return '<button data-a="nav" data-p="'+p+'" data-t="'+i[0]+'"'+(cur===i[0]?' aria-current="page"':'')+'>'+i[1]+'</button>';
+  }).join('')+'</nav>';
+}
+function unread(p){return resolved() && !S[p].seen;}
+function phone(p,cur,body){
+  return '<div class="phone"><div class="scr">'+body+'</div>'+nav(p,cur)+'</div>';
+}
+function stub(p){
+  return phone(p,'x','<h2 id="title" tabindex="-1">Fuera del prototipo</h2><p>Esta pestaña no forma parte del circuito de sustitución. Usa «Mis guardias» o «Avisos».</p>');
+}
+function item(date,label,b,note,act){
+  return '<div class="item"><div class="r"><b>'+date+' · '+label+'</b>'+b+'</div>'+(note?'<div class="k">'+note+'</div>':'')+(act||'')+'</div>';
+}
+/* ---------- J. Roca ---------- */
+function rocaHome(){
+  var st=S.req.status,g17;
+  if(st==='ofrecida') g17=item('17 mar','Penal · 24 h',badge('of'),'Sigue siendo tuya hasta la validación del Colegio.');
+  else if(st==='aceptada') g17=item('17 mar','Penal · 24 h',badge('pv'),'Sigue siendo tuya hasta la validación del Colegio.');
+  else if(st==='aprobada') g17=item('17 mar','Penal · 24 h',badge('nt'),'Cubre '+cand()+' desde la versión 2 del cuadrante.');
+  else g17=item('17 mar','Penal · 24 h',badge('ok'),st==='denegada'?'Solicitud desestimada: la guardia se mantiene.':(st==='devuelta'?'Solicitud devuelta: puedes enviarla de nuevo.':''),'<button class="btn sm" data-a="roca-start" id="start">Solicitar sustitución</button>');
+  return phone('roca','guardias','<h2 id="title" tabindex="-1">Mis guardias</h2><div class="k">Marzo 2027 · titular: J. Roca</div>'+
+    item('15 mar','Penal · 08:00–20:00',badge('ok'))+g17+item('18 mar','Violencia de género · 24 h',badge('ok'))+item('31 mar','Penal · 08:00–20:00',badge('sa')));
+}
+function prog(n){return '<div class="prog" aria-hidden="true">'+[1,2,3].map(function(i){return '<i'+(i<=n?' class="d"':'')+'></i>';}).join('')+'</div>';}
+function back(to){return '<button class="btn sm" data-a="'+to+'" style="align-self:flex-start">‹ Atrás</button>';}
+function rocaP1(){
+  var r=S.roca,ms=['Enfermedad','Asunto propio','Conciliación','Fuerza mayor','Otro'];
+  return phone('roca','guardias',back('roca-home')+prog(1)+'<h2 id="title" tabindex="-1">Solicitar sustitución</h2><div class="k">Paso 1 de 3 · Motivo · Guardia del 17 de marzo · Penal · 24 h</div>'+
+   '<fieldset><legend>Motivo</legend>'+ms.map(function(m,i){return '<label class="opt"><input type="radio" name="motivo" id="mo'+i+'" value="'+m+'"'+(r.motivo===m?' checked':'')+'>'+m+'</label>';}).join('')+'</fieldset>'+
+   '<div class="k">Categorías cerradas del contrato (sin diagnósticos).</div>'+'<div><label class="f" for="obs">Observaciones</label><textarea id="obs" placeholder="Comparecencia citada por el juzgado…">'+esc(r.obs)+'</textarea><div class="k">No incluyas datos de salud ni diagnósticos.</div></div>'+
+   legal('Ten en cuenta','La guardia sigue siendo tuya hasta que el Colegio valide el cambio.')+
+   '<button class="btn p" data-a="roca-p2" style="margin-top:auto">Continuar</button>');
+}
+function rocaP2(){
+  var r=S.roca,dis=r.quien==='colegio'?' disabled':'';
+  return phone('roca','guardias',back('roca-p1')+prog(2)+'<h2 id="title" tabindex="-1">¿Quién la cubre?</h2><div class="k">Paso 2 de 3 · Propuesta de sustituto</div>'+
+   '<fieldset><legend>Cómo proponer</legend><label class="opt"><input type="radio" name="quien" id="q0" value="colegio"'+(r.quien==='colegio'?' checked':'')+'>Que el Colegio proponga candidato</label><label class="opt"><input type="radio" name="quien" id="q1" value="companero"'+(r.quien==='companero'?' checked':'')+'>Proponer a un compañero</label></fieldset>'+
+   '<fieldset'+dis+'><legend>Compañeros elegibles · Penal</legend>'+NAMES.map(function(n,i){return '<label class="opt"><input type="radio" name="cand" id="c'+i+'" value="'+n+'"'+(r.cand===n?' checked':'')+dis+'>'+n+'</label>';}).join('')+'</fieldset>'+
+   '<div class="k">Solo aparecen compañeros habilitados, disponibles y sin otra guardia solapada. De cada uno se ve solo nombre y materia.</div>'+
+   legal('Ten en cuenta','Un acuerdo entre dos letrados no cambia el cuadrante hasta que el Colegio lo valide.')+
+   '<button class="btn p" data-a="roca-p3" style="margin-top:auto">Continuar</button>');
+}
+function rocaP3(){
+  var r=S.roca;
+  return phone('roca','guardias',back('roca-p2')+prog(3)+'<h2 id="title" tabindex="-1">Revisar y enviar</h2><div class="k">Paso 3 de 3</div>'+
+   '<div class="sum"><div><span>Guardia</span><span>17 mar · Penal 24 h</span></div><div><span>Motivo</span><span>'+esc(r.motivo)+'</span></div><div><span>Candidato</span><span>'+esc(cand())+(r.quien==='colegio'?' (propone el Colegio)':'')+'</span></div>'+(r.obs?'<div><span>Observaciones</span><span>'+esc(r.obs)+'</span></div>':'')+'</div>'+
+   '<div><b style="font-size:16px">Qué pasa ahora</b><ol class="tl" style="margin-top:8px"><li><span class="m"></span>El sistema comprueba plazo y documentación.</li><li><span class="m"></span>Se ofrece la guardia al candidato.</li><li><span class="m"></span>La coordinación resuelve y lo motiva.</li><li><span class="m"></span>Os avisamos a los dos del resultado.</li></ol></div>'+
+   legal('Ten en cuenta','Hasta la resolución, la guardia del 17 de marzo sigue siendo tuya.')+
+   '<button class="btn p" data-a="roca-send" style="margin-top:auto">Enviar solicitud</button>');
+}
+function tl(items){
+  return '<ol class="tl">'+items.map(function(i){return '<li class="'+(i[0]?'done':'')+'"><span class="m">'+(i[0]?'✓':'')+'</span>'+i[1]+'</li>';}).join('')+'</ol>';
+}
+function rocaSent(){
+  var st=S.req.status;
+  var acc=st==='aceptada'||resolved();
+  var bdg=st==='ofrecida'?'of':st==='aceptada'?'pv':st==='aprobada'?'es':st==='denegada'?'de':'dv';
+  return phone('roca','guardias','<h2 id="title" tabindex="-1">Solicitud enviada</h2>'+badge(bdg)+
+   tl([[true,'Solicitud enviada con motivo y observaciones.'],[true,'Guardia ofrecida a '+esc(cand())+'.'],[acc,esc(cand())+' ha aceptado.'],[resolved(),'Resolución del Colegio.']])+
+   legal('Ten en cuenta','La guardia sigue siendo tuya hasta que el Colegio valide el cambio. Te avisaremos del resultado.')+
+   '<button class="btn" data-a="roca-home" style="margin-top:auto">Volver a Mis guardias</button>');
+}
+function notifs(p){
+  var st=S.req.status,c=esc(cand()),out='';
+  if(resolved()){
+    if(st==='aprobada'){
+      out+=p==='roca'
+       ?'<div class="msg"><h3>Sustitución validada — guardia del 17 de marzo</h3><p>El Colegio ha validado la sustitución de la guardia de Penal del 17 de marzo. Ya no tienes esta guardia: la cubre '+c+' desde la publicación de la versión 2 del cuadrante. Titular anterior: tú. No tienes que hacer nada más.</p></div>'
+       :'<div class="msg"><h3>Sustitución validada — guardia del 17 de marzo</h3><p>El Colegio ha validado la sustitución de la guardia de Penal del 17 de marzo. La guardia es tuya desde la publicación de la versión 2 del cuadrante. Titular anterior: J. Roca. No tienes que hacer nada más.</p></div>';
+    }else if(st==='denegada'){
+      out+=p==='roca'
+       ?'<div class="msg"><h3>Resolución de la solicitud — guardia del 17 de marzo</h3><p>La solicitud ha sido desestimada. Motivación de la resolución: '+esc(S.req.reason||'sin motivación registrada')+'. La guardia sigue siendo tuya: la designación se mantiene en sus términos. No tienes que hacer nada más.</p></div>'
+       :'<div class="msg"><h3>Resolución de la solicitud — guardia del 17 de marzo</h3><p>El Colegio no ha validado la sustitución. Motivación de la resolución: '+esc(S.req.reason||'sin motivación registrada')+'. La guardia sigue siendo de J. Roca. No tienes que hacer nada más.</p></div>';
+    }else{
+      out+=p==='roca'
+       ?'<div class="msg"><h3>Solicitud devuelta — guardia del 17 de marzo</h3><p>La coordinación ha devuelto tu solicitud para que la completes. Motivación: '+esc(S.req.reason||'sin motivación registrada')+'. Al reenviarla, vuelve a en_revision. La guardia sigue siendo tuya.</p></div>'
+       :'<div class="msg"><h3>Solicitud devuelta — guardia del 17 de marzo</h3><p>La solicitud ha sido devuelta al titular. Motivación: '+esc(S.req.reason||'sin motivación registrada')+'. No tienes que hacer nada por ahora.</p></div>';
+    }
+  }
+  if(p==='serra'&&S.req.status!=='none'){
+    out+='<div class="msg"><h3>Oferta de sustitución — guardia del 17 de marzo</h3><p>Se te ofrece la guardia de Penal 24 h del 17 de marzo.</p>'+(S.serra.screen!=='accepted'&&S.req.status==='ofrecida'?'<div style="margin-top:10px"><button class="btn sm" data-a="serra-open" id="openoffer">Ver oferta</button></div>':'')+'</div>';
+  }
+  if(p==='roca'){
+    out+='<div class="msg"><h3>Guardia asignada — 17 de marzo — Penal 24 h</h3><p>Se le ha asignado la guardia de Penal, modalidad localizada, 24 horas. La confirmación no altera la eficacia de la designación; solo acredita que la conoce.</p></div>';
+  }
+  return out;
+}
+function avisos(p){
+  S[p].seen=true;
+  return phone(p,'avisos','<h2 id="title" tabindex="-1">Avisos</h2><div class="k">Los avisos no contienen datos de salud.</div>'+(notifs(p)||'<p>No tienes avisos nuevos.</p>'));
+}
+/* ---------- Sustituto ---------- */
+function serraOffer(){
+  return phone('serra','avisos',back('serra-avisos')+'<h2 id="title" tabindex="-1">Oferta de sustitución</h2><div class="sum"><div><span>Guardia</span><span>17 mar · Penal 24 h</span></div><div><span>Titular</span><span>J. Roca</span></div><div><span>Plazo de respuesta</span><span>48 h desde la oferta (propuesto; lo confirma el Colegio)</span></div></div>'+
+   legal('Ten en cuenta','Si aceptas, la guardia no será tuya hasta que el Colegio valide el cambio.')+
+   '<div style="display:flex;flex-direction:column;gap:12px;margin-top:auto"><button class="btn p" data-a="serra-accept" id="acc">Aceptar la guardia</button><button class="btn" data-a="serra-decline">No puedo</button></div>');
+}
+function serraAccepted(){
+  return phone('serra','avisos','<h2 id="title" tabindex="-1">Aceptada</h2>'+badge('pv')+'<p style="margin:0">Has aceptado cubrir la guardia del 17 de marzo. Queda pendiente de validación del Colegio.</p>'+
+   legal('Ten en cuenta','Hasta la resolución, la guardia sigue siendo de J. Roca. Te avisaremos del resultado.')+
+   '<button class="btn" data-a="serra-avisos" style="margin-top:auto">Ir a Avisos</button>');
+}
+function serraDeclined(){
+  return phone('serra','avisos','<h2 id="title" tabindex="-1">Oferta rechazada</h2><p style="margin:0">La oferta pasa al siguiente candidato del orden.</p><button class="btn" data-a="serra-open" style="margin-top:auto">Deshacer (solo en el prototipo)</button>');
+}
+/* ---------- Coordinación ---------- */
+function coord(){
+  var st=S.req.status,c=S.coord,body='';
+  var bar='<div class="deskbar"><b>Turno de Oficio · Coordinación</b><div style="display:flex;flex-wrap:wrap;gap:16px"><span>Cuadrante</span><span>Disponibilidad</span><span class="on">Solicitudes'+(st==='none'?'':' (1)')+'</span><span>Habilitaciones</span><span>Panel</span></div></div>';
+  if(c.screen==='inbox'){
+    if(st==='none') body='<h2 id="title" tabindex="-1">Solicitudes</h2><p style="margin:0">No hay solicitudes pendientes.</p>';
+    else if(st==='ofrecida') body='<h2 id="title" tabindex="-1">Solicitudes</h2><div class="item"><div class="r"><b>EX-2027-0311 · Guardia 17/03 · Penal 24 h</b>'+badge('of')+'</div><div class="k">J. Roca solicita sustitución. Oferta enviada a '+esc(cand())+', pendiente de respuesta.</div><button class="btn sm" disabled style="align-self:flex-start">Resolver: falta la aceptación del candidato</button></div>';
+    else if(st==='aceptada') body='<h2 id="title" tabindex="-1">Solicitudes</h2><div class="item"><div class="r"><b>EX-2027-0311 · Guardia 17/03 · Penal 24 h</b>'+badge('pv')+'</div><div class="k">J. Roca solicita sustitución. '+esc(cand())+' ha aceptado y queda pendiente de validación.</div><button class="btn sm" data-a="coord-open" id="open" style="align-self:flex-start">Abrir expediente</button></div>';
+    else body='<h2 id="title" tabindex="-1">Solicitudes</h2><p style="margin:0">No hay solicitudes pendientes. La última, EX-2027-0311, está resuelta.</p>';
+  }else if(c.screen==='exp'){
+    body='<h2 id="title" tabindex="-1">Expediente de solicitud · EX-2027-0311</h2><div class="k">Guardia 17/03 · Penal 24 h</div>'+
+     '<div class="cols"><div class="item"><b>Solicitante</b><div>J. Roca</div><div class="k">Motivo: Fuerza mayor · dentro de plazo</div><b>Sustituto propuesto</b><div>'+esc(cand())+'</div><div class="k">Habilitación vigente · disponible · cómputo 4,00</div></div>'+
+     '<div class="item"><b>Comprobaciones automáticas</b><ul class="chk"><li><span>✓</span>Plazo: presentada 3 días antes</li><li><span>✓</span>Habilitación: vigente en la materia</li><li><span>✓</span>Solapamiento: sin conflicto</li><li><span>✓</span>Cómputo: el sustituto queda por encima de la media</li></ul></div></div>'+
+     '<div><label class="f" for="motiv">Motivación (obligatoria para cualquier decisión)</label><textarea id="motiv" aria-describedby="merr">'+esc(c.motiv)+'</textarea><div id="merr" class="err" role="alert">'+esc(c.err)+'</div><button class="btn sm" data-a="coord-tipo" style="margin-top:6px">Insertar motivación tipo</button></div>'+
+     '<div class="acts"><button class="btn p" data-a="coord-approve" id="appr" style="min-height:56px">Aprobar y publicar v2</button><button class="btn d" data-a="coord-deny">Denegar con motivación</button><button class="btn" data-a="coord-return">Devolver al solicitante</button></div>'+
+     '<div class="k">Plataforma propone, comprueba y avisa; la decisión la toma la coordinación.</div>';
+  }else{
+    var t,l;
+    if(st==='aprobada'){t='Resuelta: sustitución aprobada';l=['Versión 2 del cuadrante publicada: la guardia del 17/03 pasa a '+esc(cand())+'.','El histórico conserva a J. Roca como titular anterior.','Notificación enviada a J. Roca y a '+esc(cand())+'.','Resolución y motivación incorporadas al expediente y visibles en ambas notificaciones.'];}
+    else if(st==='denegada'){t='Resuelta: solicitud denegada';l=['La guardia del 17/03 sigue a nombre de J. Roca.','Notificación enviada a J. Roca y a '+esc(cand())+' con la motivación visible.','Resolución y motivación incorporadas al expediente.'];}
+    else{t='Solicitud devuelta al solicitante';l=['J. Roca puede completarla y enviarla de nuevo.','Notificación enviada a J. Roca y a '+esc(cand())+'.','La guardia del 17/03 sigue a nombre de J. Roca.'];}
+    body='<h2 id="title" tabindex="-1">'+t+'</h2><ul class="chk">'+l.map(function(x){return '<li><span>✓</span>'+x+'</li>';}).join('')+'</ul><div class="acts"><button class="btn" data-a="who" data-p="roca">Ver el aviso de J. Roca</button><button class="btn" data-a="who" data-p="serra">Ver el aviso de '+esc(cand())+'</button></div>';
+  }
+  return '<div class="desk">'+bar+'<div class="deskbody">'+body+'</div></div>';
+}
+/* ---------- Render ---------- */
+function screen(){
+  var p=S.persona;
+  if(p==='roca'){
+    var s=S.roca.screen;
+    return s==='home'?rocaHome():s==='p1'?rocaP1():s==='p2'?rocaP2():s==='p3'?rocaP3():s==='sent'?rocaSent():s==='avisos'?avisos('roca'):stub('roca');
+  }
+  if(p==='serra'){
+    var t=S.serra.screen;
+    return t==='offer'?serraOffer():t==='accepted'?serraAccepted():t==='declined'?serraDeclined():t==='avisos'?avisos('serra'):stub('serra');
+  }
+  return coord();
+}
+function hint(){
+  var st=S.req.status,p=S.persona,c=esc(cand());
+  var B=function(l,a,x){return '<button class="btn sm" data-a="'+a+'"'+(x?' data-p="'+x+'"':'')+'>'+l+'</button>';};
+  if(st==='none') return p==='roca'?'<span>Empieza: pulsa «Solicitar sustitución» en la guardia del 17 de marzo.</span>':'<span>Todavía no hay solicitud.</span>'+B('Empezar como J. Roca','who','roca');
+  if(st==='ofrecida'){
+    if(p==='roca') return '<span>Solicitud enviada. Ahora el sustituto recibe la oferta.</span>'+B('Siguiente: ver como '+c,'who','serra');
+    if(p==='serra') return '<span>Abre el aviso y acepta la oferta.</span>';
+    return '<span>La coordinación aún no puede resolver: el candidato no ha aceptado.</span>'+B('Ver como '+c,'who','serra');
+  }
+  if(st==='aceptada'){
+    if(p==='coord') return '<span>Abre el expediente, revisa las comprobaciones y resuelve con motivación.</span>';
+    return '<span>El sustituto ha aceptado. La decisión es de la coordinación.</span>'+B('Siguiente: ver como Coordinación','who','coord');
+  }
+  if(p==='roca'||p==='serra') return '<span>Notificación recibida. Fin del circuito.</span>'+B('Reiniciar','reset');
+  return '<span>Resuelto. Comprueba las notificaciones de los dos letrados.</span>';
+}
+function steps(){
+  var st=S.req.status,r=resolved();
+  var d=[st!=='none',st==='aceptada'||r,r,r];
+  var now=!d[0]?0:!d[1]?1:!d[2]?2:3;
+  var L=[['Solicitud','J. Roca pide la sustitución con motivo.'],['Propuesta de sustituto','Se ofrece a un candidato elegible y acepta.'],['Resolución de la coordinación','Revisa comprobaciones y decide con motivación.'],['Notificación','Ambos letrados reciben el resultado.']];
+  return L.map(function(x,i){return '<li class="'+(d[i]?'done':'')+(i===now&&!(r&&i===3)?' now':'')+'"><span class="dotn" aria-hidden="true">'+(d[i]?'✓':(i+1))+'</span><span><b>'+x[0]+'</b><small>'+x[1]+'</small></span></li>';}).join('');
+}
+function who(){
+  var P=[['roca','J. Roca (titular)'],['serra',esc(cand())+' (sustituto)'],['coord','Coordinación']];
+  return P.map(function(x){return '<button class="btn" data-a="who" data-p="'+x[0]+'" aria-pressed="'+(S.persona===x[0])+'">'+x[1]+'</button>';}).join('');
+}
+function render(){
+  var prev=document.activeElement&&document.activeElement.id;
+  document.getElementById('steps').innerHTML=steps();
+  document.getElementById('who').innerHTML=who();
+  document.getElementById('hint').innerHTML=hint();
+  document.getElementById('dev').innerHTML=screen();
+  document.getElementById('live').textContent=S.live;
+  var f=S.focus||prev;S.focus='';
+  var el=f&&document.getElementById(f);
+  if(el)el.focus();
+}
+function go(focus,live){S.focus=focus||'title';S.live=live||'';render();}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;
+  var a=b.getAttribute('data-a'),p=b.getAttribute('data-p'),t=b.getAttribute('data-t');
+  if(a==='reset'){init();go('title','Prototipo reiniciado');return;}
+  if(a==='who'){S.persona=p;go('title');return;}
+  if(a==='nav'){
+    if(t==='guardias'){if(p==='roca')S.roca.screen='home';else S.serra.screen='stub';}
+    else if(t==='avisos'){S[p].screen='avisos';}
+    else S[p].screen='stub';
+    go('title');return;
+  }
+  if(a==='roca-home'){S.roca.screen='home';go('title');return;}
+  if(a==='roca-start'){S.roca.screen='p1';go('title');return;}
+  if(a==='roca-p1'){S.roca.screen='p1';go('title');return;}
+  if(a==='roca-p2'){S.roca.screen='p2';go('title');return;}
+  if(a==='roca-p3'){S.roca.screen='p3';go('title');return;}
+  if(a==='roca-send'){S.req.status='ofrecida';S.roca.screen='sent';S.serra.screen='avisos';S.coord.screen='inbox';go('title','Solicitud enviada. La guardia sigue siendo tuya hasta la validación.');return;}
+  if(a==='serra-open'){S.serra.screen='offer';go('title');return;}
+  if(a==='serra-avisos'){S.serra.screen='avisos';go('title');return;}
+  if(a==='serra-accept'){S.req.status='aceptada';S.serra.screen='accepted';go('title','Oferta aceptada. Pendiente de validación del Colegio.');return;}
+  if(a==='serra-decline'){S.serra.screen='declined';go('title','Oferta rechazada');return;}
+  if(a==='coord-open'){S.coord.screen='exp';S.coord.err='';go('title');return;}
+  if(a==='coord-tipo'){S.coord.motiv='Solicitud dentro de plazo; sustituto habilitado, disponible y sin solapamiento.';S.coord.err='';go('motiv');return;}
+  if(a==='coord-approve'||a==='coord-deny'||a==='coord-return'){
+    var m=(document.getElementById('motiv')||{}).value||'';
+    S.coord.motiv=m;
+    if(!m.trim()){S.coord.err='Escribe la motivación para resolver.';go('motiv');return;}
+    S.req.status=a==='coord-approve'?'aprobada':a==='coord-deny'?'denegada':'devuelta';
+    S.req.reason=m;S.roca.seen=false;S.serra.seen=false;S.coord.screen='done';
+    go('title','Resolución registrada y notificada a los dos letrados.');return;
+  }
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.id==='obs')S.roca.obs=t.value;
+  if(t.id==='motiv'){S.coord.motiv=t.value;}
+});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.name==='motivo'){S.roca.motivo=t.value;}
+  if(t.name==='quien'){S.roca.quien=t.value;go(t.id);}
+  if(t.name==='cand'){S.roca.cand=t.value;go(t.id);}
+});
+render();
+})();
+</script>
+</body>
+</html>

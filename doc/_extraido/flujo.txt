@@ -1,0 +1,117 @@
+Flujo ETL de carga inicial
+Cómo entran los datos históricos sin romper el modelo: cuatro estaciones —origen, staging,
+validado, carga— con mapeo de campos, reglas de rechazo y tratamiento de errores que deja
+rastro de cada fila.
+Estación
+Entrada
+Operación
+Salida y responsable
+1 · Origen
+La hoja del trimestre, el listado
+colegial y los partes, tal como
+vienen
+Sin tocar el origen. Se copia y se
+registra el lote: fichero, fuente y
+fecha de recepción
+Lote archivado con su
+suma de control · ETL
+2 · Staging
+La copia, con todo el texto en
+bruto
+Normalización sin reglas de
+negocio: fechas a ISO, texto
+recortado, nombres en
+mayúsculas, sin duplicar ni saltar
+filas
+Tabla de staging con la
+fila original y los campos
+ya tipados · ETL
+3 · Validado
+Staging completo
+Reglas de rechazo (abajo):
+identidad del letrado, vigencia de
+la habilitación, franja dentro del
+cuadrante, solapes y duplicados.
+Sin excepciones silenciosas
+Dos conjuntos: filas
+aceptadas y filas en
+cuarentena con el
+motivo · ETL +
+Coordinación
+4 · Carga
+Solo filas aceptadas
+Inserción en el modelo (GUARDIA,
+ESTADO, designación) con origen,
+fecha de carga y responsable; la
+carga es idempotente: repetirla no
+duplica nada
+Cuadrante versionado
+publicado con informe de
+carga · Coordinación
+16/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-007   |   Entregable 4 · Flujo ETL
+Classification: Internal
+1 / 2
+
+Equivalencia: de la hoja al modelo
+La hoja no se parece al modelo: hay que traducir cada columna con una regla escrita. Esta
+tabla es la que usan el mapeo automático y la revisión manual, y no puede cambiar sin nueva
+versión del flujo.
+Campo en la
+hoja
+Campo en el
+modelo
+Transformación
+Ejemplo
+«García»
+CUENTA /
+persona
+Coincidencia con el listado colegial por
+apellidos y nombre; si ambigüedad,
+cuarentena con motivo «identidad»
+«García López, M» → nº
+colegiado 003142
+«12-nov»
+GUARDIA.fecha
+Fechas en formato texto o Excel se
+convierten a ISO; el año se toma del
+lote, nunca a ojo
+«12-nov» → 2026-11-12
+«Penal»
+GUARDIA.materia
+Normalización contra el catálogo de
+materias; texto libre no catalogado
+entra en cuarentena
+«Penal» → materia PENAL
+«08:00-14:00»
+FRANJA
+La franja se resuelve contra la
+configuración vigente del cuadrante; si
+no existe, cuarentena
+«08:00-14:00» → franja de
+mañana
+Habilitación
+(listado)
+HABILITACIÓN
+Vigencia por materia y fecha; la
+caducada bloquea la asignación
+(Tabla de rechazo n.º 4)
+Penal vigente hasta 2027-03-
+31
+Qué pasa cuando algo no cuadra
+Rechazo de fila: fecha imposible, letrado no encontrado, materia no catalogada, solape con
+otra guardia del mismo día o duplicado dentro del mismo lote. La fila entra en cuarentena con
+motivo y origen.
+Rechazo de lote: la plantilla de la hoja no se reconoce o falta una columna obligatoria. Todo el
+lote se rechaza y se avisa; no se carga «a ver si sale».
+Nada se arregla en silencio: el informe de carga lista aceptadas, cuarentena y motivo, y la
+coordinación firma el lote antes de publicar la versión. Si hay filas en cuarentena, el cuadrante
+se publica con esa marca y sin ellas.
+Reversibilidad: cada carga crea una versión; si la coordinación detecta un error, se descarta la
+versión y se vuelve a cargar del origen. El origen jamás se sobrescribe.
+Relación con el inventario (Ref. TOF-2026-005): este flujo exige las fuentes que allí se listan —la
+hoja del trimestre, el listado colegial y los partes— y produce el cuadrante versionado que luego
+se publica, se notifica y sirve de base a la certificación. Sin datos cargados, el reparto no puede
+explicarse ni defenderse (guía de la píldora, diapositiva 6).
+16/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-007   |   Entregable 4 · Flujo ETL
+Classification: Internal
+2 / 2

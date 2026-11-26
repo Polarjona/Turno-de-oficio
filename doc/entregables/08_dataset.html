@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Dataset de pruebas anonimizado</title>
+</head>
+<body>
+
+<h1 class="dtitle">Dataset de pruebas anonimizado</h1>
+<p class="dlead">Todos pueden probar con datos realistas y sin datos personales: un juego de datos coherente con el
+modelo, con el mismo tamaño y la misma forma que el real, pero cuyos nombres y cuasiidentificadores no hablan de nadie.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:19%">Ámbito</th><th style="width:23%">Volumen ilustrativo</th><th style="width:58%">Qué se incluye y cómo se protege</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Letrados (base)</strong></td><td>~120 en el dataset base; ~900 cuentas en el dataset de estrés</td>
+      <td>Nombres ficticios con apellidos comunes; número de colegiado inventado y no coincidente con ningún registro; sin direcciones, teléfonos ni correos reales. El de estrés (900) es para rendimiento (#48), nunca para validar equidad: con 900 letrados cada uno cubriría una guardia cada dos años y medio</td></tr>
+    <tr><td><strong>Especialidades y habilitaciones</strong></td><td>Las 12 materias del contrato (#29), con vigencias mixtas</td>
+      <td>Habilitaciones vigentes y caducadas, para poder probar el filtro de elegibilidad y el bloqueo por caducidad</td></tr>
+    <tr><td><strong>Guardias y franjas</strong></td><td>124 franjas al mes; ~372 por trimestre (unas 10 guardias por letrado y año en el dataset base)</td>
+      <td>Plantillas de la tabla 7.1 (detenido 1,00 · violencia 1,00 · menores 0,90 · penal 0,75 · extranjería 0,60 · civil 0,50)</td></tr>
+    <tr><td><strong>Disponibilidades</strong></td><td>~300 bajas y vacaciones por trimestre</td>
+      <td>Solo indisponibilidad y tipo, sin motivo clínico (RGPD art. 9): nunca se incluye el parte de baja</td></tr>
+    <tr><td><strong>Sustituciones y excusas</strong></td><td>~40 solicitudes con excusa, permuta y sustitución</td>
+      <td>Motivos tipificados, sin detalle libre; todo marcado con una nota de que no son expediente real</td></tr>
+    <tr><td><strong>Partes validados</strong></td><td>~350 partes cerrados por trimestre</td>
+      <td>Actuaciones ilustrativas, sin datos de clientes ni de procedimientos reales</td></tr>
+    <tr><td><strong>Carga inicial</strong></td><td>1 trimestre completo listo para ejecutar el flujo ETL dos veces</td>
+      <td>Repetible e idempotente: la segunda carga no duplica nada (ver Flujo ETL, TOF-2026-007)</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Qué protege y qué no</div>
+  <ul class="tight" style="margin-bottom:0;">
+    <li><strong>Nombre ficticio, entidad real:</strong> la forma y el volumen son los del modelo, así que las pruebas de carga y de equidad son válidas. Con distribución desigual a propósito: si todos empiezan empatados, la equidad no tiene nada que corregir.</li>
+    <li><strong>Sin cuasiidentificadores:</strong> nada que, cruzado con otra fuente, reidentifique a una persona. Si un nombre coincide por azar con uno real, se vuelve a generar.</li>
+    <li><strong>Sin datos sensibles:</strong> los motivos de baja no existen en el dataset; guardan la indisponibilidad y el intervalo, como en la aplicación.</li>
+    <li><strong>Casos límite sembrados:</strong> un 15 % con indisponibilidad declarada en fechas concretas; una habilitación caducada, sin caducar; una baja con justificante, sin motivo clínico; una designación urgente por violencia de género; y un letrado en el cupo máximo. Son la prueba de aceptación del algoritmo del #34, así que van en el base y no en el de estrés.</li>
+    <li><strong>Se reemplaza, no se acumula:</strong> cada carga de prueba descarta la anterior; no se crea un histórico de datos ficticios en producción.</li>
+  </ul>
+</div>
+
+<p class="footnote">Documento de trabajo dentro de un proyecto de ejercicio: los volúmenes son ilustrativos y no reproducen datos
+reales del Colegio. El dataset se adjunta junto con su nota de uso cuando se entrega en la tarjeta #38. Ref. TOF-2026-011.</p>
+
+</body>
+</html>

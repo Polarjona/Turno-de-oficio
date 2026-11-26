@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Inventario de fuentes de datos</title>
+</head>
+<body>
+
+<h1 class="dtitle">Inventario de fuentes de datos e integraciones</h1>
+<p class="dlead">Antes de diseñar el ETL hay que saber de dónde sale cada dato y en qué formato entra.
+Esta tabla fija qué fuentes alimentan la plataforma, quién las custodia y por qué vía salen, para que
+ninguna carga dependa de una conversación o de un correo reenviado.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:15%">Fuente</th><th style="width:23%">Qué aporta</th><th style="width:12%">Formato</th><th style="width:13%">Titular</th><th style="width:11%">Frecuencia</th><th style="width:26%">Vía de acceso</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Hoja de cuadrante</strong></td><td>Guardias, fechas, materias, franjas y letrados asignados; estado de cada franja</td>
+      <td>.xlsx (plantilla compartida)</td><td>Coordinación del turno</td><td>Trimestral, con ajustes</td>
+      <td>Fichero en carpeta compartida; el cargador lo lee sin modificarlo</td></tr>
+    <tr><td><strong>Correos de disponibilidad</strong></td><td>Ausencias, permutas, excusas y cambios de última hora</td>
+      <td>Texto libre (correo)</td><td>Letrados → coordinación</td><td>Continua</td>
+      <td>Lectura puntual por el equipo de carga; no hay buzón automatizado</td></tr>
+    <tr><td><strong>Listado colegial de letrados</strong></td><td>Número de colegiado, apellidos y nombre, especialidad, alta y baja, habilitaciones vigentes</td>
+      <td>Exportación de la base colegial</td><td>Colegio (secretaría)</td><td>Alta y cambios</td>
+      <td>Fichero de intercambio recurrente; la aplicación no accede a la base colegial directamente</td></tr>
+    <tr><td><strong>Calendario oficial</strong></td><td>Festivos y periodos vacacionales reconocidos del territorio</td>
+      <td>Listado público / ICS</td><td>Administraciones públicas</td><td>Anual</td>
+      <td>Descarga del calendario oficial y carga como tabla de referencia</td></tr>
+    <tr><td><strong>Partes de guardia</strong></td><td>Servicio realizado, horas de entrada y salida, actuaciones, observaciones; base de la certificación</td>
+      <td>Papel / PDF firmado</td><td>Letrado de guardia</td><td>Por guardia</td>
+      <td>Reproducción en la entrada de datos interna; el original manda</td></tr>
+    <tr><td><strong>Acuerdos y criterios</strong></td><td>Cupos, pesos de equidad, especialidades, preferencias de asignación</td>
+      <td>Actas y acuerdos (PDF)</td><td>Junta de Gobierno</td><td>Por acuerdo</td>
+      <td>Documento oficial; sus cifras se parametrizan en el sistema, no se importan</td></tr>
+    <tr><td><strong>Comunicaciones con juzgados</strong></td><td>Incidencias de comparecencia, sustituciones y confirmaciones de designación</td>
+      <td>Correos y actuaciones</td><td>Coordinación</td><td>Por evento</td>
+      <td>Registro manual en el expediente; la aplicación no sustituye la comunicación oficial</td></tr>
+  </tbody>
+</table>
+
+<p style="font-size:9.2pt; color:#4a5470; margin:3mm 0 0;">Las fuentes se leen y se copian; el origen no se toca. Los principios de entrada de datos van al final de este documento.</p>
+
+<h1 class="dtitle pagebreak" style="font-size:13.6pt;">Integraciones y límites</h1>
+<p class="dlead" style="margin-bottom:2.4mm;">La aplicación no sustituye las comunicaciones oficiales ni se integra con sistemas judiciales. Las conexiones
+definidas son de salida, no de entrada.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Integración</th><th style="width:34%">Dirección</th><th style="width:17%">Uso</th><th style="width:27%">Qué garantiza</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Suscripción al calendario personal</strong></td><td>Salida</td><td>Letrados</td>
+      <td>El letrado incorpora sus guardias a su agenda sin copiar datos a mano</td></tr>
+    <tr><td><strong>Cuadrante en PDF</strong></td><td>Salida</td><td>Coordinación</td>
+      <td>Documento con sello de versión y fecha para tablón y acta</td></tr>
+    <tr><td><strong>Fichero de certificación</strong></td><td>Salida</td><td>Coordinación</td>
+      <td>Guardias realizadas con detalle para remitir al Colegio; sin reconstrucciones a final de trimestre</td></tr>
+    <tr><td><strong>Notificación in-app + correo</strong></td><td>Salida</td><td>Todos los roles</td>
+      <td>Aviso con registro de envío, entrega y lectura; el correo es un refuerzo, la constancia es la aplicación</td></tr>
+    <tr><td><strong>Comunicaciones con juzgados</strong></td><td>—</td><td>—</td>
+      <td>Quedan fuera a propósito: la aplicación no sustituye el cauce oficial ni produce actuaciones jurídicas</td></tr>
+    <tr><td><strong>Base colegial</strong></td><td>—</td><td>—</td>
+      <td>Queda fuera a propósito: entra por fichero de intercambio, nunca por lectura directa</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Principios de entrada de datos</div>
+  <ul class="tight" style="margin-bottom:0;">
+    <li><strong>El origen no se toca.</strong> Las fuentes se leen y se copian; nunca se edita el fichero del Colegio ni el listado colegial.</li>
+    <li><strong>Sin acceso directo a bases colegiales.</strong> Todo entra por fichero o por registro manual, con responsable y fecha de carga guardados.</li>
+    <li><strong>Minimizar el dato personal.</strong> Las bajas se registran como indisponibilidad, sin motivo clínico (RGPD art. 9); el resto se guarda lo mínimo necesario.</li>
+    <li><strong>Cada dato lleva su origen.</strong> Quién lo aportó, de qué fuente, cuándo y con qué versión; sin ese rastro no hay defensa ante una queja.</li>
+  </ul>
+</div>
+
+<p class="footnote">Si una fuente no llega: sin la hoja del trimestre el cierre se anuncia como <strong>guardia descubierta</strong> y se activa la vía manual (R-01); sin el listado colegial los nuevos letrados se cargan con alta provisional y <strong>sin asignables</strong>; sin los partes validados el periodo se cierra como <strong>pendiente de validación</strong>. Inventario resultante del análisis funcional (Propuesta TOF-2026-001, cap. 2 y 16): no trata datos reales; volumen estimado, unas 372 filas de cuadrante por trimestre (124 franjas al mes).</p>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+Plan de Migración de Datos Existentes
+Proyecto: Turno de Oficio
+Objetivo
+Migrar la información existente desde los archivos Excel actuales hacia la nueva base de datos,
+garantizando la conservación del histórico, evitando duplicidades y verificando la coherencia de los
+datos migrados.
+Fuente de Datos
+- Ficheros Excel utilizados actualmente para la gestión del cuadrante y los letrados.
+- Datos históricos de asignaciones y guardias.
+Estrategia de Migración
+1. Extracción de los datos desde los ficheros Excel.
+2. Limpieza y normalización de formatos (fechas, correos electrónicos y nombres).
+3. Identificación de registros duplicados.
+4. Carga en tablas temporales de validación.
+5. Inserción definitiva en la base de datos.
+6. Verificación y aceptación de la migración.
+Plan de Deduplicación
+- Unificación de registros con el mismo número de colegiado.
+- Detección de coincidencias por nombre, correo electrónico y teléfono.
+- Conservación de un único identificador por letrado.
+- Registro de incidencias para revisión manual cuando existan conflictos.
+Reconciliación de Totales
+Tras la migración se compararán los totales entre Excel y la base de datos:
+- Número total de letrados.
+- Número de asignaciones históricas.
+- Número de cuadrantes registrados.
+- Número de registros archivados.
+Consultas de Aceptación
+1. Verificación de letrados migrados:
+SELECT COUNT(*) FROM abogados;
+2. Detección de posibles duplicados:
+SELECT num_colegiado, COUNT(*) FROM abogados GROUP BY num_colegiado HAVING
+COUNT(*) > 1;
+3. Comprobación de registros históricos:
+SELECT COUNT(*) FROM historial_asignaciones;
+4. Validación de integridad referencial:
+SELECT * FROM asignaciones WHERE id_abogado NOT IN (SELECT id_abogado FROM
+abogados);
+Criterios de Aceptación
+- No existen letrados duplicados.
+- Los totales coinciden con la información de origen.
+- Se conserva el histórico completo.
+- No existen errores de integridad referencial.
+
+Conclusión
+El plan garantiza una migración controlada desde Excel hacia la base de datos, preservando la
+historia del sistema y asegurando la calidad e integridad de la información migrada.

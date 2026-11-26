@@ -1,0 +1,79 @@
+MAPA DE EXPERIENCIA DEL LETRADO EN GUARDIA
+Proyecto Turno de Oficio TarragonaDhruva - Frontend12 Noviembre 2026
+1. Introducción
+La gestión del Turno de Oficio implica numerosas interacciones entre los letrados y el Colegio. Este Journey Map analiza el recorrido completo del abogado durante una guardia para detectar problemas, puntos de fricción y oportunidades de mejora que posteriormente servirán para diseñar wireframes, prototipos y componentes de interfaz.
+2. Perfil del Usuario
+El usuario principal es el letrado del Turno de Oficio. Utiliza la aplicación desde el móvil, frecuentemente en situaciones de presión, desplazamientos y necesidad de respuesta rápida. Sus principales objetivos son consultar guardias, confirmar asignaciones, registrar actuaciones y gestionar sustituciones.
+3. Descripción General del Recorrido
+AVISO → ACUSE → PREPARACIÓN → ACTUACIÓN → PARTE → SUSTITUCIÓN → RESOLUCIÓN
+4. Journey Map
+Fase
+Qué hace
+Qué piensa
+Problemas
+Oportunidades
+Aviso
+Recibe una guardia
+¿Cuándo me toca?
+Aviso poco visible
+Mostrar próxima guardia al abrir la app
+Acuse
+Confirma recepción
+Quiero hacerlo rápido
+Muchos pasos
+Confirmación en un toque
+Preparación
+Consulta datos
+Necesito toda la información
+Información dispersa
+Pantalla Mi Guardia Hoy
+Actuación
+Realiza la guardia
+No tengo tiempo
+Acciones lentas
+Botones rápidos
+Parte
+Registra actuaciones
+Quiero terminar rápido
+Formulario largo
+Simplificar formulario
+Sustitución
+Solicita reemplazo
+Quiero seguimiento
+No sé el estado
+Timeline visual
+Resolución
+Espera respuesta
+¿Está aprobada?
+Incertidumbre
+Notificación automática
+5.1 Aviso de Guardia
+El abogado recibe una notificación informando de una nueva guardia. Necesita visualizar rápidamente fecha, hora, ubicación y tipo de servicio. La oportunidad principal consiste en destacar la próxima guardia desde la pantalla inicial.
+5.2 Acuse de Recibo
+Tras revisar la asignación, el usuario debe confirmar la recepción. El proceso debe ser rápido y ofrecer confirmación inmediata.
+5.3 Preparación
+El usuario consulta toda la información necesaria antes de iniciar la guardia. Resulta fundamental evitar la dispersión de información entre varias pantallas.
+5.4 Actuación
+Durante la guardia el tiempo es crítico. Las acciones frecuentes deben poder realizarse mediante accesos rápidos y botones claramente visibles.
+5.5 Registro del Parte
+Una vez finalizado el servicio, el abogado registra las actuaciones realizadas. El formulario debe minimizar campos innecesarios y repetir la menor cantidad de información posible.
+5.6 Solicitud de Sustitución
+Cuando no puede asistir, el letrado solicita una sustitución. Necesita conocer en todo momento el estado de la petición.
+5.7 Resolución
+La coordinación aprueba o rechaza la solicitud. El resultado debe comunicarse de manera clara mediante notificaciones automáticas.
+6. Momentos Críticos
+Recepción de la guardia
+Confirmación de recepción
+Solicitud urgente de sustitución
+Resolución de coordinación
+Cierre del parte
+7. Oportunidades de Diseño
+Mostrar la próxima guardia en primer plano
+Confirmación con un solo toque
+Notificaciones visibles y persistentes
+Seguimiento claro de sustituciones
+Diseño optimizado para uso móvil con una mano
+8. Impacto en el Diseño de la Aplicación
+Las conclusiones obtenidas servirán como base para los wireframes, el sistema de diseño, el prototipo navegable y las pruebas de usabilidad posteriores.
+9. Conclusiones
+El Journey Map demuestra que las prioridades principales del letrado son la rapidez, la claridad y la reducción del número de pasos necesarios para completar tareas. La futura aplicación deberá centrarse en la visibilidad de la información crítica y en la simplificación de procesos.

@@ -1,0 +1,7 @@
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Sistema operativo
+Thumbs.db
+.DS_Store

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mapa de experiencia del letrado en guardia</title>
+</head>
+<body>
+
+<div class="dkicker">Entregable T2 · Dhruva (Frontend) · Tarjeta #20</div>
+<h1 class="dtitle">Mapa de experiencia del letrado en guardia</h1>
+<p class="dlead">Recorrido completo del letrado en guardia — aviso → acuse → actuación → parte →
+sustitución — con momentos críticos y oportunidades de diseño, para guiar wireframes, prototipo y pruebas.</p>
+
+<h2>1. Premisas del recorrido</h2>
+<ul class="tight">
+<li>El letrado usa la aplicación <b>desde el móvil, de pie, con una mano y a plena luz</b>, a menudo con presión y desplazamientos.</li>
+<li>Los estados se distinguen por <b>texto y forma del borde, no solo por color</b> (sistema de diseño T4).</li>
+<li>Tres reglas mandan en todo el recorrido: <b>publicada no es confirmada</b>; <b>la guardia es del titular hasta que el Colegio valida</b>; <b>toda decisión lleva motivación</b>.</li>
+<li>La columna «Qué piensa» recoge <b>hipótesis emocionales</b>: se confirman o no en la prueba de usabilidad (T6), no son resultados.</li>
+</ul>
+
+<h2>2. Perfil del usuario</h2>
+<p>El usuario principal es el letrado del Turno de Oficio. Sus objetivos son consultar sus guardias,
+confirmar asignaciones, registrar actuaciones y gestionar sustituciones. La coordinación es el segundo
+usuario: resuelve solicitudes con motivación y publica el cuadrante.</p>
+
+<h2>3. Journey map</h2>
+<p>Recorrido según la tarjeta: <b>AVISO → ACUSE → ACTUACIÓN → PARTE → SUSTITUCIÓN</b>. Se añaden dos fases de
+apoyo (Preparación y Resolución) porque el letrado las vive, aunque la resolución la ejecuta la coordinación.</p>
+<table class="grid">
+<thead><tr><th style="width:11%">Fase</th><th style="width:22%">Qué hace</th><th style="width:22%">Qué piensa (hipótesis)</th><th style="width:22%">Problemas</th><th style="width:23%">Oportunidades</th></tr></thead>
+<tbody>
+<tr><td><strong>Aviso</strong></td><td>Recibe una guardia</td><td>«¿Cuándo me toca?»</td><td>Aviso poco visible; no distingue publicada de confirmada</td><td>Mostrar la próxima guardia al abrir la app, con su estado (publicada/confirmada) en texto, no solo en color</td></tr>
+<tr><td><strong>Acuse</strong></td><td>Confirma recepción</td><td>«Quiero hacerlo rápido»</td><td>Muchos pasos para confirmar</td><td>Confirmación en un toque; el acuse acredita conocimiento sin condicionar la eficacia de la designación (RN-10)</td></tr>
+<tr><td><em>Preparación</em></td><td>Consulta sus datos</td><td>«Necesito toda la información»</td><td>Información dispersa entre pantallas</td><td>Pantalla «Mi guardia de hoy»: estado, horario, materia y acciones en una sola vista</td></tr>
+<tr><td><strong>Actuación</strong></td><td>Realiza la guardia</td><td>«No tengo tiempo»</td><td>Acciones lentas en plena guardia</td><td>Botones rápidos y grandes (48 px, principal 60 px); registrar incidencias sin salir de la guardia</td></tr>
+<tr><td><strong>Parte</strong></td><td>Registra actuaciones</td><td>«Quiero terminar rápido»</td><td>Formulario largo; repite datos ya conocidos</td><td>Formulario mínimo: horas y actuaciones; el resto precargado. Sin horas ni actuaciones no se puede validar (RN-18)</td></tr>
+<tr><td><strong>Sustitución</strong></td><td>Solicita reemplazo</td><td>«Quiero seguimiento»</td><td>No sé en qué estado está mi solicitud</td><td>Recorrido en 3 pasos con línea de tiempo y estados del catálogo (<em>oferta_enviada → pendiente_validacion → estimada/desestimada</em>); aviso legal en cada paso: sigue siendo suya hasta la validación</td></tr>
+<tr><td><em>Resolución</em></td><td>Espera la decisión de la coordinación</td><td>«¿Está aprobada?»</td><td>Incertidumbre si el aviso no llega o no se entiende</td><td>Notificación automática con la <b>motivación visible</b> y sin datos de salud; si se deniega, la guardia se mantiene y se dice expresamente</td></tr>
+</tbody>
+</table>
+
+<h2>4. Momentos críticos</h2>
+<ul class="tight">
+<li>Recepción de la guardia: si el aviso no se ve, todo lo demás falla.</li>
+<li>Confirmación de recepción: debe ser inmediata y en un toque.</li>
+<li>Solicitud urgente de sustitución: el titular debe entender que sigue siendo responsable hasta la validación.</li>
+<li>Resolución de coordinación: motivada y notificada a ambos letrados.</li>
+<li>Cierre del parte: rápido, sin campos innecesarios, y sin poder validar vacío (RN-18).</li>
+</ul>
+
+<h2>5. Oportunidades de diseño</h2>
+<ul class="tight">
+<li>Mostrar la próxima guardia en primer plano, con estado en texto.</li>
+<li>Confirmación con un solo toque (acuse sin condicionar la designación).</li>
+<li>Notificaciones visibles y persistentes, sin datos de salud en el aviso.</li>
+<li>Seguimiento claro de sustituciones con estados del catálogo y motivación visible.</li>
+<li>Diseño optimizado para uso móvil con una mano, de pie y a plena luz.</li>
+</ul>
+
+<h2>6. Impacto en el diseño de la aplicación</h2>
+<p>Estas conclusiones son la base de los wireframes (T3), el sistema de diseño (T4), el prototipo navegable
+(T5) y las pruebas de usabilidad (T6), donde las hipótesis de esta tabla se contrastan con letrados reales.</p>
+
+<h2>7. Conclusiones</h2>
+<p>Las prioridades del letrado son la rapidez, la claridad y la reducción de pasos. La aplicación debe centrarse
+en la visibilidad de la información crítica —qué guardia tiene, en qué estado está y qué tiene que hacer—
+y en simplificar los procesos sin perder nunca la trazabilidad ni la motivación de las decisiones.</p>
+
+<p class="footnote">Tarjeta #20 — Dhruva (Frontend). Proyecto de ejercicio, sin interlocución con el Colegio.
+La columna «Qué piensa» son hipótesis, no resultados de usuarios.</p>
+
+</body>
+</html>

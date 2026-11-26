@@ -1,0 +1,1973 @@
+Í
+DISEÑO FUNCIONAL · VERSIÓN EJECUTIVA
+Gestión del
+Turno de Oficio
+Planificación, cobertura y control de las guardias del
+servicio de asistencia jurídica gratuita
+CLIENTE
+Colegio de la Abogacía de Tarragona — Turno de Oficio
+OBJETO
+Diseño funcional de la aplicación de gestión de guardias
+VERSIÓN
+1.1 — resumen ejecutivo · 5 de noviembre de 2026
+DESTINATARIOS
+Junta de Gobierno · Coordinación del Turno · Equipo de desarrollo
+Versión resumida del documento funcional completo. Describe cómo funcionará la aplicación y qué modelo de información la
+sostiene, sin decisiones de arquitectura técnica. Las referencias normativas son orientativas y deben contrastarse con las normas
+colegiales vigentes y con el asesoramiento jurídico del Colegio. Los nombres y cifras de los ejemplos son ilustrativos.
+
+Índice
+1
+La aplicación en una página
+3
+2
+Qué se digitaliza exactamente
+4
+3
+Base normativa del diseño
+5
+4
+Roles y permisos
+6
+5
+Tipología de guardias
+7
+6
+El ciclo del cuadrante
+8
+7
+Asignación de guardias
+9
+8
+Ciclo de vida y estados
+11
+9
+Calendarios
+12
+10
+Disponibilidad y habilitación
+13
+11
+Sustituciones, permutas y excusas
+14
+12
+Modo guardia e incidencias
+15
+13
+Comunicaciones y trazabilidad
+16
+14
+Panel e indicadores
+17
+15
+Reglas de negocio
+18
+16
+Modelo de datos
+20
+17
+Diagrama entidad-relación
+22
+18
+Seguridad y protección de datos
+23
+A
+Pantallas de referencia
+24
+Qué encontrarás y qué no
+El documento describe el funcionamiento de la aplicación en el orden en que se usa: qué se digitaliza, quién
+hace qué, cómo se construye el cuadrante, cómo se cubre una guardia, qué ocurre cuando alguien no puede
+acudir y cómo se mide el resultado. Termina con las reglas de negocio numeradas y el modelo de datos.
+No incluye presupuesto, plazos de proveedor ni decisiones de tecnología. Tampoco interpreta la normativa:
+describe cómo la aplicación se adapta a ella sin sustituir ninguna decisión del Colegio.
+La regla que ordena todo el diseño
+La plataforma no decide: propone, comprueba, documenta y avisa. La designación, la estimación de una
+excusa y la validación de una sustitución son actos del Colegio, adoptados por la persona competente dentro
+de la aplicación. De ahí que ninguna función automática publique ni notifique por sí misma.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+2 / 24
+
+1 La aplicación en una página
+Cada año el Colegio coloca a cerca de un centenar de profesionales en más de un millar de franjas de
+guardia, respetando especialidades, ausencias, descansos y un reparto equitativo que debe poder
+explicarse. Hoy ese trabajo vive en correos y hojas de cálculo. La propuesta lo convierte en un
+procedimiento único y trazable.
+La aplicación no se organiza alrededor de un calendario, sino de una unidad de trabajo distinta: la guardia,
+entendida como una franja de cobertura que debe estar atendida por un profesional habilitado, con una
+modalidad concreta y un responsable identificable en todo momento. Todo lo demás —disponibilidad,
+especialidades, sustituciones, incidencias, estadísticas— gira alrededor de esa entidad.
+Digitaliza el ciclo completo: definición del calendario anual, comunicación de disponibilidad, generación y
+validación del cuadrante, designación, acuse, gestión de sustituciones, registro de incidencias, cierre del
+parte y certificación de lo realizado, con constancia de quién decidió qué y cuándo.
+COBERTURA
+El 100 % de las franjas
+planificadas, con alerta
+automática ante cualquier
+hueco.
+EQUIDAD
+Criterio publicado y
+aplicado igual para todos,
+con el cómputo de cada
+letrado a la vista.
+CONSTANCIA
+Cada cambio con autor,
+fecha, motivo; el histórico no
+se reescribe.
+CONTINUIDAD
+Vía manual de designación
+siempre disponible, también
+si el sistema falla.
+Qué cambia para el Colegio
+Se acaban los huecos invisibles. Un semáforo único por materia y día distingue cubierta, pendiente de
+acuse y descubierta.
+El reparto deja de ser opinable. Cada designación se justifica con la carga previa del letrado y su posición
+en el turno.
+Las sustituciones salen de la mensajería privada. Entran en un circuito con candidatos elegibles y
+resolución expresa.
+La retribución se documenta sola. El parte cerrado y validado es la base de la certificación trimestral.
+Lo que la aplicación no hace
+No gestiona expedientes judiciales, no sustituye las comunicaciones con juzgados ni con la Comisión de
+Asistencia Jurídica Gratuita, no calcula retribuciones y no decide sobre la procedencia de una excusa. Cada
+una de esas funciones permanece donde la ley y las normas colegiales la sitúan.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+3 / 24
+
+2 Qué se digitaliza exactamente
+La mayoría de los errores en proyectos como este nace de mezclar cuatro cosas que el lenguaje
+cotidiano confunde: la guardia, el turno, la designación y la sustitución.
+GUARDIA
+Franja que debe cubrirse.
+Existe aunque nadie la
+cubra: por eso puede estar
+descubierta.
+TURNO
+Lista ordenada de
+habilitados en una materia.
+Fija la prelación y el
+cómputo de equidad.
+DESIGNACIÓN
+Acto colegial que atribuye
+la guardia a un letrado.
+Produce obligaciones.
+SUSTITUCIÓN
+Cambio de titular validado
+por el Colegio, que conserva
+la historia de la guardia.
+La distinción tiene consecuencias inmediatas. Si guardia y designación se modelan como una sola cosa, el
+sistema no puede representar una franja vacía y, por tanto, no puede avisar de un hueco. Y si la designación
+se confunde con la aceptación del letrado, se le atribuye una facultad que no tiene —decidir si cubre o no— y
+un deber profesional se convierte en una invitación.
+01
+Calendario
+Tipos y franjas
+del año.
+COORDINACIÓN
+→
+02
+Guardias
+Franjas creadas,
+sin titular.
+SISTEMA
+→
+03
+Propuesta
+Reparto elegible
+y equilibrado.
+SISTEMA
+→
+04
+Designación
+Validación y
+publicación.
+COORDINACIÓN
+→
+05
+Acuse
+El letrado
+confirma que la
+conoce.
+ABOGADO
+El problema que se resuelve
+Situación actual
+Efecto sobre el servicio
+Respuesta de la aplicación
+El cuadrante vive en varias copias
+Nadie puede afirmar qué franjas están
+cubiertas
+Estado único y semáforo de cobertura por
+franja
+Siempre cubren los mismos
+Agravio comparativo y bajas del turno
+Cómputo ponderado y prelación
+publicada
+Cambios por mensajería
+El Colegio se entera cuando ya cambió
+el titular
+Circuito con candidatos, acuse y
+resolución
+El aviso no deja rastro
+Discusiones sobre si se comunicó
+Notificación con envío, entrega y lectura
+Partes dispersos
+Certificación lenta y con errores
+Parte validado que alimenta la
+certificación
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+4 / 24
+
+3 Base normativa del diseño
+La organización de la guardia es competencia colegial y la relación con el letrado designado está
+regulada. De esa regla se derivan decisiones muy concretas del producto.
+Referencia
+Qué impone
+Decisión en la aplicación
+Ley 1/1996, art. 22
+Los Colegios organizan el servicio
+mediante sus Juntas de Gobierno y
+garantizan su prestación continuada.
+La aplicación es instrumento de apoyo:
+existe siempre una vía manual de
+designación.
+Ley 1/1996, art. 24
+Distribución objetiva y equitativa, pública y
+consultable; la excusa se formula en plazo
+desde la notificación.
+Los criterios son visibles para todo el turno y
+la renuncia se modela como excusa con
+plazo y resolución.
+RD 141/2021 (Reglamento de
+asistencia jurídica gratuita;
+deroga el RD 996/2003)
+Designación de oficio, turnos
+especializados y actuación inmediata en
+supuestos urgentes.
+Admite designaciones urgentes fuera del
+cuadrante, conservando su origen y su
+autorización.
+RD 135/2021 (Estatuto General
+de la Abogacía, cap. VI)
+Deber profesional del designado, sin
+derivación libre de la asistencia a otro
+letrado.
+La sustitución requiere sustituto habilitado y
+validación colegial: no es un acuerdo
+privado.
+RGPD y LO 3/2018
+Datos de salud como categoría especial;
+minimización y protección desde el diseño.
+Se registra la indisponibilidad, no el
+diagnóstico; el justificante queda en espacio
+restringido y auditado.
+RGPD, art. 22
+Derecho a no ser objeto de decisiones
+individuales automatizadas.
+El cálculo de reparto es una propuesta sin
+efectos hasta la validación humana.
+Normas de la Junta de
+Gobierno
+Fijan plazos de excusa, cupos y criterios de
+equidad.
+Todos los parámetros son configuración
+versionada, no código.
+Tres principios que no se negocian
+1. Nada se publica sin acto colegial. La automatización comprueba, ordena y avisa; nunca designa.
+2. Nada se borra. Las correcciones se hacen por nuevo estado; la historia del cuadrante se puede
+reconstruir.
+3. La continuidad prevalece. Ante un fallo, un bloqueo o un dato contradictorio hay una vía de excepción, y
+también queda registrada.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+5 / 24
+
+4 Roles y permisos
+Cinco roles, con una separación deliberada: quien propone no aprueba y la información sensible no
+circula por la vista equivocada.
+Rol
+Quién
+Qué puede hacer
+Abogado/a
+Colegiado inscrito en el turno
+Ver el cuadrante y sus guardias; comunicar disponibilidad; acusar
+recibo; solicitar excusa o permuta; registrar incidencias; cerrar su
+parte; descargar su certificación.
+Coordinación del
+Turno
+Personal administrativo del
+Colegio
+Gestionar letrados, especialidades y tipos; generar y publicar el
+cuadrante; asignar; resolver excusas y sustituciones; gestionar
+incidencias; obtener informes.
+Junta de Gobierno
+Órgano de gobierno
+Aprobar criterios, plazos y cupos; resolver recursos; consultar
+cualquier expediente.
+Administración
+técnica
+Servicio informático
+Altas, credenciales, parámetros y copias. Sin acceso al contenido
+de guardias ni a la auditoría.
+Auditoría y datos
+Responsable designado
+Consultar accesos y cambios; atender derechos de las personas.
+Sin capacidad de modificar nada.
+Matriz de permisos
+C = consulta · E = edita · A = aprueba · — = sin acceso
+Función
+Abogado
+Coordinación
+Junta
+Técnica
+Auditoría
+Ver cuadrante publicado
+C
+C
+C
+—
+C
+Comunicar disponibilidad
+E
+E
+—
+—
+—
+Validar disponibilidad
+—
+A
+C
+—
+C
+Generar propuesta de cuadrante
+—
+E
+—
+—
+—
+Publicar o modificar cuadrante
+—
+A
+C
+—
+C
+Solicitar excusa o permuta
+E
+E
+—
+—
+—
+Resolver excusa o sustitución
+—
+A
+C
+—
+C
+Cerrar / validar parte
+E
+A
+C
+—
+—
+Ver justificante de salud
+Propio
+C
+C
+—
+C
+Aprobar criterios y plazos
+—
+—
+A
+—
+C
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+6 / 24
+
+5 Tipología de guardias
+Una guardia de asistencia al detenido no cuesta lo mismo al letrado que una disponibilidad telefónica
+de civil. Tratarlas como equivalentes falsea la equidad.
+Tipo
+Modalidad
+Franja
+Cómputo
+Particularidad operativa
+Asistencia al detenido
+Localizada con
+comparecencia
+24 h o turnos
+de 8 h
+1,00
+Máxima exigencia: el escalado por falta de
+respuesta debe resolverse en minutos.
+Guardia penal
+Presencial en
+sede
+08:00–20:00
+0,75
+Juicios rápidos y diligencias urgentes; presencia
+física y coordinación con el juzgado.
+Violencia de género
+Localizada
+24 h
+1,00
+Turno especializado: habilitación vigente y
+formación acreditada.
+Menores
+Localizada
+24 h
+0,90
+Coordinación con fiscalía y equipo técnico;
+registro de comparecencias.
+Extranjería e interior
+Localizada
+Según sede
+0,60
+Asistencias en frontera o dependencias policiales;
+control de tiempos de espera.
+Civil, social y
+contencioso
+Localizada
+Mañana /
+tarde
+0,50
+Carga concentrada en señalamientos; refuerzo
+por volumen previsto.
+Refuerzo e
+incidencias
+Según
+necesidad
+Variable
+0,50
+Se activa sobre una guardia existente;
+designación urgente y motivada.
+Los pesos son una configuración inicial; los fija la Junta y el sistema conserva la versión aplicada en cada periodo, de modo que
+un cambio de criterio no altera estadísticas ya publicadas.
+Cada tipo se define una vez
+La plantilla de guardia contiene lo necesario para que la franja sea inequívoca: denominación y código,
+materia requerida, modalidad y sede, horario —con indicación de si cruza la medianoche—, número de
+letrados previstos, unidad de cómputo y regla de descanso posterior. Una guardia de 24 horas pertenece a
+una sola fecha de servicio, no a dos: así el reparto, los descansos y las estadísticas se calculan sobre una
+única unidad.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+7 / 24
+
+6 El ciclo del cuadrante
+El cuadrante no se publica de golpe: se construye en cinco fases con responsables distintos. Ninguna
+puede saltarse, porque de ello depende que el letrado haya podido comunicar sus circunstancias antes
+de ser designado.
+FASE 1
+Definición
+Tipos, franjas,
+sedes y cupos.
+COORDINACIÓN ·
+APRUEBA JUNTA
+→
+FASE 2
+Disponibilidad
+Vacaciones y
+ausencias.
+ABOGADOS ·
+VALIDA
+COORDINACIÓN
+→
+FASE 3
+Propuesta
+Reparto por
+elegibilidad y
+equidad.
+SISTEMA
+→
+FASE 4
+Alegaciones
+Causa
+justificada.
+ABOGADOS ·
+RESUELVE
+COORDINACIÓN
+→
+FASE 5
+Publicación
+Versión vigente.
+COORDINACIÓN
+Fase
+Qué ocurre
+Plazo orientativo
+Resultado
+Definición
+Se fija qué días hay guardia, de qué tipo y con qué
+modalidad.
+60 días antes
+Calendario marco
+Disponibilidad
+Los letrados comunican vacaciones, ausencias y
+formación; se validan.
+Cierre 45 días antes
+Mapa de
+indisponibilidades
+Propuesta
+El sistema cruza elegibilidad, ausencias y cómputo y
+justifica cada asignación.
+35 días antes
+Borrador justificado
+Alegaciones
+El letrado consulta su propuesta y opone causa si
+procede; se resuelve cada una.
+Ventana de 10 días
+Expediente resuelto
+Publicación
+Se publica la versión vigente y se notifica; empiezan
+los plazos de excusa.
+20 días antes
+Cuadrante v1
+Estados del cuadrante
+Estado
+Significado
+Consecuencia
+Borrador
+Solo visible para coordinación; cambios libres.
+Sin efectos para el letrado
+En alegaciones
+Publicado internamente para el afectado.
+Puede oponer causa; no es designación
+Publicado
+Versión vigente, notificada y consultable.
+Produce designaciones y abre plazos
+Congelado
+Alcanzada la antelación mínima fijada por la Junta.
+Solo cambia por sustitución o permuta
+validada
+Cerrado
+Periodo terminado y partes validados.
+Pasa al histórico y a la certificación
+La publicidad del criterio no es un gesto de transparencia: el art. 24 de la Ley 1/1996 exige que el sistema de distribución sea
+objetivo, equitativo y consultable. En la aplicación eso es una pantalla concreta, «Cómo se reparten las guardias», con los
+criterios vigentes, los pesos y la fecha del acuerdo que los aprobó.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+8 / 24
+
+7 Asignación de guardias
+Tres vías conviven: la asignación manual para casos singulares, la propuesta asistida para el grueso del
+cuadrante y la designación urgente para lo que no admite espera. Las tres terminan igual: un acto del
+Colegio, registrado.
+Quién es elegible
+Siete filtros acumulativos descartan a quien no puede cubrir la guardia; cada descarte queda registrado con
+su motivo, lo que permite explicar por qué una persona concreta no fue propuesta.
+#
+Filtro
+Comprobación
+1
+Alta en el turno
+Activo en el turno correspondiente a la materia.
+2
+Habilitación vigente
+Acreditación en la especialidad, no caducada. Bloqueo duro.
+3
+Disponibilidad
+Sin indisponibilidad validada que cubra la franja.
+4
+Solapamiento
+Sin otra guardia que se solape total o parcialmente.
+5
+Descanso
+Se respeta la regla de descanso posterior, si está configurada.
+6
+Cupos
+No ha alcanzado el máximo del mes, del año o del periodo.
+7
+Excusas
+No está en periodo de exclusión por excusa estimada, si la norma lo prevé.
+Cómo se elige entre los elegibles
+1. Menor cómputo acumulado en el periodo, ponderado por modalidad. Es el criterio principal porque es el
+que hace efectiva la equidad.
+2. Mayor antigüedad en el turno, que actúa como memoria histórica cuando el cómputo se iguala.
+3. Menor carga reciente (guardias de los últimos 30 días).
+4. Menor número de excusas estimadas en el periodo.
+5. Desempate aleatorio reproducible, con semilla registrada junto a la propuesta.
+Ejemplo: guardia de penal del 15 de marzo, con cuatro elegibles (24 h = 1,00; presencial = 0,75; localizada = 0,50)
+Letrado
+Cómputo previo
+Último mes
+Excusas
+Orden
+Resultado
+A. Ferrer
+3,25
+2
+0
+1
+Propuesto
+ menor carga acumulada
+M. Serra
+4,00
+3
+0
+2
+Alternativa inmediata
+J. Roca
+5,50
+1
+1
+3
+No propuesto por cómputo
+N. Vidal
+6,75
+4
+0
+4
+No propuesto por cómputo
+La pantalla muestra esta tabla junto al nombre propuesto. La coordinación puede aceptarla o apartarse de
+ella: si se aparta, el sistema exige un motivo tipificado (continuidad, conocimiento del asunto, indicación del
+juzgado, situación excepcional) y lo incorpora al expediente. No existe la posibilidad de asignar «sin más».
+La propuesta nunca publica sola
+El cálculo no genera designaciones ni notificaciones: su resultado es un borrador que adquiere eficacia solo
+con la publicación del cuadrante. Es la garantía de que no hay decisión automatizada con efectos jurídicos y
+de que el Colegio conserva la dirección efectiva del reparto.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+9 / 24
+
+Designación urgente
+Cuando la guardia debe cubrirse de inmediato, la coordinación designa sin esperar al ciclo ordinario. La
+guardia conserva su identificador y añade origen (urgente, refuerzo o cobertura de hueco), autoridad y hora,
+motivo y resultado de la comunicación. Se reflejan en el panel como indicador propio: un volumen alto de
+urgencias suele significar que la planificación previa no funciona.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+10 / 24
+
+8 Ciclo de vida y estados
+Saber en qué estado está una guardia es lo que permite detectar a tiempo un problema y distinguir
+entre «no ha confirmado» y «no va a acudir», que son situaciones muy distintas.
+Estado
+Significado
+Qué hace el sistema
+Planificada
+Franja creada, sin titular.
+Cuenta como pendiente en cobertura
+Propuesta
+Titular propuesto, aún sin publicar.
+No notifica; admite cambios
+Publicada
+Designación vigente y notificada.
+Abre plazo de excusa y de acuse
+Confirmada
+El letrado ha acusado recibo.
+Registra fecha y hora; mantiene avisos
+En revisión
+Excusa o permuta pendiente de resolución.
+El titular sigue siendo responsable
+Descubierta
+Sin titular efectivo.
+Alerta máxima y bolsa de urgencia
+En curso
+La franja ha comenzado.
+Activa el modo guardia
+Realizada
+Franja terminada y parte cerrado.
+Pendiente de validación
+Validada
+Parte validado por el Colegio.
+Entra en certificación y estadística
+definitiva
+Anulada
+La franja deja de existir por decisión colegial.
+Exige motivo y recalcula cobertura
+Transiciones principales
+Desde
+Evento
+Resultado y condición
+Planificada
+Se asigna titular
+Propuesta; requiere superar los siete filtros
+Propuesta
+Se publica el cuadrante
+Publicada + notificación con plazo de excusa
+Publicada
+Acuse del letrado
+Confirmada; sin acuse no hay cambio ni pérdida de la
+guardia
+Publicada / Confirmada
+Solicitud de excusa o permuta
+En revisión; el titular continúa como responsable
+En revisión
+Resolución con sustituto
+validado
+Publicada con nuevo titular; se conserva el anterior
+En revisión
+Resolución sin sustituto
+Descubierta + incidencia + bolsa de urgencia
+En curso
+Cierre del parte
+Realizada; exige horas y actuaciones descritas
+Realizada
+Validación del parte
+Validada; pasa a certificación
+Dos distinciones que evitan errores de interpretación
+Publicada no es confirmada. La designación produce efectos desde que el Colegio la comunica; el acuse solo
+documenta el conocimiento. Un letrado que no pulsa «confirmar» no queda libre: genera una alerta.
+Descubierta no es anulada. Una guardia descubierta sigue existiendo y sigue exigiendo cobertura. Es la señal
+más grave del sistema y por eso tiene tratamiento visual y escalado propios.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+11 / 24
+
+9 Calendarios
+El mismo cuadrante se mira de cuatro maneras según quién consulta y para qué. La coordinación
+necesita ver de un golpe dónde falta cobertura; el letrado, saber cuándo le toca.
+VISTA ANUAL
+Doce meses con densidad
+de guardias y huecos en
+rojo.
+VISTA CUADRANTE
+Días en filas, materias en
+columnas, titular y estado.
+VISTA PERSONAL
+«Mis guardias»: calendario y
+lista con vacaciones y
+avisos.
+VISTA DE DÍA
+Quién cubre cada materia,
+cómo localizarlo y qué
+incidencias hay.
+Cuadrante · Semana del 15 al 21 de marzo de 2027 · v3 (publicada)
+Penal · Violencia · Menores · Civil
+Día
+Asistencia detenido
+Penal
+Violencia género
+Menores
+Civil
+Extranjería
+L 15
+Ferrer
+24 h · conf.
+Serra
+08–20
+Roca
+24 h · conf.
+—
+Vidal
+Mañana
+—
+M 16
+Ferrer
+sin acuse
+Roca
+08–20
+Serra
+24 h · conf.
+Mas
+Localizada
+Vidal
+Mañana
+—
+X 17
+DESCUBIERTA
+excusa pendiente
+Vidal
+08–20
+Roca
+24 h · conf.
+—
+Serra
+Mañana
+Puig
+Tarde
+J 18
+Mas
+24 h · conf.
+Ferrer
+08–20
+Vidal
+24 h · conf.
+Puig
+Localizada
+Roca
+Mañana
+—
+V 19
+Mas
+24 h · conf.
+Serra
+08–20
+Ferrer
+24 h · conf.
+—
+Vidal
+Mañana
+—
+S 20
+Puig
+24 h · conf.
+—
+Serra
+24 h · conf.
+—
+—
+—
+D 21
+Puig
+24 h · conf.
+—
+Serra
+24 h · conf.
+—
+—
+—
+Cubierta y confirmada
+Cubierta sin acuse
+Descubierta
+Sin servicio previsto
+Figura 9.1 — Vista cuadrante. La franja descubierta enlaza al expediente de la excusa que la ha provocado.
+Marzo 2027 · Mis guardias
+3 guardias · 1 sin acuse
+L
+M
+X
+J
+V
+S
+D
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+Penal
+16
+17
+18
+Violencia
+19
+20
+21
+22
+23
+Vacaciones
+24
+25
+26
+27
+28
+29
+30
+31
+Penal
+15 Penal · 08:00–20:00 · confirmada
+18 Violencia · 24 h
+31 Penal · sin acuse
+Figura 9.2 — Calendario personal. De los compañeros solo se muestra nombre y materia: la privacidad es una condición del diseño, no un
+añadido.
+Versiones y cambios
+El cuadrante no se reescribe: es una secuencia de versiones. Cada publicación crea una versión con fecha,
+autor y lista de cambios; la consulta muestra la vigente y permite ver la anterior con las diferencias
+resaltadas. Se exporta en PDF con sello de versión, se suscribe al calendario personal del letrado en solo
+lectura y alimenta la certificación de guardias.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+12 / 24
+
+10 Disponibilidad y habilitación
+La disponibilidad no es un sí o un no: es información con categoría, plazo y consecuencia. Y no cualquier
+letrado puede cubrir cualquier guardia: la habilitación es un bloqueo efectivo, no una recomendación.
+Tipo
+Qué comunica
+Efecto
+Documentación
+Vacaciones
+Periodo previsto, dentro de cupo y
+plazo.
+Bloquea en el periodo
+validado
+No; sí validación colegial
+No disponible
+Fecha o franja concreta.
+Bloquea si está validada
+No; motivación breve
+Formación
+Curso o actividad con fecha.
+Bloquea si se valida
+Certificado, opcional
+Baja médica
+Periodo de incapacidad, sin detalle
+clínico.
+Bloquea y revisa guardias ya
+asignadas
+Parte, en espacio
+restringido
+Deber inexcusable
+Comparecencia o causa análoga.
+Bloquea y genera propuesta
+de sustitución
+Cuando proceda
+El circuito es siempre el mismo: el letrado comunica, el sistema comprueba plazos, cupos y solapamientos, la
+coordinación valida o rechaza con motivo, y la validación bloquea la asignación. Validar una baja médica no
+deja la guardia huérfana: abre automáticamente una propuesta de sustitución con los candidatos elegibles.
+Habilitación por materia
+Cada habilitación relaciona un letrado con una materia y tiene fecha de inicio, caducidad y estado —vigente,
+suspendida, caducada o revocada—. Solo «vigente» permite asignar. Al caducar, el sistema avisa con
+antelación a la coordinación y al letrado, y marca para revisión las guardias ya asignadas.
+Materia
+Habilitados
+Disponibles
+Media de guardias
+Lectura
+Penal
+64
+58
+6,4
+Suficiente
+Violencia de género
+31
+27
+8,1
+Vigilar carga
+Menores
+22
+19
+5,2
+Suficiente
+Civil
+48
+41
+4,8
+Suficiente
+Extranjería
+14
+9
+9,6
+Riesgo de hueco
+La excepción también se documenta
+Cuando la Junta dispensa motivadamente un requisito, la dispensa se registra con su fundamento, alcance y
+vigencia. La aplicación no permite saltarse un filtro sin rastro: permite ejercer una excepción y documentarla. Es
+la diferencia entre flexibilidad y ausencia de control.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+13 / 24
+
+11 Sustituciones, permutas y excusas
+Este es el capítulo que decide si la aplicación sirve. Las guardias cambian constantemente, y cómo se
+gestionan esos cambios es exactamente lo que distingue un servicio ordenado de uno que se sostiene
+sobre llamadas.
+EXCUSA
+El titular pide no cubrir, por
+causa tipificada y en plazo.
+La guardia sigue siendo
+suya hasta la resolución.
+SUSTITUCIÓN
+Otro letrado habilitado la
+asume. Precisarlo no libera
+al titular hasta la validación.
+PERMUTA
+Dos letrados intercambian
+guardias; requiere
+conformidad de ambos y
+validación.
+REFUERZO
+Se añade un letrado a una
+guardia cubierta. No
+sustituye a nadie.
+01
+Solicita
+Motivo
+tipificado y
+observaciones.
+ABOGADO
+→
+02
+Comprueba
+Plazo y
+documentación.
+SISTEMA
+→
+03
+Candidatos
+Elegibles por
+materia,
+disponibilidad
+y equidad.
+SISTEMA
+→
+04
+Acepta
+Queda
+pendiente
+de
+validación.
+SUSTITUTO
+→
+05
+Resuelve
+Aprueba o
+deniega con
+motivación.
+COORDINACIÓN
+→
+06
+Publica
+Nueva
+versión
+y aviso
+a
+ambos.
+SISTEMA
+Figura
+Quién inicia
+Requisitos
+Efecto
+Excusa
+Titular
+Motivo tipificado, dentro del plazo
+fijado por la Junta (referencia al
+plazo legal de tres días desde la
+notificación) y documentación si
+procede.
+Si se estima con sustituto, cambia el titular;
+sin sustituto, queda descubierta; si se
+desestima, continúa el titular.
+Sustitución
+Titular o
+coordinación
+Sustituto habilitado, disponible y sin
+solapamiento.
+Cambio de titular conservando el histórico de
+la guardia.
+Permuta
+Cualquiera de los
+dos
+Misma materia, compatibilidad de
+ambas y conformidad de los dos.
+Intercambio; ambas guardias conservan su
+identificador y expediente.
+Refuerzo
+Coordinación
+Guardia cubierta, causa de carga o
+incidencia.
+Cobertura múltiple registrada; el titular no se
+sustituye.
+Plazos y escalado
+Al registrarse: se comprueba plazo y documentación y se calculan candidatos.
+Sin respuesta en el plazo de oferta: la oferta pasa al siguiente candidato del orden.
+Sin candidato tras una vuelta completa: la guardia se marca descubierta provisional y se abre incidencia
+con aviso destacado.
+Menos de 24 horas: modo urgencia, designación directa y notificación inmediata.
+Lo que el sistema no permite
+Que dos letrados acuerden un cambio y lo ejecuten por su cuenta. Aunque exista acuerdo, el cambio no se
+refleja en el cuadrante hasta la validación colegial: hasta ese momento el titular sigue siendo el designado y el
+Colegio sigue respondiendo por esa designación. La aplicación hace visible esta regla en el propio flujo, no en
+un manual aparte.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+14 / 24
+
+12 Modo guardia e incidencias
+Durante la guardia la aplicación deja de ser un calendario y se convierte en herramienta de trabajo. Lo
+que ocurre en esas horas es lo que después permite cerrar el parte y acreditar el servicio.
+Acción del letrado
+Para qué sirve
+Qué registra
+Estoy operativo
+Confirma que está localizable al inicio de la franja.
+Hora de activación y dispositivo
+Registrar actuación
+Anota una comparecencia sin esperar al cierre.
+Tipo, hora, órgano y observaciones
+Necesito refuerzo
+Solicita apoyo por volumen o complejidad.
+Motivo y hora; avisa a coordinación
+No puedo acudir
+Imposibilidad sobrevenida con la franja iniciada.
+Abre incidencia grave y escalado
+Incidencia
+Gravedad
+Respuesta del sistema
+No localizable
+Alta
+Escalado al siguiente del turno con marcas de hora
+No comparece
+Alta
+Aviso a coordinación, cobertura y constancia en el expediente
+Error de asignación
+Media
+Corrección motivada, reasignación y revisión del criterio
+Falta de medios en sede
+Media
+Registro y acumulación para informe al Colegio
+Conflicto deontológico
+Alta
+Bloqueo y aviso reservado a coordinación
+Escalado por falta de localización
+Es el supuesto más delicado: afecta a un derecho fundamental y no admite espera. La secuencia queda
+registrada con marcas de tiempo.
+00:00 — Aviso al letrado designado. Notificación con acuse y llamada al teléfono de guardia.
+▼
+00:05 — Sin respuesta. Segundo aviso y aviso preventivo a la coordinación.
+▼
+00:10 — Sin respuesta. Se considera no localizable: se avisa al siguiente letrado y se abre incidencia grave.
+▼
+Cobertura efectiva. Se registra quién acudió y a qué hora, conservando el nombre del designado inicial.
+Los intervalos son configurables: para guardias con comparecencia inmediata deben ser cortos; para guardias localizadas, más
+amplios.
+Cierre del parte
+Al terminar, el letrado cierra su parte con hora de entrada y salida, actuaciones y observaciones. No es un
+formulario administrativo: es la pieza que acredita el servicio y sostiene la certificación. Por eso no se cierra
+sin actuaciones descritas ni se da por bueno sin validación de la coordinación.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+15 / 24
+
+13 Comunicaciones y trazabilidad
+Avisar no es notificar. Una notificación sirve cuando puede demostrarse que se produjo, cuándo y con
+qué contenido. Todo el sistema de avisos se construye sobre esa idea.
+Evento
+Destinatario
+Canal
+Constancia
+Nueva guardia asignada
+Letrado
+Aplicación + correo
+Envío, entrega y lectura
+Recordatorio de guardia
+Letrado
+Aplicación
+Envío y lectura
+Guardia sin acuse
+Letrado y
+coordinación
+Aplicación + correo
+Envío con marca de hora
+Oferta de sustitución
+Candidatos
+Aplicación + correo
+Envío y plazo de
+respuesta
+Cambio validado o denegado
+Afectados
+Aplicación + correo
+Envío, entrega y
+motivación
+Guardia descubierta
+Coordinación
+Aplicación + aviso
+destacado
+Envío y acuse de
+coordinación
+Sin acuse hay recordatorio: el silencio no se interpreta como aceptación ni como renuncia; genera aviso
+y, si procede, escalado.
+Sin datos sensibles: ninguna comunicación incluye información clínica ni documentación adjunta
+sensible; solo indica que hay una novedad y dirige a la aplicación.
+Con terceros, otros cauces: las comunicaciones con juzgados, Comisión de Asistencia Jurídica Gratuita o
+Administración no se realizan desde la aplicación.
+El expediente de la guardia
+Reúne en orden cronológico todo lo ocurrido con una guardia: creación, designación, notificación, acuse,
+solicitudes, resoluciones, incidencias, parte y validación. Es lo primero que se consulta ante una queja.
+Fecha y hora
+Actor
+Hecho
+Detalle
+20/02 10:12
+Coordinación
+Publicación del cuadrante
+v1; designación notificada
+20/02 18:40
+J. Roca
+Acuse de recibo
+Guardia del 17/03 confirmada
+01/03 09:05
+J. Roca
+Solicitud de excusa
+Deber inexcusable; con justificante
+02/03 11:30
+M. Serra
+Aceptación de sustitución
+Pendiente de validación colegial
+02/03 12:15
+Coordinación
+Resolución estimatoria
+Cambio validado; cuadrante v2
+El registro no se edita ni se elimina: las correcciones se hacen añadiendo un asiento que indica qué se corrige
+y por qué. Ni la administración técnica puede alterar la historia. El acceso a la información también se
+registra, lo que permite detectar usos indebidos antes de que se conviertan en un incidente.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+16 / 24
+
+14 Panel e indicadores
+El panel es el instrumento con el que la Junta justifica ante el colectivo que el reparto es equitativo y que
+el servicio está cubierto.
+Panel de control · Marzo 2027
+Coordinación · datos a 31/03
+COBERTURA
+98,4 %
+2 de 124 franjas
+SIN ACUSE
+6
+de 124 designaciones
+SOLICITUDES
+11
+3 pendientes
+EQUIDAD
+0,12
+límite 0,15
+INCIDENCIAS
+4
+1 grave, cerrada
+Penal
+6,4
+Violencia género
+5,1
+Menores
+4,2
+Civil
+3,8
+Extranjería
+6,9
+Guardias medias por letrado habilitado y materia. El ámbar señala carga por encima de la media del turno.
+Figura 14.1 — Panel de la coordinación con los cinco indicadores de seguimiento.
+Indicador
+Cálculo
+Lectura
+Cobertura
+Guardias con titular validado ÷ guardias
+planificadas.
+Por debajo del 100 % hay un problema concreto
+que debe poder nombrarse; se listan las franjas.
+Equidad
+(Cómputo máximo − mínimo) ÷ cómputo
+medio, por materia.
+Mide dispersión, no media: identifica
+concentración.
+Acuse
+Guardias con acuse ÷ notificadas.
+Un valor bajo suele indicar un problema de
+comunicación, no de cumplimiento.
+Tasa de excusas
+Excusas estimadas ÷ guardias designadas.
+Detecta materias o periodos con dificultad
+estructural.
+Tiempo de respuesta
+Desde el aviso hasta la confirmación de
+comparecencia.
+Crítico en asistencia al detenido; se analiza por
+franja y sede.
+Los informes derivados son cinco: cobertura mensual con las franjas descubiertas y su causa, equidad por
+letrado y periodo, movilidad con tiempos de resolución, certificación de guardias realizadas y memoria anual.
+Ninguno muestra causas clínicas ni el detalle de las ausencias: la equidad se explica con números de carga,
+que es lo que el colectivo necesita para confiar en el reparto.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+17 / 24
+
+15 Reglas de negocio
+Se numeran para que puedan citarse en el pliego, en las pruebas y en las actas. Cada una indica si
+impide la operación (bloqueante) o solo advierte.
+ID
+Regla
+Tipo
+RN-01
+Toda guardia planificada debe tener titular efectivo antes de iniciarse la franja.
+Bloqueante
+RN-02
+No puede designarse a un letrado sin habilitación vigente en la materia.
+Bloqueante
+RN-03
+No puede designarse a quien tenga indisponibilidad validada en la franja.
+Bloqueante
+RN-04
+No puede designarse a quien tenga otra guardia solapada.
+Bloqueante
+RN-05
+Debe respetarse la regla de descanso posterior fijada por la Junta.
+Bloqueante si se
+configura
+RN-06
+Deben respetarse los cupos máximos por mes, trimestre y año.
+Bloqueante
+RN-07
+La propuesta automática no publica ni notifica por sí misma.
+Bloqueante
+RN-08
+Toda asignación que se aparte del criterio de equidad exige motivo tipificado.
+Bloqueante
+RN-09
+Publicar un cuadrante exige cobertura completa o justificación de cada hueco.
+Bloqueante
+RN-10
+El acuse no es condición para que la designación produzca efectos.
+Informativa
+RN-11
+La falta de acuse en plazo genera recordatorio y aviso a coordinación.
+Automática
+RN-12
+La excusa se presenta en el plazo fijado por la Junta; fuera de plazo se registra como
+extemporánea.
+Bloqueante parcial
+RN-13
+La excusa no libera al titular hasta la resolución colegial.
+Bloqueante
+RN-14
+Toda sustitución requiere sustituto habilitado, disponible y sin solapamiento.
+Bloqueante
+RN-15
+Toda sustitución o permuta requiere validación expresa del Colegio.
+Bloqueante
+RN-16
+Una permuta exige misma materia y conformidad de ambos letrados.
+Bloqueante
+RN-17
+Una guardia descubierta genera alerta máxima y propuesta de cobertura inmediata.
+Automática
+RN-18
+El parte no puede cerrarse sin horas de entrada y salida ni actuaciones descritas.
+Bloqueante
+RN-19
+Solo los partes validados cuentan para certificación y estadística definitiva.
+Bloqueante
+RN-20
+No puede modificarse ni eliminarse un asiento de auditoría.
+Bloqueante absoluto
+RN-21
+Toda modificación de una guardia publicada genera nueva versión del cuadrante.
+Automática
+RN-22
+Las versiones anteriores se conservan y son consultables.
+Bloqueante
+RN-23
+Ninguna comunicación contiene datos de salud ni documentación clínica.
+Bloqueante
+RN-24
+El justificante de salud solo es accesible a roles autorizados y su acceso se registra.
+Bloqueante
+RN-25
+Un letrado solo ve de sus compañeros el nombre y la materia de la guardia.
+Bloqueante
+RN-26
+Los criterios de reparto vigentes son consultables por cualquier colegiado del turno.
+Obligatoria
+RN-27
+Plazos y cupos se versionan; se conserva la versión aplicada en cada periodo.
+Bloqueante
+RN-28
+Debe existir un procedimiento manual de designación si el sistema no está disponible.
+Obligatoria
+RN-29
+Toda designación manual de excepción se registra con causa y autoridad.
+Bloqueante
+RN-30
+La habilitación caducada impide nuevas designaciones y marca para revisión las
+existentes.
+Automática
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+18 / 24
+
+ID
+Regla
+Tipo
+RN-31
+Una guardia anulada exige motivo y notificación a los afectados.
+Bloqueante
+RN-32
+El identificador de la guardia no cambia nunca, aunque cambie de titular.
+Bloqueante
+RN-33
+Un refuerzo no sustituye al titular: se añade y consta como cobertura múltiple.
+Bloqueante
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+19 / 24
+
+16 Modelo de datos
+Catorce entidades sostienen toda la funcionalidad. La guardia es el centro; a su alrededor se organizan
+la planificación, las personas, la habilitación, la movilidad y el control.
+Todas las entidades incorporan además los campos comunes de auditoría: creado_en, creado_por, modificado_en y version.
+Las claves principales se marcan en color; las ajenas llevan el sufijo _id.
+USUARIO · cuenta
+id
+UUID · PK
+nombre / apellidos
+texto
+email
+texto · único
+password_hash
+hash
+rol
+enum
+estado
+enum
+ABOGADO · colegiado del turno
+id
+UUID · PK
+usuario_id
+FK · único
+num_colegiado
+texto · único
+telefono_guardia
+texto
+orden_turno
+entero
+activo
+booleano
+ESPECIALIDAD · materia
+id
+UUID · PK
+codigo
+texto · único
+nombre
+texto
+requiere_formacion
+booleano
+activa
+booleano
+HABILITACION · acreditación
+id
+UUID · PK
+abogado_id
+FK · ABOGADO
+especialidad_id
+FK · ESPECIALIDAD
+fecha_habilitacion
+fecha
+caducidad
+fecha · nulo
+estado
+enum
+TIPO_GUARDIA · plantilla
+id
+UUID · PK
+especialidad_id
+FK · ESPECIALIDAD
+modalidad
+enum
+hora_inicio / fin
+hora
+peso_computo
+decimal
+letrados_previstos
+entero
+CUADRANTE · versión
+id
+UUID · PK
+anio / periodo
+entero / texto
+version
+entero
+estado
+enum
+fecha_publicacion
+fecha-hora
+publicado_por
+FK · USUARIO
+GUARDIA · servicio a cubrir
+id
+UUID · PK
+cuadrante_id
+FK · CUADRANTE
+tipo_guardia_id
+FK · TIPO_GUARDIA
+abogado_id
+FK · ABOGADO
+fecha / horario
+fecha / hora
+estado / origen
+enum
+DISPONIBILIDAD · ausencia
+id
+UUID · PK
+abogado_id
+FK · ABOGADO
+fecha_inicio / fin
+fecha
+tipo
+enum
+estado
+enum
+validada_por
+FK · USUARIO
+SOLICITUD · excusa / permuta
+id
+UUID · PK
+guardia_id
+FK · GUARDIA
+tipo
+enum
+solicitante_id / sustituto_id
+FK · ABOGADO
+motivo · detalle
+enum / texto
+estado / resuelta_por
+enum / FK
+INCIDENCIA · evento
+id
+UUID · PK
+guardia_id
+FK · GUARDIA
+categoria / gravedad
+enum
+abierta_por
+FK · USUARIO
+fecha_apertura / cierre
+fecha-hora
+estado
+enum
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+20 / 24
+
+PARTE_GUARDIA · cierre
+id
+UUID · PK
+guardia_id
+FK · único
+realizada
+booleano
+hora_entrada / salida
+hora
+actuaciones
+texto
+validado / validado_por
+bool / FK
+JUSTIFICANTE · documento
+id
+UUID · PK
+solicitud_id
+FK · nulo
+disponibilidad_id
+FK · nulo
+referencia_fichero
+texto
+acceso_restringido
+booleano
+NOTIFICACION · aviso y acuse
+id
+UUID · PK
+usuario_id
+FK · USUARIO
+tipo / canal
+enum
+referencia_tipo / id
+texto
+estado_entrega / leida
+enum / bool
+AUDITORIA · registro inmutable
+id
+UUID · PK
+entidad / entidad_id
+texto / UUID
+accion
+enum
+estado_anterior / nuevo
+texto
+actor_id / fecha
+FK / fecha-hora
+Relaciones principales
+Relación
+Cardinalidad
+Regla de integridad
+USUARIO — ABOGADO
+1 : 1
+No hay abogado sin cuenta ni cuenta de abogado sin su
+registro.
+ABOGADO — HABILITACION
+1 : N
+Varias materias; no se repite la misma con estado vigente.
+ABOGADO — GUARDIA
+1 : N
+Varias guardias, nunca solapadas; se comprueba al
+asignar y al publicar.
+CUADRANTE — GUARDIA
+1 : N
+El cambio de titular no saca la guardia de su cuadrante.
+GUARDIA — SOLICITUD
+1 : N
+Varias históricas; solo una abierta a la vez.
+GUARDIA — PARTE_GUARDIA
+1 : 1
+Un parte por guardia, creado al cerrar la franja.
+AUDITORIA — (todas)
+N : 1
+Polimórfica por entidad + entidad_id; sin actualización ni
+borrado.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+21 / 24
+
+17 Diagrama entidad-relación
+Las relaciones y cardinalidades del modelo, en una sola vista. Se representan los campos identificativos;
+el detalle completo figura en el capítulo anterior.
+1
+1
+1
+N
+N
+1
+1
+N
+1
+N
+1
+N
+1
+N
+1
+N
+1
+N
+1
+1
+1
+N
+1
+N
+USUARIO
+cuenta y credenciales
+id
+UUID
+nombre
+texto
+email
+texto
+rol
+enum
+estado
+enum
+fecha_alta
+fecha
+ABOGADO
+colegiado del turno
+id
+UUID
+usuario_id
+FK
+num_colegiado
+texto
+orden_turno
+entero
+fecha_alta_turno
+fecha
+activo
+bool
+ESPECIALIDAD
+materia del turno
+id
+UUID
+codigo
+texto
+nombre
+texto
+requiere_formacion
+bool
+DISPONIBILIDAD
+ausencia comunicada
+id
+UUID
+abogado_id
+FK
+fecha_inicio
+fecha
+fecha_fin
+fecha
+tipo
+enum
+estado
+enum
+HABILITACION
+acreditación vigente
+id
+UUID
+abogado_id
+FK
+especialidad_id
+FK
+fecha_habilitacion
+fecha
+caducidad
+fecha
+estado
+enum
+TIPO_GUARDIA
+plantilla de servicio
+id
+UUID
+especialidad_id
+FK
+modalidad
+enum
+hora_inicio
+hora
+peso_computo
+decimal
+letrados
+entero
+SOLICITUD
+excusa / permuta
+id
+UUID
+guardia_id
+FK
+tipo
+enum
+solicitante_id
+FK
+sustituto_id
+FK
+estado
+enum
+GUARDIA
+servicio a cubrir
+id
+UUID
+cuadrante_id
+FK
+tipo_guardia_id
+FK
+abogado_id
+FK
+fecha
+fecha
+estado
+enum
+CUADRANTE
+versión publicada
+id
+UUID
+anio
+entero
+periodo
+texto
+version
+entero
+estado
+enum
+JUSTIFICANTE
+documento acreditativo
+id
+UUID
+solicitud_id
+FK
+disponibilidad_id
+FK
+fecha_subida
+fecha-hora
+PARTE_GUARDIA
+cierre del servicio
+id
+UUID
+guardia_id
+FK
+realizada
+bool
+hora_entrada
+hora
+validado
+bool
+INCIDENCIA
+evento en guardia
+id
+UUID
+guardia_id
+FK
+categoria
+enum
+gravedad
+enum
+estado
+enum
+NOTIFICACION
+aviso y acuse
+id
+UUID
+usuario_id
+FK
+tipo
+enum
+canal
+enum
+estado_entrega
+enum
+AUDITORIA
+registro inmutable (*)
+id
+UUID
+entidad
+texto
+entidad_id
+UUID
+accion
+texto
+actor_id
+FK
+Figura 17.1 — Modelo entidad-relación. La guardia concentra la designación, la movilidad, la incidencia y el cierre del servicio.
+Cómo leerlo
+1 : N — un registro del origen se relaciona con varios del destino: un abogado, con muchas guardias a lo
+largo del tiempo.
+1 : 1 — relación única en ambos sentidos: cada guardia tiene un único parte.
+N : M resuelto — abogado y especialidad se relacionan mediante HABILITACION, que conserva fecha y estado
+de la acreditación.
+Polimórfica — AUDITORIA referencia cualquier entidad por el par entidad + entidad_id; sin aristas para no
+sobrecargar el dibujo.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+22 / 24
+
+18 Seguridad y protección de datos
+La aplicación trata datos de profesionales y, en un caso concreto, datos de salud. Esa circunstancia
+condiciona el diseño y obliga a formalizar responsabilidades antes del primer día de uso.
+Cuestión
+Planteamiento
+Responsable
+El Colegio, como titular del servicio y de la organización del turno.
+Encargado
+El proveedor, con contrato de encargo que fija finalidad, duración, medidas de seguridad y
+prohibición de uso para fines propios.
+Base jurídica
+Organización del servicio de asistencia jurídica gratuita y cumplimiento de obligaciones
+legales; los datos de salud se limitan a constatar la indisponibilidad.
+Minimización
+Sin diagnóstico, sin informe clínico y sin dato biométrico. Solo el periodo de indisponibilidad
+y, si la norma lo exige, el parte en espacio restringido.
+Conservación
+Calendario aprobado por el Colegio, alineado con los plazos de prescripción; al vencer,
+bloqueo de acceso y eliminación.
+Derechos
+Canal definido para acceso, rectificación, supresión y limitación, con plazo de respuesta y
+constancia.
+Evaluación de impacto
+Recomendable por el tratamiento de datos de salud a escala del colectivo; se documenta
+antes de la puesta en producción.
+Medidas de seguridad
+Acceso nominal, sin cuentas compartidas.
+Mínimo privilegio por rol; la administración
+técnica no accede al contenido.
+Doble factor para roles con capacidad de
+resolución.
+Cifrado en tránsito y en reposo, con claves
+gestionadas aparte.
+Copias de seguridad con prueba de restauración
+documentada.
+Registro de accesos a información sensible, con
+alerta ante patrones anómalos.
+Procedimiento de incidentes con plazos y
+responsable identificado.
+Plan de continuidad: vía manual de designación
+durante una caída.
+Uso real y accesibilidad
+La aplicación se usará de pie, en un pasillo de juzgado, con una mano y a veces sin cobertura. De ahí tres
+requisitos que no son cosméticos: contraste y tamaños legibles a la intemperie, navegación que no dependa
+solo del color y funcionamiento degradado que conserve lo esencial —mi guardia de hoy, el teléfono de la
+sede y el registro de una actuación— cuando la conexión falla. El objetivo es el nivel AA de las pautas WCAG
+en las pantallas principales.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+23 / 24
+
+A Pantallas de referencia
+Tres pantallas resumen la experiencia del letrado: saber qué le toca hoy, consultar lo que viene y resolver
+un imprevisto. Ninguna requiere más de dos toques para llegar a la acción principal.
+Mi guardia
+hoy
+Penal · 24 h
+Martes 16 de marzo · localizada
+Estado
+Confirmada
+Inicio
+08:00
+Fin
+08:00 (17/03)
+Juzgado de guardia
+Tarragona · 977 000 000
+Estoy operativo
+Registrar actuación
+Necesito refuerzo
+Hoy
+Mis guardias
+Avisos
+Perfil
+A.1 · Mi guardia de hoy. La pantalla que se
+abre al comenzar la franja; la acción
+principal es confirmar disponibilidad.
+Mis guardias
+marzo
+15 mar
+Confirmada
+Penal · 08:00–20:00
+18 mar
+Confirmada
+Violencia de género · 24 h
+31 mar
+Sin acuse
+Penal · 08:00–20:00
+Confirmar
+23–26 mar
+Vacaciones
+Validadas por el Colegio
+Comunicar indisponibilidad
+Hoy
+Mis guardias
+Avisos
+Perfil
+A.2 · Mis guardias. Lista cronológica con el
+estado de cada designación y el acuse
+pendiente a un toque.
+Solicitar sustitución
+1 de 3
+Guardia del 17 de marzo
+Penal · 24 h · titular: J. Roca
+Motivo
+Deber inexcusable
+Enfermedad · fallecimiento ·
+formación · otro
+Observaciones
+Comparecencia citada por el
+juzgado…
+Ten en cuenta
+La guardia sigue siendo tuya hasta
+que el Colegio valide el cambio.
+Continuar
+Hoy
+Mis guardias
+Avisos
+Perfil
+A.3 · Solicitud de sustitución. El aviso legal
+aparece en la propia pantalla, no en
+condiciones que nadie lee.
+Pantalla de resolución para la coordinación
+Expediente de solicitud · EX-2027-0311
+Guardia 17/03 · Penal 24 h
+SOLICITANTE
+J. Roca
+Motivo: deber inexcusable · dentro de plazo
+SUSTITUTO PROPUESTO
+M. Serra
+Habilitación vigente · disponible · cómputo 4,00
+COMPROBACIONES
+Plazo
+ presentada 3 días antes
+Habilitación
+ vigente en la materia
+Solapamiento
+ sin conflicto
+Cómputo
+ el sustituto queda por encima de la media
+Aprobar y publicar v2
+Denegar con motivación
+Devolver al solicitante
+Figura A.4 — Expediente de resolución: las comprobaciones automáticas se muestran antes de decidir y la decisión, sea cual sea, exige
+motivación.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-002   |   Diseño funcional · Gestión del Turno de Oficio
+Classification: Internal
+24 / 24

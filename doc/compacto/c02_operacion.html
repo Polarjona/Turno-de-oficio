@@ -1,0 +1,369 @@
+<!-- ============ CAPÍTULO 8 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 8</span>Ciclo de vida y estados</h1>
+<p class="chlead">Saber en qué estado está una guardia es lo que permite detectar a tiempo un problema y distinguir
+entre «no ha confirmado» y «no va a acudir», que son situaciones muy distintas.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:20%">Estado</th><th style="width:44%">Significado</th><th style="width:36%">Qué hace el sistema</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip">Planificada</span></td><td>Franja creada, sin titular.</td><td>Cuenta como pendiente en cobertura</td></tr>
+    <tr><td><span class="chip">Propuesta</span></td><td>Titular propuesto, aún sin publicar.</td><td>No notifica; admite cambios</td></tr>
+    <tr><td><span class="chip a">Publicada</span></td><td>Designación vigente y notificada.</td><td>Abre plazo de excusa y de acuse</td></tr>
+    <tr><td><span class="chip g">Confirmada</span></td><td>El letrado ha acusado recibo.</td><td>Registra fecha y hora; mantiene avisos</td></tr>
+    <tr><td><span class="chip a">En revisión</span></td><td>Excusa o permuta pendiente de resolución.</td><td>El titular sigue siendo responsable</td></tr>
+    <tr><td><span class="chip r">Descubierta</span></td><td>Sin titular efectivo.</td><td>Alerta máxima y bolsa de urgencia</td></tr>
+    <tr><td><span class="chip">En curso</span></td><td>La franja ha comenzado.</td><td>Activa el modo guardia</td></tr>
+    <tr><td><span class="chip g">Realizada</span></td><td>Franja terminada y parte cerrado.</td><td>Pendiente de validación</td></tr>
+    <tr><td><span class="chip g">Validada</span></td><td>Parte validado por el Colegio.</td><td>Entra en certificación y estadística definitiva</td></tr>
+    <tr><td><span class="chip">Anulada</span></td><td>La franja deja de existir por decisión colegial.</td><td>Exige motivo y recalcula cobertura</td></tr>
+  </tbody>
+</table>
+
+<h2>Transiciones principales</h2>
+<table class="grid">
+  <thead><tr><th style="width:26%">Desde</th><th style="width:26%">Evento</th><th style="width:48%">Resultado y condición</th></tr></thead>
+  <tbody>
+    <tr><td>Planificada</td><td>Se asigna titular</td><td>Propuesta; requiere superar los siete filtros</td></tr>
+    <tr><td>Propuesta</td><td>Se publica el cuadrante</td><td>Publicada + notificación con plazo de excusa</td></tr>
+    <tr><td>Publicada</td><td>Acuse del letrado</td><td>Confirmada; sin acuse no hay cambio ni pérdida de la guardia</td></tr>
+    <tr><td>Publicada / Confirmada</td><td>Solicitud de excusa o permuta</td><td>En revisión; el titular continúa como responsable</td></tr>
+    <tr><td>En revisión</td><td>Resolución con sustituto validado</td><td>Publicada con nuevo titular; se conserva el anterior</td></tr>
+    <tr><td>En revisión</td><td>Resolución sin sustituto</td><td>Descubierta + incidencia + bolsa de urgencia</td></tr>
+    <tr><td>En curso</td><td>Cierre del parte</td><td>Realizada; exige horas y actuaciones descritas</td></tr>
+    <tr><td>Realizada</td><td>Validación del parte</td><td>Validada; pasa a certificación</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Dos distinciones que evitan errores de interpretación</div>
+  <p><strong>Publicada no es confirmada.</strong> La designación produce efectos desde que el Colegio la comunica; el
+  acuse solo documenta el conocimiento. Un letrado que no pulsa «confirmar» no queda libre: genera una alerta.</p>
+  <p style="margin-bottom:0;"><strong>Descubierta no es anulada.</strong> Una guardia descubierta sigue existiendo y
+  sigue exigiendo cobertura. Es la señal más grave del sistema y por eso tiene tratamiento visual y escalado propios.</p>
+</div>
+
+<!-- ============ CAPÍTULO 9 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 9</span>Calendarios</h1>
+<p class="chlead">El mismo cuadrante se mira de cuatro maneras según quién consulta y para qué. La coordinación
+necesita ver de un golpe dónde falta cobertura; el letrado, saber cuándo le toca.</p>
+
+<div class="kv">
+  <div><div class="kt">Vista anual</div><div class="kd">Doce meses con densidad de guardias y huecos en rojo.</div></div>
+  <div><div class="kt">Vista cuadrante</div><div class="kd">Días en filas, materias en columnas, titular y estado.</div></div>
+  <div><div class="kt">Vista personal</div><div class="kd">«Mis guardias»: calendario y lista con vacaciones y avisos.</div></div>
+  <div><div class="kt">Vista de día</div><div class="kd">Quién cubre cada materia, cómo localizarlo y qué incidencias hay.</div></div>
+</div>
+
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Cuadrante · Semana del 15 al 21 de marzo de 2027 · v3 (publicada)</span><span>Penal · Violencia · Menores · Civil</span></div>
+    <div class="wf-body" style="padding:0;">
+      <table class="cuadrante">
+        <thead>
+          <tr><th style="width:13%">Día</th><th>Asistencia detenido</th><th>Penal</th><th>Violencia género</th><th>Menores</th><th>Civil</th><th>Extranjería</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rowhead">L 15</td><td class="ok"><span class="ini">Ferrer</span>24 h · conf.</td><td class="ok"><span class="ini">Serra</span>08–20</td><td class="ok"><span class="ini">Roca</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Vidal</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">M 16</td><td class="pend"><span class="ini">Ferrer</span>sin acuse</td><td class="ok"><span class="ini">Roca</span>08–20</td><td class="ok"><span class="ini">Serra</span>24 h · conf.</td><td class="ok"><span class="ini">Mas</span>Localizada</td><td class="ok"><span class="ini">Vidal</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">X 17</td><td class="hueco"><span class="ini">DESCUBIERTA</span>excusa pendiente</td><td class="ok"><span class="ini">Vidal</span>08–20</td><td class="ok"><span class="ini">Roca</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Serra</span>Mañana</td><td class="ok"><span class="ini">Puig</span>Tarde</td></tr>
+          <tr><td class="rowhead">J 18</td><td class="ok"><span class="ini">Mas</span>24 h · conf.</td><td class="ok"><span class="ini">Ferrer</span>08–20</td><td class="ok"><span class="ini">Vidal</span>24 h · conf.</td><td class="ok"><span class="ini">Puig</span>Localizada</td><td class="ok"><span class="ini">Roca</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">V 19</td><td class="ok"><span class="ini">Mas</span>24 h · conf.</td><td class="ok"><span class="ini">Serra</span>08–20</td><td class="ok"><span class="ini">Ferrer</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Vidal</span>Mañana</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">S 20</td><td class="ok"><span class="ini">Puig</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Serra</span>24 h · conf.</td><td class="na">—</td><td class="na">—</td><td class="na">—</td></tr>
+          <tr><td class="rowhead">D 21</td><td class="ok"><span class="ini">Puig</span>24 h · conf.</td><td class="na">—</td><td class="ok"><span class="ini">Serra</span>24 h · conf.</td><td class="na">—</td><td class="na">—</td><td class="na">—</td></tr>
+        </tbody>
+      </table>
+      <div style="padding:2.2mm; display:flex; gap:2.5mm; font-size:6.5pt;">
+        <span class="chip g">Cubierta y confirmada</span>
+        <span class="chip a">Cubierta sin acuse</span>
+        <span class="chip r">Descubierta</span>
+        <span class="chip">Sin servicio previsto</span>
+      </div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 9.1 — Vista cuadrante. La franja descubierta enlaza al expediente de la excusa que la
+  ha provocado.</div>
+</div>
+
+<div class="fig">
+  <div class="wf-window" style="max-width:132mm;">
+    <div class="wf-bar"><span>Marzo 2027 · Mis guardias</span><span>3 guardias · 1 sin acuse</span></div>
+    <div class="wf-body">
+      <table class="cuadrante">
+        <thead><tr><th>L</th><th>M</th><th>X</th><th>J</th><th>V</th><th>S</th><th>D</th></tr></thead>
+        <tbody>
+          <tr><td class="na">1</td><td class="na">2</td><td class="na">3</td><td class="na">4</td><td class="na">5</td><td class="na">6</td><td class="na">7</td></tr>
+          <tr><td class="na">8</td><td class="na">9</td><td class="na">10</td><td class="na">11</td><td class="na">12</td><td class="na">13</td><td class="na">14</td></tr>
+          <tr><td class="ok"><span class="ini">15</span>Penal</td><td class="na">16</td><td class="na">17</td><td class="ok"><span class="ini">18</span>Violencia</td><td class="na">19</td><td class="na">20</td><td class="na">21</td></tr>
+          <tr><td class="na">22</td><td class="pend"><span class="ini">23</span>Vacaciones</td><td class="pend">24</td><td class="pend">25</td><td class="pend">26</td><td class="na">27</td><td class="na">28</td></tr>
+          <tr><td class="na">29</td><td class="na">30</td><td class="ok"><span class="ini">31</span>Penal</td><td class="na"></td><td class="na"></td><td class="na"></td><td class="na"></td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex; gap:4mm; margin-top:2mm; font-size:6.6pt; color:var(--muted);">
+        <span><strong>15</strong> Penal · 08:00–20:00 · confirmada</span>
+        <span><strong>18</strong> Violencia · 24 h</span>
+        <span><strong>31</strong> Penal · sin acuse</span>
+      </div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 9.2 — Calendario personal. De los compañeros solo se muestra nombre y materia: la
+  privacidad es una condición del diseño, no un añadido.</div>
+</div>
+
+<h3>Versiones y cambios</h3>
+<p>El cuadrante no se reescribe: es una secuencia de versiones. Cada publicación crea una versión con fecha, autor y
+lista de cambios; la consulta muestra la vigente y permite ver la anterior con las diferencias resaltadas. Se exporta
+en PDF con sello de versión, se suscribe al calendario personal del letrado en solo lectura y alimenta la
+certificación de guardias.</p>
+
+<!-- ============ CAPÍTULO 10 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 10</span>Disponibilidad y habilitación</h1>
+<p class="chlead">La disponibilidad no es un sí o un no: es información con categoría, plazo y consecuencia. Y no
+cualquier letrado puede cubrir cualquier guardia: la habilitación es un bloqueo efectivo, no una recomendación.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Tipo</th><th style="width:30%">Qué comunica</th><th style="width:26%">Efecto</th><th style="width:22%">Documentación</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Vacaciones</strong></td><td>Periodo previsto, dentro de cupo y plazo.</td><td>Bloquea en el periodo validado</td><td>No; sí validación colegial</td></tr>
+    <tr><td><strong>No disponible</strong></td><td>Fecha o franja concreta.</td><td>Bloquea si está validada</td><td>No; motivación breve</td></tr>
+    <tr><td><strong>Formación</strong></td><td>Curso o actividad con fecha.</td><td>Bloquea si se valida</td><td>Certificado, opcional</td></tr>
+    <tr><td><strong>Baja médica</strong></td><td>Periodo de incapacidad, sin detalle clínico.</td><td>Bloquea y revisa guardias ya asignadas</td><td>Parte, en espacio restringido</td></tr>
+    <tr><td><strong>Deber inexcusable</strong></td><td>Comparecencia o causa análoga.</td><td>Bloquea y genera propuesta de sustitución</td><td>Cuando proceda</td></tr>
+  </tbody>
+</table>
+
+<p>El circuito es siempre el mismo: el letrado comunica, el sistema comprueba plazos, cupos y solapamientos, la
+coordinación valida o rechaza con motivo, y la validación bloquea la asignación. Validar una baja médica no deja la
+guardia huérfana: abre automáticamente una propuesta de sustitución con los candidatos elegibles.</p>
+
+<h2>Habilitación por materia</h2>
+<p>Cada habilitación relaciona un letrado con una materia y tiene fecha de inicio, caducidad y estado —vigente,
+suspendida, caducada o revocada—. Solo «vigente» permite asignar. Al caducar, el sistema avisa con antelación a la
+coordinación y al letrado, y marca para revisión las guardias ya asignadas.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:26%">Materia</th><th class="c">Habilitados</th><th class="c">Disponibles</th><th class="c">Media de guardias</th><th>Lectura</th></tr></thead>
+  <tbody>
+    <tr><td>Penal</td><td class="c">64</td><td class="c">58</td><td class="c">6,4</td><td><span class="chip g">Suficiente</span></td></tr>
+    <tr><td>Violencia de género</td><td class="c">31</td><td class="c">27</td><td class="c">8,1</td><td><span class="chip a">Vigilar carga</span></td></tr>
+    <tr><td>Menores</td><td class="c">22</td><td class="c">19</td><td class="c">5,2</td><td><span class="chip g">Suficiente</span></td></tr>
+    <tr><td>Civil</td><td class="c">48</td><td class="c">41</td><td class="c">4,8</td><td><span class="chip g">Suficiente</span></td></tr>
+    <tr><td>Extranjería</td><td class="c">14</td><td class="c">9</td><td class="c">9,6</td><td><span class="chip r">Riesgo de hueco</span></td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">La excepción también se documenta</div>
+  <p style="margin-bottom:0;">Cuando la Junta dispensa motivadamente un requisito, la dispensa se registra con su
+  fundamento, alcance y vigencia. La aplicación no permite saltarse un filtro sin rastro: permite ejercer una
+  excepción y documentarla. Es la diferencia entre flexibilidad y ausencia de control.</p>
+</div>
+
+<!-- ============ CAPÍTULO 11 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 11</span>Sustituciones, permutas y excusas</h1>
+<p class="chlead">Este es el capítulo que decide si la aplicación sirve. Las guardias cambian constantemente, y cómo
+se gestionan esos cambios es exactamente lo que distingue un servicio ordenado de uno que se sostiene sobre llamadas.</p>
+
+<div class="kv">
+  <div><div class="kt">Excusa</div><div class="kd">El titular pide no cubrir, por causa tipificada y en plazo. La
+  guardia sigue siendo suya hasta la resolución.</div></div>
+  <div><div class="kt">Sustitución</div><div class="kd">Otro letrado habilitado la asume. Precisarlo no libera al
+  titular hasta la validación.</div></div>
+  <div><div class="kt">Permuta</div><div class="kd">Dos letrados intercambian guardias; requiere conformidad de ambos
+  y validación.</div></div>
+  <div><div class="kt">Refuerzo</div><div class="kd">Se añade un letrado a una guardia cubierta. No sustituye a
+  nadie.</div></div>
+</div>
+
+<div class="flow">
+  <div class="flow-steps">
+    <div class="flow-step"><span class="sn">01</span><b>Solicita</b>Motivo tipificado y observaciones.
+      <span class="who">Abogado</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">02</span><b>Comprueba</b>Plazo y documentación.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">03</span><b>Candidatos</b>Elegibles por materia, disponibilidad y
+      equidad. <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">04</span><b>Acepta</b>Queda pendiente de validación.
+      <span class="who">Sustituto</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">05</span><b>Resuelve</b>Aprueba o deniega con motivación.
+      <span class="who">Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">06</span><b>Publica</b>Nueva versión y aviso a ambos.
+      <span class="who">Sistema</span></div>
+  </div>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:15%">Figura</th><th style="width:17%">Quién inicia</th><th style="width:30%">Requisitos</th><th style="width:38%">Efecto</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Excusa</strong></td><td>Titular</td><td>Motivo tipificado, dentro del plazo fijado por la Junta
+      (referencia al plazo legal de tres días desde la notificación) y documentación si procede.</td>
+      <td>Si se estima con sustituto, cambia el titular; sin sustituto, queda descubierta; si se desestima, continúa
+      el titular.</td></tr>
+    <tr><td><strong>Sustitución</strong></td><td>Titular o coordinación</td><td>Sustituto habilitado, disponible y sin
+      solapamiento.</td><td>Cambio de titular conservando el histórico de la guardia.</td></tr>
+    <tr><td><strong>Permuta</strong></td><td>Cualquiera de los dos</td><td>Misma materia, compatibilidad de ambas y
+      conformidad de los dos.</td><td>Intercambio; ambas guardias conservan su identificador y expediente.</td></tr>
+    <tr><td><strong>Refuerzo</strong></td><td>Coordinación</td><td>Guardia cubierta, causa de carga o incidencia.</td>
+      <td>Cobertura múltiple registrada; el titular no se sustituye.</td></tr>
+  </tbody>
+</table>
+
+<h2>Plazos y escalado</h2>
+<ul class="tight">
+  <li><strong>Al registrarse:</strong> se comprueba plazo y documentación y se calculan candidatos.</li>
+  <li><strong>Sin respuesta en el plazo de oferta:</strong> la oferta pasa al siguiente candidato del orden.</li>
+  <li><strong>Sin candidato tras una vuelta completa:</strong> la guardia se marca descubierta provisional y se abre
+  incidencia con aviso destacado.</li>
+  <li><strong>Menos de 24 horas:</strong> modo urgencia, designación directa y notificación inmediata.</li>
+</ul>
+
+<div class="box rule">
+  <div class="box-title">Lo que el sistema no permite</div>
+  <p style="margin-bottom:0;">Que dos letrados acuerden un cambio y lo ejecuten por su cuenta. Aunque exista acuerdo,
+  el cambio no se refleja en el cuadrante hasta la validación colegial: hasta ese momento el titular sigue siendo el
+  designado y el Colegio sigue respondiendo por esa designación. La aplicación hace visible esta regla en el propio
+  flujo, no en un manual aparte.</p>
+</div>
+
+<!-- ============ CAPÍTULO 12 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 12</span>Modo guardia e incidencias</h1>
+<p class="chlead">Durante la guardia la aplicación deja de ser un calendario y se convierte en herramienta de trabajo.
+Lo que ocurre en esas horas es lo que después permite cerrar el parte y acreditar el servicio.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:24%">Acción del letrado</th><th style="width:44%">Para qué sirve</th><th style="width:32%">Qué registra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Estoy operativo</strong></td><td>Confirma que está localizable al inicio de la franja.</td><td>Hora de activación y dispositivo</td></tr>
+    <tr><td><strong>Registrar actuación</strong></td><td>Anota una comparecencia sin esperar al cierre.</td><td>Tipo, hora, órgano y observaciones</td></tr>
+    <tr><td><strong>Necesito refuerzo</strong></td><td>Solicita apoyo por volumen o complejidad.</td><td>Motivo y hora; avisa a coordinación</td></tr>
+    <tr><td><strong>No puedo acudir</strong></td><td>Imposibilidad sobrevenida con la franja iniciada.</td><td>Abre incidencia grave y escalado</td></tr>
+  </tbody>
+</table>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Incidencia</th><th style="width:10%" class="c">Gravedad</th><th style="width:68%">Respuesta del sistema</th></tr></thead>
+  <tbody>
+    <tr><td>No localizable</td><td class="c">Alta</td><td>Escalado al siguiente del turno con marcas de hora</td></tr>
+    <tr><td>No comparece</td><td class="c">Alta</td><td>Aviso a coordinación, cobertura y constancia en el expediente</td></tr>
+    <tr><td>Error de asignación</td><td class="c">Media</td><td>Corrección motivada, reasignación y revisión del criterio</td></tr>
+    <tr><td>Falta de medios en sede</td><td class="c">Media</td><td>Registro y acumulación para informe al Colegio</td></tr>
+    <tr><td>Conflicto deontológico</td><td class="c">Alta</td><td>Bloqueo y aviso reservado a coordinación</td></tr>
+  </tbody>
+</table>
+
+<h2>Escalado por falta de localización</h2>
+<p>Es el supuesto más delicado: afecta a un derecho fundamental y no admite espera. La secuencia queda registrada con
+marcas de tiempo.</p>
+
+<div class="chain">
+  <div class="chain-item a"><b>00:00 — Aviso al letrado designado.</b> Notificación con acuse y llamada al teléfono de guardia.</div>
+  <div class="chain-sep">▼</div>
+  <div class="chain-item a"><b>00:05 — Sin respuesta.</b> Segundo aviso y aviso preventivo a la coordinación.</div>
+  <div class="chain-sep">▼</div>
+  <div class="chain-item r"><b>00:10 — Sin respuesta.</b> Se considera no localizable: se avisa al siguiente letrado y se abre incidencia grave.</div>
+  <div class="chain-sep">▼</div>
+  <div class="chain-item g"><b>Cobertura efectiva.</b> Se registra quién acudió y a qué hora, conservando el nombre del designado inicial.</div>
+</div>
+
+<p class="small">Los intervalos son configurables: para guardias con comparecencia inmediata deben ser cortos; para
+guardias localizadas, más amplios.</p>
+
+<h3>Cierre del parte</h3>
+<p>Al terminar, el letrado cierra su parte con hora de entrada y salida, actuaciones y observaciones. No es un
+formulario administrativo: es la pieza que acredita el servicio y sostiene la certificación. Por eso no se cierra sin
+actuaciones descritas ni se da por bueno sin validación de la coordinación.</p>
+
+<!-- ============ CAPÍTULO 13 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 13</span>Comunicaciones y trazabilidad</h1>
+<p class="chlead">Avisar no es notificar. Una notificación sirve cuando puede demostrarse que se produjo, cuándo y con
+qué contenido. Todo el sistema de avisos se construye sobre esa idea.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:34%">Evento</th><th style="width:20%">Destinatario</th><th style="width:24%">Canal</th><th style="width:22%">Constancia</th></tr></thead>
+  <tbody>
+    <tr><td>Nueva guardia asignada</td><td>Letrado</td><td>Aplicación + correo</td><td>Envío, entrega y lectura</td></tr>
+    <tr><td>Recordatorio de guardia</td><td>Letrado</td><td>Aplicación</td><td>Envío y lectura</td></tr>
+    <tr><td>Guardia sin acuse</td><td>Letrado y coordinación</td><td>Aplicación + correo</td><td>Envío con marca de hora</td></tr>
+    <tr><td>Oferta de sustitución</td><td>Candidatos</td><td>Aplicación + correo</td><td>Envío y plazo de respuesta</td></tr>
+    <tr><td>Cambio validado o denegado</td><td>Afectados</td><td>Aplicación + correo</td><td>Envío, entrega y motivación</td></tr>
+    <tr><td>Guardia descubierta</td><td>Coordinación</td><td>Aplicación + aviso destacado</td><td>Envío y acuse de coordinación</td></tr>
+  </tbody>
+</table>
+
+<ul class="tight">
+  <li><strong>Sin acuse hay recordatorio:</strong> el silencio no se interpreta como aceptación ni como renuncia;
+  genera aviso y, si procede, escalado.</li>
+  <li><strong>Sin datos sensibles:</strong> ninguna comunicación incluye información clínica ni documentación adjunta
+  sensible; solo indica que hay una novedad y dirige a la aplicación.</li>
+  <li><strong>Con terceros, otros cauces:</strong> las comunicaciones con juzgados, Comisión de Asistencia Jurídica
+  Gratuita o Administración no se realizan desde la aplicación.</li>
+</ul>
+
+<h2>El expediente de la guardia</h2>
+<p>Reúne en orden cronológico todo lo ocurrido con una guardia: creación, designación, notificación, acuse,
+solicitudes, resoluciones, incidencias, parte y validación. Es lo primero que se consulta ante una queja.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:18%">Fecha y hora</th><th style="width:20%">Actor</th><th style="width:28%">Hecho</th><th style="width:34%">Detalle</th></tr></thead>
+  <tbody>
+    <tr><td>20/02 10:12</td><td>Coordinación</td><td>Publicación del cuadrante</td><td>v1; designación notificada</td></tr>
+    <tr><td>20/02 18:40</td><td>J. Roca</td><td>Acuse de recibo</td><td>Guardia del 17/03 confirmada</td></tr>
+    <tr><td>01/03 09:05</td><td>J. Roca</td><td>Solicitud de excusa</td><td>Deber inexcusable; con justificante</td></tr>
+    <tr><td>02/03 11:30</td><td>M. Serra</td><td>Aceptación de sustitución</td><td>Pendiente de validación colegial</td></tr>
+    <tr><td>02/03 12:15</td><td>Coordinación</td><td>Resolución estimatoria</td><td>Cambio validado; cuadrante v2</td></tr>
+  </tbody>
+</table>
+
+<p>El registro no se edita ni se elimina: las correcciones se hacen añadiendo un asiento que indica qué se corrige y
+por qué. Ni la administración técnica puede alterar la historia. El acceso a la información también se registra, lo
+que permite detectar usos indebidos antes de que se conviertan en un incidente.</p>
+
+<!-- ============ CAPÍTULO 14 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 14</span>Panel e indicadores</h1>
+<p class="chlead">El panel es el instrumento con el que la Junta justifica ante el colectivo que el reparto es
+equitativo y que el servicio está cubierto.</p>
+
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Panel de control · Marzo 2027</span><span>Coordinación · datos a 31/03</span></div>
+    <div class="wf-body">
+      <div class="wf-kpis">
+        <div class="wf-kpi"><div class="k">Cobertura</div><div class="v">98,4 %</div><div class="s">2 de 124 franjas</div></div>
+        <div class="wf-kpi"><div class="k">Sin acuse</div><div class="v">6</div><div class="s">de 124 designaciones</div></div>
+        <div class="wf-kpi"><div class="k">Solicitudes</div><div class="v">11</div><div class="s">3 pendientes</div></div>
+        <div class="wf-kpi"><div class="k">Equidad</div><div class="v">0,12</div><div class="s">límite 0,15</div></div>
+        <div class="wf-kpi"><div class="k">Incidencias</div><div class="v">4</div><div class="s">1 grave, cerrada</div></div>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><span class="lbl">Penal</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">6,4</span></div>
+        <div class="bar-row"><span class="lbl">Violencia género</span><span class="bar-track"><span class="bar-fill" style="width:78%"></span></span><span class="num">5,1</span></div>
+        <div class="bar-row"><span class="lbl">Menores</span><span class="bar-track"><span class="bar-fill" style="width:64%"></span></span><span class="num">4,2</span></div>
+        <div class="bar-row"><span class="lbl">Civil</span><span class="bar-track"><span class="bar-fill" style="width:58%"></span></span><span class="num">3,8</span></div>
+        <div class="bar-row"><span class="lbl">Extranjería</span><span class="bar-track"><span class="bar-fill" style="width:96%; background:#b5762a;"></span></span><span class="num">6,9</span></div>
+      </div>
+      <div style="font-size:6.4pt; color:var(--muted); margin-top:1.4mm;">Guardias medias por letrado habilitado y
+      materia. El ámbar señala carga por encima de la media del turno.</div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 14.1 — Panel de la coordinación con los cinco indicadores de seguimiento.</div>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Indicador</th><th style="width:36%">Cálculo</th><th style="width:42%">Lectura</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cobertura</strong></td><td>Guardias con titular validado ÷ guardias planificadas.</td><td>Por debajo del 100 % hay un problema concreto que debe poder nombrarse; se listan las franjas.</td></tr>
+    <tr><td><strong>Equidad</strong></td><td>(Cómputo máximo − mínimo) ÷ cómputo medio, por materia.</td><td>Mide dispersión, no media: identifica concentración.</td></tr>
+    <tr><td><strong>Acuse</strong></td><td>Guardias con acuse ÷ notificadas.</td><td>Un valor bajo suele indicar un problema de comunicación, no de cumplimiento.</td></tr>
+    <tr><td><strong>Tasa de excusas</strong></td><td>Excusas estimadas ÷ guardias designadas.</td><td>Detecta materias o periodos con dificultad estructural.</td></tr>
+    <tr><td><strong>Tiempo de respuesta</strong></td><td>Desde el aviso hasta la confirmación de comparecencia.</td><td>Crítico en asistencia al detenido; se analiza por franja y sede.</td></tr>
+  </tbody>
+</table>
+
+<p>Los informes derivados son cinco: cobertura mensual con las franjas descubiertas y su causa, equidad por letrado y
+periodo, movilidad con tiempos de resolución, certificación de guardias realizadas y memoria anual. Ninguno muestra
+causas clínicas ni el detalle de las ausencias: la equidad se explica con números de carga, que es lo que el colectivo
+necesita para confiar en el reparto.</p>

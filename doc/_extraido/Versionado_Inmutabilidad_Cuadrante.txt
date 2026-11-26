@@ -1,0 +1,33 @@
+Versionado e Inmutabilidad del Cuadrante
+Proyecto: Turno de Oficio
+Objetivo
+Garantizar la trazabilidad completa del cuadrante para poder demostrar qué información fue
+publicada, cuándo se publicó y qué usuario realizó cada modificación.
+Diseño de Versiones
+- Cada publicación del cuadrante genera una nueva versión identificada mediante un version_id
+único.
+- Las versiones anteriores permanecen almacenadas y disponibles para consulta.
+- Se registra la fecha de publicación y el usuario responsable de cada versión.
+Histórico de Cambios
+Para cada modificación se almacenan los siguientes datos:
+- Usuario que realiza el cambio.
+- Fecha y hora de la modificación.
+- Campo modificado.
+- Valor anterior.
+- Valor nuevo.
+Borrado Lógico
+- Los registros no se eliminan físicamente de la base de datos.
+- Se utiliza un campo activo o deleted_at para marcar el estado del registro.
+- La información puede recuperarse posteriormente para fines de auditoría.
+Consultas de Auditoría
+1. Historial de cambios:
+SELECT usuario, fecha_cambio, campo, valor_anterior, valor_nuevo FROM historial_cambios
+ORDER BY fecha_cambio DESC;
+2. Versiones publicadas:
+SELECT version_id, fecha_publicacion, usuario_publicador FROM versiones_cuadrante ORDER
+BY fecha_publicacion DESC;
+3. Registros eliminados lógicamente:
+SELECT * FROM cuadrante WHERE activo = FALSE;
+Conclusión
+El diseño propuesto garantiza la inmutabilidad y trazabilidad del cuadrante, permitiendo demostrar
+qué información fue publicada, cuándo se publicó y quién realizó cada modificación.

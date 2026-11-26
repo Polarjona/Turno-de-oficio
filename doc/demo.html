@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Demo final · Turno de Oficio</title><style>
+@font-face { font-family:"Poppins"; font-weight:300; src:url("fonts/Poppins-Light.ttf"); }
+@font-face { font-family:"Poppins"; font-weight:400; src:url("fonts/Poppins-Regular.ttf"); }
+@font-face { font-family:"Poppins"; font-weight:500; src:url("fonts/Poppins-Medium.ttf"); }
+@font-face { font-family:"Poppins"; font-weight:600; src:url("fonts/Poppins-SemiBold.ttf"); }
+@font-face { font-family:"Poppins"; font-weight:700; src:url("fonts/Poppins-Bold.ttf"); }
+
+@page { size: 960pt 540pt; margin: 0; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  color: #232d4b;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.slide {
+  position: relative;
+  width: 960pt; height: 540pt;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+}
+.slide:last-child { page-break-after: auto; }
+.dark { background: #232d4b; color: #fff; }
+.light { background: #fff; color: #232d4b; }
+
+.body {
+  position: absolute; left: 56pt; top: 0; width: 848pt; height: 540pt;
+  padding: 38pt 0 64pt;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.body.flat { height: 468pt; padding-bottom: 26pt; }
+
+.eyebrow {
+  font-size: 8.5pt; font-weight: 600; letter-spacing: 2.2px;
+  text-transform: uppercase; color: #da1984;
+}
+.dark .eyebrow { color: #f5f340; }
+h1 {
+  font-size: 27pt; font-weight: 400; line-height: 1.15; color: #232d4b;
+  margin-top: 8pt; letter-spacing: -0.3px;
+}
+.dark h1 { color: #f5f340; }
+.rule { width: 46pt; height: 2.4pt; background: #da1984; margin-top: 14pt; }
+.dark .rule { background: #f5f340; }
+
+p { font-size: 12.4pt; line-height: 1.55; }
+.lead { font-size: 13pt; line-height: 1.55; margin-top: 16pt; max-width: 760pt; }
+
+.footer {
+  position: absolute; left: 32pt; right: 32pt; bottom: 11pt;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 6.8pt; letter-spacing: 0.2px;
+}
+.footer .l { display: flex; gap: 10pt; }
+.footer .date { color: #da1984; }
+.footer .ref { color: #7f7f7f; }
+.dark .footer .ref { color: #9aa3b8; }
+.footer .num { font-size: 9pt; color: #232d4b; }
+.dark .footer .num { color: #f5f340; }
+
+/* --- portada --- */
+.band { position: absolute; right: 0; top: 0; width: 116pt; height: 540pt; background: #f5f340; }
+.sq {
+  position: absolute; right: 190pt; top: 40pt; width: 62pt; height: 62pt;
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+}
+.sq i { display: block; }
+.sq i:nth-child(1) { grid-column: 2; grid-row: 1; background: #f5f340; }
+.sq i:nth-child(2) { grid-column: 3; grid-row: 1; background: rgba(255, 255, 255, 0.85); }
+.sq i:nth-child(3) { grid-column: 3; grid-row: 2; background: rgba(255, 255, 255, 0.45); }
+.sq i:nth-child(4) { grid-column: 1; grid-row: 3; background: rgba(255, 255, 255, 0.65); }
+.cover { position: absolute; left: 56pt; top: 44pt; width: 700pt; }
+.cover .logo { width: 104pt; height: 17pt; overflow: hidden; }
+.cover .logo img { height: 17pt; width: auto; filter: brightness(0) invert(1); }
+.cover .kicker { margin-top: 76pt; }
+.cover h1 { font-size: 34pt; margin-top: 8pt; }
+.cover .sub { color: #fff; font-size: 12.4pt; line-height: 1.55; margin-top: 16pt; max-width: 560pt; }
+.cover .r { width: 44pt; height: 2.4pt; background: #f5f340; margin: 24pt 0 9pt; }
+.cover .date { color: #f5f340; font-size: 11pt; }
+
+/* --- tarjetas --- */
+.cols { display: flex; gap: 16pt; margin-top: 28pt; }
+.col { flex: 1 1 0; padding-top: 11pt; border-top: 3pt solid #da1984; }
+.col .k { font-size: 8.6pt; font-weight: 700; letter-spacing: 1.6px; color: #da1984; text-transform: uppercase; }
+.col p { font-size: 11pt; line-height: 1.5; color: #4a5470; margin-top: 7pt; }
+
+/* --- listas --- */
+ul.pts { margin-top: 24pt; list-style: none; }
+ul.pts li {
+  position: relative; padding-left: 22pt; margin-bottom: 15pt;
+  font-size: 12.6pt; line-height: 1.45;
+}
+ul.pts li:before {
+  content: ""; position: absolute; left: 0; top: 6pt;
+  width: 8pt; height: 8pt; background: #da1984;
+}
+.dark ul.pts li { color: #fff; }
+.dark ul.pts li:before { background: #f5f340; }
+ul.pts b { font-weight: 600; }
+.dark ul.pts b { color: #f5f340; }
+
+ol.rules { margin-top: 24pt; list-style: none; counter-reset: r; }
+ol.rules li {
+  counter-increment: r; position: relative; padding-left: 40pt;
+  margin-bottom: 13pt; font-size: 12.2pt; line-height: 1.45; color: #fff;
+}
+ol.rules li:before {
+  content: counter(r); position: absolute; left: 0; top: -3pt;
+  font-size: 20pt; font-weight: 300; color: #f5f340;
+}
+ol.rules b { color: #f5f340; font-weight: 600; }
+
+/* --- tabla --- */
+table { width: 100%; border-collapse: collapse; margin-top: 24pt; }
+th {
+  background: #232d4b; color: #f5f340; text-align: left;
+  font-size: 9pt; font-weight: 600; letter-spacing: 0.4px;
+  padding: 8pt 10pt;
+}
+td { padding: 8pt 10pt; font-size: 10.8pt; border-bottom: 1pt solid #dfe3ec; vertical-align: top; }
+tr:nth-child(even) td { background: #f7f8fb; }
+td:first-child { font-weight: 600; width: 31%; }
+td.risk { color: #7a8399; font-size: 10pt; }
+
+/* --- flujo --- */
+.flow { display: flex; align-items: flex-start; gap: 6pt; margin-top: 28pt; }
+.step { flex: 1 1 0; border-top: 3pt solid #da1984; padding-top: 10pt; }
+.step .n { font-size: 8.4pt; font-weight: 700; letter-spacing: 1.4px; color: #da1984; text-transform: uppercase; }
+.step b { display: block; font-size: 12.6pt; margin: 4pt 0 6pt; }
+.step p { font-size: 10.2pt; line-height: 1.45; color: #4a5470; }
+.step code { font-family: "Poppins", monospace; font-size: 9.4pt; background: #f2f3f8; padding: 1pt 3pt; }
+.step { position: relative; }
+.close .footer { bottom: 80pt; }
+.close .footer .ref { color: #9aa3b8; }
+.close .footer .num { color: #f5f340; }
+
+/* --- cierre --- */
+.bandbottom {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 72pt;
+  background: #f5f340; color: #232d4b;
+  display: flex; align-items: center; gap: 30pt; padding: 0 56pt;
+  font-size: 10.6pt;
+}
+.bandbottom .when { display: flex; align-items: baseline; gap: 9pt; }
+.bandbottom b { font-weight: 600; }
+.bandbottom span { font-weight: 400; font-size: 10.2pt; }
+</style></head><body><section class="slide dark"><div class="band"></div><div class="sq"><i></i><i></i><i></i><i></i></div><div class="cover"><div class="logo"><img src="assets/logo_white.png" alt="Inetum"></div><div class="eyebrow kicker" style="color:#f5f340">DEMO FINAL · FRONTEND · 15 MINUTOS</div><h1>Turno de Oficio<br>frontend</h1><p class="sub">Gestión del Turno de Oficio — Colegio de la Abogacía de Tarragona. Aplicación para letrados y coordinación: dos recorridos en vivo sobre el prototipo.</p><div class="r"></div><div class="date">Dhruva · Frontend · Noviembre de 2026</div></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div></div></section><section class="slide light"><div class="body"><div class="eyebrow">GUION</div><h1>15 minutos y dos recorridos en vivo</h1><div class="rule"></div><table><thead><tr><th>Minuto</th><th>Bloque</th><th>Soporte</th></tr></thead><tbody><tr><td>0:00–1:30</td><td>Contexto y alcance</td><td>Diapositivas 1–3</td></tr><tr><td>1:30–3:30</td><td>Lo que aprendimos antes de diseñar</td><td>Diapositiva 4</td></tr><tr><td>3:30–5:30</td><td>Pantallas y sistema de diseño</td><td>Diapositivas 5–6</td></tr><tr><td>5:30–10:00</td><td>Demo en vivo: recorrido del letrado</td><td>Prototipo, J. Roca y M. Serra</td></tr><tr><td>10:00–12:30</td><td>Demo en vivo: recorrido de la coordinación</td><td>Prototipo, Coordinación</td></tr><tr><td>12:30–14:00</td><td>Prueba con letrados y límites</td><td>Diapositiva 9</td></tr><tr><td>14:00–15:00</td><td>Pendientes, entregables y preguntas</td><td>Diapositiva 10</td></tr></tbody></table></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">2</span></div></section><section class="slide dark"><div class="body"><div class="eyebrow">CONTEXTO</div><h1>De pie, con una mano y a plena luz</h1><div class="rule"></div><p class="lead">Un letrado necesita saber si tiene guardia hoy y si está confirmada. Tres reglas mandan en el diseño:</p><ul class="pts"><li><b>Publicada no es confirmada.</b></li><li><b>La guardia es del titular hasta que el Colegio valida.</b></li><li><b>Toda decisión lleva motivación</b> — visible también en el aviso al letrado afectado.</li></ul></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">3</span></div></section><section class="slide light"><div class="body"><div class="eyebrow">ANTES DE DISEÑAR</div><h1>Lo que aprendimos antes de dibujar</h1><div class="rule"></div><div class="cols"><div class="col"><div class="k">Benchmark</div><p>Cinco referentes: ICAM, ICA Cádiz e ICAB como colegiales, Deputy y PagerDuty como genéricos. Solo información pública, sin probar las aplicaciones.</p></div><div class="col"><div class="k">Recorrido</div><p>Aviso, acuse, actuación, parte y sustitución. Cada etapa tiene momentos críticos y oportunidades de diseño; las emociones son hipótesis para la prueba.</p></div><div class="col"><div class="k">Decisiones</div><p>Estados que no dependen solo del color, un aviso legal en cada paso de la sustitución y decisiones de coordinación siempre motivadas.</p></div></div></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">4</span></div></section><section class="slide light"><div class="body"><div class="eyebrow">WIREFRAMES DE BAJA FIDELIDAD</div><h1>Cuatro pantallas, una por tarea del día</h1><div class="rule"></div><table><thead><tr><th>Pantalla</th><th>Qué hace</th></tr></thead><tbody><tr><td>Mi guardia de hoy</td><td>Estado, horario y acciones principales a un toque.</td></tr><tr><td>Calendario personal</td><td>Mes con guardias propias, sustituciones y días sin servicio.</td></tr><tr><td>Solicitud de sustitución</td><td>Tres pasos: motivo, quién la cubre y revisar y enviar.</td></tr><tr><td>Cuadrante de coordinación</td><td>Semana por materias, con pendientes y huecos sin cubrir a la vista.</td></tr></tbody></table></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">5</span></div></section><section class="slide dark"><div class="body"><div class="eyebrow">SISTEMA DE DISEÑO MÍNIMO</div><h1>Legible de pie, con una mano y a plena luz</h1><div class="rule"></div><ul class="pts"><li><b>18 px:</b> tamaño mínimo del texto principal.</li><li><b>48 px:</b> objetivo táctil mínimo; el botón principal, 60 px.</li><li><b>2 temas:</b> claro y exterior de alto contraste. <b>7:1</b> de contraste en el texto de estado.</li><li><b>Estados distinguibles sin color:</b> Confirmada · Sin acuse · En revisión · Descubierta · Sin servicio (texto + forma del borde). En el circuito: <i>oferta_enviada · pendiente_validacion · estimada · desestimada</i>.</li></ul></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">6</span></div></section><section class="slide light"><div class="body"><div class="eyebrow">DEMO EN VIVO 1 · 4 MIN 30</div><h1>Recorrido del letrado: de la solicitud al aviso</h1><div class="rule"></div><ul class="pts"><li>J. Roca abre Mis guardias y pulsa «Solicitar sustitución» en la del 17 de marzo.</li><li>Elige el motivo (categorías cerradas del contrato, sin diagnósticos) y propone a un compañero elegible.</li><li>Revisa y envía: la guardia sigue siendo suya.</li><li>M. Serra abre Avisos, ve la oferta (48 h propuesto) y la acepta.</li><li><b>Qué señalar:</b> aviso legal en cada paso · motivo sin datos de salud · «Pendiente de validación», no «Confirmada».</li></ul></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">7</span></div></section><section class="slide light"><div class="body"><div class="eyebrow">DEMO EN VIVO 2 · 2 MIN 30</div><h1>Recorrido de la coordinación: resolver con motivación</h1><div class="rule"></div><ul class="pts"><li>En Solicitudes, abrir el expediente pendiente.</li><li>Revisar las comprobaciones: plazo, habilitación, solapamiento y cómputo.</li><li>Escribir la motivación; sin ella no se puede resolver.</li><li>Aprobar: se publica la versión 2 del cuadrante.</li><li>Ver los avisos de los dos letrados: motivación visible en ambos y «Titular anterior: J. Roca».</li><li><b>Qué señalar:</b> la plataforma propone y comprueba; decide la coordinación · el histórico conserva al titular anterior · avisos sin datos de salud.</li></ul></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">8</span></div></section><section class="slide dark"><div class="body"><div class="eyebrow">PRUEBA DE USABILIDAD (T6)</div><h1>Prueba con 2 letrados: cinco tareas de 3 minutos</h1><div class="rule"></div><ul class="pts"><li>Solicitar una sustitución con motivo y candidato.</li><li>Decir de quién es la guardia tras enviar.</li><li>Aceptar la oferta como sustituto.</li><li>Entender el aviso de resolución (incluida la motivación).</li><li>Pedir que el Colegio proponga candidato.</li><li><b>Resultados: pendientes de las sesiones del 18–19 de noviembre.</b> No se presentan cifras hasta tenerlas: tareas sin ayuda (__ de 10), hallazgo más grave (__) y corrección prioritaria (__), contra el criterio del T6 (≥ 9/10 sin ayuda, ningún crítico sin corregir, facilidad media ≥ 5).</li><li>Con 2 letrados no hay estadística; denegación/devolución, exterior, sin conexión y escalada quedan para la segunda ronda.</li></ul></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">9</span></div></section><section class="slide dark close"><div class="body flat"><div class="eyebrow">CIERRE</div><h1>Pendientes y entregables</h1><div class="rule"></div><ul class="pts"><li><b>Todavía pendiente:</b> tema exterior a plena luz · modo sin conexión · escalada por retraso · puntos «Verificar» de la checklist WCAG · confirmación del Colegio del plazo de respuesta (48 h propuesto) · resultados del T6 (18–20 nov).</li><li><b>Entregables:</b> T1 Benchmark · T2 Mapa de recorrido · T3 Wireframes · T4 Sistema de diseño · T5 Prototipo · T6 Prueba de usabilidad.</li><li><b>Respaldo sin conexión:</b> el prototipo es un único HTML sin recursos externos (fuente del sistema); llevar copia en USB y capturas. No activar «Modo test» durante la demo.</li></ul></div><div class="bandbottom"><div class="when"><b>T1–T4</b><span>diseño</span></div><div class="when"><b>T5</b><span>prototipo</span></div><div class="when"><b>T6</b><span>prueba 18–20 nov</span></div></div><div class="footer"><div class="l"><span class="date">18/11/2026</span><span class="ref">©2026 Inetum | Ref. Demo frontend | Demo final · 15 min | Classification: Internal</span></div><span class="num">10</span></div></section></body></html>

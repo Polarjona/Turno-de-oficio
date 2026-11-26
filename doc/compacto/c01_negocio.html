@@ -1,0 +1,322 @@
+<!-- ============ CAPÍTULO 1 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 1</span>La aplicación en una página</h1>
+<p class="chlead">Cada año el Colegio coloca a cerca de un centenar de profesionales en más de un millar de franjas de
+guardia, respetando especialidades, ausencias, descansos y un reparto equitativo que debe poder explicarse. Hoy ese
+trabajo vive en correos y hojas de cálculo. La propuesta lo convierte en un procedimiento único y trazable.</p>
+
+<p class="lead-in">La aplicación no se organiza alrededor de un calendario, sino de una unidad de trabajo distinta:
+la <strong>guardia</strong>, entendida como una franja de cobertura que debe estar atendida por un profesional
+habilitado, con una modalidad concreta y un responsable identificable en todo momento. Todo lo demás —disponibilidad,
+especialidades, sustituciones, incidencias, estadísticas— gira alrededor de esa entidad.</p>
+
+<p>Digitaliza el ciclo completo: definición del calendario anual, comunicación de disponibilidad, generación y
+validación del cuadrante, designación, acuse, gestión de sustituciones, registro de incidencias, cierre del parte y
+certificación de lo realizado, con constancia de quién decidió qué y cuándo.</p>
+
+<div class="kv">
+  <div><div class="kt">Cobertura</div><div class="kd">El 100 % de las franjas planificadas, con alerta automática
+  ante cualquier hueco.</div></div>
+  <div><div class="kt">Equidad</div><div class="kd">Criterio publicado y aplicado igual para todos, con el cómputo
+  de cada letrado a la vista.</div></div>
+  <div><div class="kt">Constancia</div><div class="kd">Cada cambio con autor, fecha, motivo; el histórico no se
+  reescribe.</div></div>
+  <div><div class="kt">Continuidad</div><div class="kd">Vía manual de designación siempre disponible, también si el
+  sistema falla.</div></div>
+</div>
+
+<h2>Qué cambia para el Colegio</h2>
+<ul>
+  <li><strong>Se acaban los huecos invisibles.</strong> Un semáforo único por materia y día distingue cubierta,
+  pendiente de acuse y descubierta.</li>
+  <li><strong>El reparto deja de ser opinable.</strong> Cada designación se justifica con la carga previa del letrado
+  y su posición en el turno.</li>
+  <li><strong>Las sustituciones salen de la mensajería privada.</strong> Entran en un circuito con candidatos
+  elegibles y resolución expresa.</li>
+  <li><strong>La retribución se documenta sola.</strong> El parte cerrado y validado es la base de la certificación
+  trimestral.</li>
+</ul>
+
+<h2>Lo que la aplicación no hace</h2>
+<p>No gestiona expedientes judiciales, no sustituye las comunicaciones con juzgados ni con la Comisión de Asistencia
+Jurídica Gratuita, no calcula retribuciones y no decide sobre la procedencia de una excusa. Cada una de esas
+funciones permanece donde la ley y las normas colegiales la sitúan.</p>
+
+<!-- ============ CAPÍTULO 2 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 2</span>Qué se digitaliza exactamente</h1>
+<p class="chlead">La mayoría de los errores en proyectos como este nace de mezclar cuatro cosas que el lenguaje
+cotidiano confunde: la guardia, el turno, la designación y la sustitución.</p>
+
+<div class="kv">
+  <div><div class="kt">Guardia</div><div class="kd">Franja que debe cubrirse. Existe aunque nadie la cubra: por eso
+  puede estar <em>descubierta</em>.</div></div>
+  <div><div class="kt">Turno</div><div class="kd">Lista ordenada de habilitados en una materia. Fija la prelación y
+  el cómputo de equidad.</div></div>
+  <div><div class="kt">Designación</div><div class="kd">Acto colegial que atribuye la guardia a un letrado. Produce
+  obligaciones.</div></div>
+  <div><div class="kt">Sustitución</div><div class="kd">Cambio de titular validado por el Colegio, que conserva la
+  historia de la guardia.</div></div>
+</div>
+
+<p class="lead-in">La distinción tiene consecuencias inmediatas. Si guardia y designación se modelan como una sola
+cosa, el sistema no puede representar una franja vacía y, por tanto, no puede avisar de un hueco. Y si la designación
+se confunde con la aceptación del letrado, se le atribuye una facultad que no tiene —decidir si cubre o no— y un
+deber profesional se convierte en una invitación.</p>
+
+<div class="flow">
+  <div class="flow-steps">
+    <div class="flow-step"><span class="sn">01</span><b>Calendario</b>Tipos y franjas del año.
+      <span class="who">Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">02</span><b>Guardias</b>Franjas creadas, sin titular.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">03</span><b>Propuesta</b>Reparto elegible y equilibrado.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">04</span><b>Designación</b>Validación y publicación.
+      <span class="who">Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">05</span><b>Acuse</b>El letrado confirma que la conoce.
+      <span class="who">Abogado</span></div>
+  </div>
+</div>
+
+<h2>El problema que se resuelve</h2>
+<table class="grid">
+  <thead><tr><th style="width:30%">Situación actual</th><th style="width:34%">Efecto sobre el servicio</th>
+  <th style="width:36%">Respuesta de la aplicación</th></tr></thead>
+  <tbody>
+    <tr><td>El cuadrante vive en varias copias</td><td>Nadie puede afirmar qué franjas están cubiertas</td><td>Estado único y semáforo de cobertura por franja</td></tr>
+    <tr><td>Siempre cubren los mismos</td><td>Agravio comparativo y bajas del turno</td><td>Cómputo ponderado y prelación publicada</td></tr>
+    <tr><td>Cambios por mensajería</td><td>El Colegio se entera cuando ya cambió el titular</td><td>Circuito con candidatos, acuse y resolución</td></tr>
+    <tr><td>El aviso no deja rastro</td><td>Discusiones sobre si se comunicó</td><td>Notificación con envío, entrega y lectura</td></tr>
+    <tr><td>Partes dispersos</td><td>Certificación lenta y con errores</td><td>Parte validado que alimenta la certificación</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 3 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 3</span>Base normativa del diseño</h1>
+<p class="chlead">La organización de la guardia es competencia colegial y la relación con el letrado designado está
+regulada. De esa regla se derivan decisiones muy concretas del producto.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:27%">Referencia</th><th style="width:36%">Qué impone</th>
+  <th style="width:37%">Decisión en la aplicación</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Ley 1/1996</strong>, art. 22</td><td>Los Colegios organizan el servicio mediante sus Juntas de
+      Gobierno y garantizan su prestación continuada.</td><td>La aplicación es instrumento de apoyo: existe siempre
+      una vía manual de designación.</td></tr>
+    <tr><td><strong>Ley 1/1996</strong>, art. 24</td><td>Distribución objetiva y equitativa, pública y consultable;
+      la excusa se formula en plazo desde la notificación.</td><td>Los criterios son visibles para todo el turno y la
+      renuncia se modela como excusa con plazo y resolución.</td></tr>
+    <tr><td><strong>RD 141/2021</strong> (Reglamento de asistencia jurídica gratuita; deroga el RD 996/2003)</td>
+      <td>Designación de oficio, turnos especializados y actuación inmediata en supuestos urgentes.</td>
+      <td>Admite designaciones urgentes fuera del cuadrante, conservando su origen y su autorización.</td></tr>
+    <tr><td><strong>RD 135/2021</strong> (Estatuto General de la Abogacía, cap. VI)</td><td>Deber profesional del
+      designado, sin derivación libre de la asistencia a otro letrado.</td><td>La sustitución requiere sustituto
+      habilitado y validación colegial: no es un acuerdo privado.</td></tr>
+    <tr><td><strong>RGPD</strong> y <strong>LO 3/2018</strong></td><td>Datos de salud como categoría especial;
+      minimización y protección desde el diseño.</td><td>Se registra la indisponibilidad, no el diagnóstico; el
+      justificante queda en espacio restringido y auditado.</td></tr>
+    <tr><td><strong>RGPD</strong>, art. 22</td><td>Derecho a no ser objeto de decisiones individuales
+      automatizadas.</td><td>El cálculo de reparto es una propuesta sin efectos hasta la validación humana.</td></tr>
+    <tr><td><strong>Normas de la Junta de Gobierno</strong></td><td>Fijan plazos de excusa, cupos y criterios de
+      equidad.</td><td>Todos los parámetros son configuración versionada, no código.</td></tr>
+  </tbody>
+</table>
+
+<h2>Tres principios que no se negocian</h2>
+<ol>
+  <li><strong>Nada se publica sin acto colegial.</strong> La automatización comprueba, ordena y avisa; nunca designa.</li>
+  <li><strong>Nada se borra.</strong> Las correcciones se hacen por nuevo estado; la historia del cuadrante se puede
+  reconstruir.</li>
+  <li><strong>La continuidad prevalece.</strong> Ante un fallo, un bloqueo o un dato contradictorio hay una vía de
+  excepción, y también queda registrada.</li>
+</ol>
+
+<!-- ============ CAPÍTULO 4 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 4</span>Roles y permisos</h1>
+<p class="chlead">Cinco roles, con una separación deliberada: quien propone no aprueba y la información sensible no
+circula por la vista equivocada.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:19%">Rol</th><th style="width:26%">Quién</th><th style="width:55%">Qué puede hacer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Abogado/a</strong></td><td>Colegiado inscrito en el turno</td><td>Ver el cuadrante y sus guardias;
+      comunicar disponibilidad; acusar recibo; solicitar excusa o permuta; registrar incidencias; cerrar su parte;
+      descargar su certificación.</td></tr>
+    <tr><td><strong>Coordinación del Turno</strong></td><td>Personal administrativo del Colegio</td><td>Gestionar
+      letrados, especialidades y tipos; generar y publicar el cuadrante; asignar; resolver excusas y sustituciones;
+      gestionar incidencias; obtener informes.</td></tr>
+    <tr><td><strong>Junta de Gobierno</strong></td><td>Órgano de gobierno</td><td>Aprobar criterios, plazos y cupos;
+      resolver recursos; consultar cualquier expediente.</td></tr>
+    <tr><td><strong>Administración técnica</strong></td><td>Servicio informático</td><td>Altas, credenciales,
+      parámetros y copias. Sin acceso al contenido de guardias ni a la auditoría.</td></tr>
+    <tr><td><strong>Auditoría y datos</strong></td><td>Responsable designado</td><td>Consultar accesos y cambios;
+      atender derechos de las personas. Sin capacidad de modificar nada.</td></tr>
+  </tbody>
+</table>
+
+<h2>Matriz de permisos</h2>
+<table class="grid">
+  <caption>C = consulta · E = edita · A = aprueba · — = sin acceso</caption>
+  <thead><tr><th style="width:40%">Función</th><th class="c">Abogado</th><th class="c">Coordinación</th><th class="c">Junta</th><th class="c">Técnica</th><th class="c">Auditoría</th></tr></thead>
+  <tbody>
+    <tr><td>Ver cuadrante publicado</td><td class="c">C</td><td class="c">C</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Comunicar disponibilidad</td><td class="c">E</td><td class="c">E</td><td class="c">—</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Validar disponibilidad</td><td class="c">—</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Generar propuesta de cuadrante</td><td class="c">—</td><td class="c">E</td><td class="c">—</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Publicar o modificar cuadrante</td><td class="c">—</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Solicitar excusa o permuta</td><td class="c">E</td><td class="c">E</td><td class="c">—</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Resolver excusa o sustitución</td><td class="c">—</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Cerrar / validar parte</td><td class="c">E</td><td class="c">A</td><td class="c">C</td><td class="c">—</td><td class="c">—</td></tr>
+    <tr><td>Ver justificante de salud</td><td class="c">Propio</td><td class="c">C</td><td class="c">C</td><td class="c">—</td><td class="c">C</td></tr>
+    <tr><td>Aprobar criterios y plazos</td><td class="c">—</td><td class="c">—</td><td class="c">A</td><td class="c">—</td><td class="c">C</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 5 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 5</span>Tipología de guardias</h1>
+<p class="chlead">Una guardia de asistencia al detenido no cuesta lo mismo al letrado que una disponibilidad telefónica
+de civil. Tratarlas como equivalentes falsea la equidad.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:20%">Tipo</th><th style="width:14%">Modalidad</th><th style="width:14%">Franja</th>
+  <th style="width:10%" class="c">Cómputo</th><th style="width:42%">Particularidad operativa</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Asistencia al detenido</strong></td><td>Localizada con comparecencia</td><td>24 h o turnos de 8 h</td><td class="c">1,00</td>
+      <td>Máxima exigencia: el escalado por falta de respuesta debe resolverse en minutos.</td></tr>
+    <tr><td><strong>Guardia penal</strong></td><td>Presencial en sede</td><td>08:00–20:00</td><td class="c">0,75</td>
+      <td>Juicios rápidos y diligencias urgentes; presencia física y coordinación con el juzgado.</td></tr>
+    <tr><td><strong>Violencia de género</strong></td><td>Localizada</td><td>24 h</td><td class="c">1,00</td>
+      <td>Turno especializado: habilitación vigente y formación acreditada.</td></tr>
+    <tr><td><strong>Menores</strong></td><td>Localizada</td><td>24 h</td><td class="c">0,90</td>
+      <td>Coordinación con fiscalía y equipo técnico; registro de comparecencias.</td></tr>
+    <tr><td><strong>Extranjería e interior</strong></td><td>Localizada</td><td>Según sede</td><td class="c">0,60</td>
+      <td>Asistencias en frontera o dependencias policiales; control de tiempos de espera.</td></tr>
+    <tr><td><strong>Civil, social y contencioso</strong></td><td>Localizada</td><td>Mañana / tarde</td><td class="c">0,50</td>
+      <td>Carga concentrada en señalamientos; refuerzo por volumen previsto.</td></tr>
+    <tr><td><strong>Refuerzo e incidencias</strong></td><td>Según necesidad</td><td>Variable</td><td class="c">0,50</td>
+      <td>Se activa sobre una guardia existente; designación urgente y motivada.</td></tr>
+  </tbody>
+</table>
+
+<p class="small">Los pesos son una configuración inicial; los fija la Junta y el sistema conserva la versión aplicada
+en cada periodo, de modo que un cambio de criterio no altera estadísticas ya publicadas.</p>
+
+<h3>Cada tipo se define una vez</h3>
+<p>La plantilla de guardia contiene lo necesario para que la franja sea inequívoca: denominación y código, materia
+requerida, modalidad y sede, horario —con indicación de si cruza la medianoche—, número de letrados previstos, unidad
+de cómputo y regla de descanso posterior. Una guardia de 24 horas pertenece a una sola fecha de servicio, no a dos:
+así el reparto, los descansos y las estadísticas se calculan sobre una única unidad.</p>
+
+<!-- ============ CAPÍTULO 6 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 6</span>El ciclo del cuadrante</h1>
+<p class="chlead">El cuadrante no se publica de golpe: se construye en cinco fases con responsables distintos. Ninguna
+puede saltarse, porque de ello depende que el letrado haya podido comunicar sus circunstancias antes de ser designado.</p>
+
+<div class="flow">
+  <div class="flow-steps">
+    <div class="flow-step"><span class="sn">FASE 1</span><b>Definición</b>Tipos, franjas, sedes y cupos.
+      <span class="who">Coordinación · aprueba Junta</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 2</span><b>Disponibilidad</b>Vacaciones y ausencias.
+      <span class="who">Abogados · valida Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 3</span><b>Propuesta</b>Reparto por elegibilidad y equidad.
+      <span class="who">Sistema</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 4</span><b>Alegaciones</b>Causa justificada.
+      <span class="who">Abogados · resuelve Coordinación</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span class="sn">FASE 5</span><b>Publicación</b>Versión vigente.
+      <span class="who">Coordinación</span></div>
+  </div>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:16%">Fase</th><th style="width:44%">Qué ocurre</th><th style="width:22%">Plazo orientativo</th><th style="width:18%">Resultado</th></tr></thead>
+  <tbody>
+    <tr><td>Definición</td><td>Se fija qué días hay guardia, de qué tipo y con qué modalidad.</td><td>60 días antes</td><td>Calendario marco</td></tr>
+    <tr><td>Disponibilidad</td><td>Los letrados comunican vacaciones, ausencias y formación; se validan.</td><td>Cierre 45 días antes</td><td>Mapa de indisponibilidades</td></tr>
+    <tr><td>Propuesta</td><td>El sistema cruza elegibilidad, ausencias y cómputo y justifica cada asignación.</td><td>35 días antes</td><td>Borrador justificado</td></tr>
+    <tr><td>Alegaciones</td><td>El letrado consulta su propuesta y opone causa si procede; se resuelve cada una.</td><td>Ventana de 10 días</td><td>Expediente resuelto</td></tr>
+    <tr><td>Publicación</td><td>Se publica la versión vigente y se notifica; empiezan los plazos de excusa.</td><td>20 días antes</td><td>Cuadrante v1</td></tr>
+  </tbody>
+</table>
+
+<h2>Estados del cuadrante</h2>
+<table class="grid">
+  <thead><tr><th style="width:22%">Estado</th><th style="width:44%">Significado</th><th style="width:34%">Consecuencia</th></tr></thead>
+  <tbody>
+    <tr><td><span class="chip">Borrador</span></td><td>Solo visible para coordinación; cambios libres.</td><td>Sin efectos para el letrado</td></tr>
+    <tr><td><span class="chip a">En alegaciones</span></td><td>Publicado internamente para el afectado.</td><td>Puede oponer causa; no es designación</td></tr>
+    <tr><td><span class="chip g">Publicado</span></td><td>Versión vigente, notificada y consultable.</td><td>Produce designaciones y abre plazos</td></tr>
+    <tr><td><span class="chip">Congelado</span></td><td>Alcanzada la antelación mínima fijada por la Junta.</td><td>Solo cambia por sustitución o permuta validada</td></tr>
+    <tr><td><span class="chip">Cerrado</span></td><td>Periodo terminado y partes validados.</td><td>Pasa al histórico y a la certificación</td></tr>
+  </tbody>
+</table>
+
+<p class="small">La publicidad del criterio no es un gesto de transparencia: el art. 24 de la Ley 1/1996 exige que el
+sistema de distribución sea objetivo, equitativo y consultable. En la aplicación eso es una pantalla concreta,
+«Cómo se reparten las guardias», con los criterios vigentes, los pesos y la fecha del acuerdo que los aprobó.</p>
+
+<!-- ============ CAPÍTULO 7 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 7</span>Asignación de guardias</h1>
+<p class="chlead">Tres vías conviven: la asignación manual para casos singulares, la propuesta asistida para el grueso
+del cuadrante y la designación urgente para lo que no admite espera. Las tres terminan igual: un acto del Colegio,
+registrado.</p>
+
+<h2>Quién es elegible</h2>
+<p>Siete filtros acumulativos descartan a quien no puede cubrir la guardia; cada descarte queda registrado con su
+motivo, lo que permite explicar por qué una persona concreta no fue propuesta.</p>
+<table class="grid">
+  <thead><tr><th style="width:6%" class="c">#</th><th style="width:26%">Filtro</th><th style="width:68%">Comprobación</th></tr></thead>
+  <tbody>
+    <tr><td class="c">1</td><td>Alta en el turno</td><td>Activo en el turno correspondiente a la materia.</td></tr>
+    <tr><td class="c">2</td><td>Habilitación vigente</td><td>Acreditación en la especialidad, no caducada. Bloqueo duro.</td></tr>
+    <tr><td class="c">3</td><td>Disponibilidad</td><td>Sin indisponibilidad validada que cubra la franja.</td></tr>
+    <tr><td class="c">4</td><td>Solapamiento</td><td>Sin otra guardia que se solape total o parcialmente.</td></tr>
+    <tr><td class="c">5</td><td>Descanso</td><td>Se respeta la regla de descanso posterior, si está configurada.</td></tr>
+    <tr><td class="c">6</td><td>Cupos</td><td>No ha alcanzado el máximo del mes, del año o del periodo.</td></tr>
+    <tr><td class="c">7</td><td>Excusas</td><td>No está en periodo de exclusión por excusa estimada, si la norma lo prevé.</td></tr>
+  </tbody>
+</table>
+
+<h2>Cómo se elige entre los elegibles</h2>
+<ol>
+  <li><strong>Menor cómputo acumulado</strong> en el periodo, ponderado por modalidad. Es el criterio principal porque
+  es el que hace efectiva la equidad.</li>
+  <li><strong>Mayor antigüedad en el turno</strong>, que actúa como memoria histórica cuando el cómputo se iguala.</li>
+  <li><strong>Menor carga reciente</strong> (guardias de los últimos 30 días).</li>
+  <li><strong>Menor número de excusas estimadas</strong> en el periodo.</li>
+  <li><strong>Desempate aleatorio reproducible</strong>, con semilla registrada junto a la propuesta.</li>
+</ol>
+
+<table class="grid">
+  <caption>Ejemplo: guardia de penal del 15 de marzo, con cuatro elegibles (24 h = 1,00; presencial = 0,75; localizada = 0,50)</caption>
+  <thead><tr><th>Letrado</th><th class="c">Cómputo previo</th><th class="c">Último mes</th><th class="c">Excusas</th><th class="c">Orden</th><th>Resultado</th></tr></thead>
+  <tbody>
+    <tr><td>A. Ferrer</td><td class="c">3,25</td><td class="c">2</td><td class="c">0</td><td class="c">1</td><td><span class="chip g">Propuesto</span> menor carga acumulada</td></tr>
+    <tr><td>M. Serra</td><td class="c">4,00</td><td class="c">3</td><td class="c">0</td><td class="c">2</td><td>Alternativa inmediata</td></tr>
+    <tr><td>J. Roca</td><td class="c">5,50</td><td class="c">1</td><td class="c">1</td><td class="c">3</td><td>No propuesto por cómputo</td></tr>
+    <tr><td>N. Vidal</td><td class="c">6,75</td><td class="c">4</td><td class="c">0</td><td class="c">4</td><td>No propuesto por cómputo</td></tr>
+  </tbody>
+</table>
+
+<p>La pantalla muestra esta tabla junto al nombre propuesto. La coordinación puede aceptarla o apartarse de ella: si
+se aparta, el sistema exige un <strong>motivo tipificado</strong> (continuidad, conocimiento del asunto, indicación
+del juzgado, situación excepcional) y lo incorpora al expediente. No existe la posibilidad de asignar «sin más».</p>
+
+<div class="box warn">
+  <div class="box-title">La propuesta nunca publica sola</div>
+  <p style="margin-bottom:0;">El cálculo no genera designaciones ni notificaciones: su resultado es un borrador que
+  adquiere eficacia solo con la publicación del cuadrante. Es la garantía de que no hay decisión automatizada con
+  efectos jurídicos y de que el Colegio conserva la dirección efectiva del reparto.</p>
+</div>
+
+<h3>Designación urgente</h3>
+<p>Cuando la guardia debe cubrirse de inmediato, la coordinación designa sin esperar al ciclo ordinario. La guardia
+conserva su identificador y añade origen (urgente, refuerzo o cobertura de hueco), autoridad y hora, motivo y resultado
+de la comunicación. Se reflejan en el panel como indicador propio: un volumen alto de urgencias suele significar que
+la planificación previa no funciona.</p>

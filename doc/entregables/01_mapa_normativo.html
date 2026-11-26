@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Entregable 1 · Mapa normativo</title>
+</head>
+<body class="entregable">
+
+<div class="dkicker">Entregable 1 · ETL · Pol · 6 de noviembre de 2026</div>
+<h1 class="dtitle">Mapa normativo: qué obliga la ley al diseño de la aplicación</h1>
+<p class="dlead">Catorce reglas con consecuencia directa en el producto, extraídas de ocho instrumentos vigentes. Cada
+fila de la segunda página se traduce en una decisión concreta de pantalla, de permiso o de modelo de datos.</p>
+
+<h2>Los ocho instrumentos que mandan</h2>
+<table class="grid">
+  <thead><tr><th style="width:24%">Norma</th><th style="width:41%">Qué impone</th><th style="width:35%">Por qué importa aquí</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Ley 1/1996</strong>, art. 22<br><span class="small">Gestión colegial</span></td>
+      <td>Los Consejos Generales y los Colegios regulan y organizan, a través de sus Juntas de Gobierno, los servicios
+      de asistencia letrada gratuita.</td>
+      <td>La competencia es colegial. La aplicación es un instrumento del Colegio, nunca un sustituto de su decisión.</td>
+    </tr>
+    <tr>
+      <td><strong>Ley 1/1996</strong>, art. 24<br><span class="small">Distribución por turnos</span></td>
+      <td>Sistemas de distribución <em>objetiva y equitativa</em>, públicos para los colegiados y consultables por los
+      solicitantes. Turnos de guardia permanente para la asistencia al detenido.</td>
+      <td>La equidad no es un adjetivo: es un requisito exigible. Y el criterio debe poder leerse.</td>
+    </tr>
+    <tr>
+      <td><strong>Ley 1/1996</strong>, art. 31<br><span class="small">Obligaciones profesionales</span></td>
+      <td>El designado desempeña sus funciones de forma real y efectiva. Solo en el orden penal cabe excusa, por motivo
+      personal y justo apreciado por el Decano, en <strong>3 días</strong> desde la notificación y resuelta en
+      <strong>5 días</strong>.</td>
+      <td>Es la norma que gobierna el circuito de excusas y el de sustituciones. Fija dos plazos y un órgano.</td>
+    </tr>
+    <tr>
+      <td><strong>RD 141/2021</strong><br><span class="small">Reglamento de AJG</span></td>
+      <td>Desarrolla la designación de oficio, los turnos especializados y la actuación inmediata en supuestos
+      urgentes, con traslado a la Comisión en 3 días hábiles. Deroga el RD 996/2003.</td>
+      <td>Cita obligada: el RD 996/2003 ya no está vigente y sigue apareciendo en documentos del sector.</td>
+    </tr>
+    <tr>
+      <td><strong>RD 135/2021</strong>, cap. VI<br><span class="small">Estatuto General de la Abogacía</span></td>
+      <td>Deberes del letrado de oficio y prohibición de derivar libremente la asistencia a otro compañero.</td>
+      <td>Un traspaso privado entre letrados no es una sustitución válida: hace falta habilitación y validación.</td>
+    </tr>
+    <tr>
+      <td><strong>RGPD</strong>, arts. 9 y 22<br><span class="small">UE 2016/679</span></td>
+      <td>Los datos de salud son categoría especial. Toda persona tiene derecho a no ser objeto de decisiones
+      automatizadas con efectos jurídicos.</td>
+      <td>Una baja médica es dato de salud. Y el reparto no puede decidirse solo.</td>
+    </tr>
+    <tr>
+      <td><strong>LO 3/2018</strong><br><span class="small">Protección de datos y derechos digitales</span></td>
+      <td>Adapta el RGPD al ordenamiento español: delegado de protección de datos, análisis de riesgo y régimen
+      sancionador.</td>
+      <td>No basta con cumplir el reglamento europeo: hay obligaciones organizativas que el diseño debe demostrar.</td>
+    </tr>
+    <tr>
+      <td><strong>Reglament del Torn d'Ofici de Catalunya</strong><br><span class="small">DOGC 5865, 26.4.2011</span></td>
+      <td>Concreta la organización del turno en Cataluña: reparto de materias, obligatoriedad del servicio de guardia y
+      remisión expresa al art. 31 de la Ley 1/1996 para la excusa.</td>
+      <td>Es la capa territorial más cercana a Tarragona; el resto de reglas se apoya en la norma estatal.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="box legal">
+  <div class="box-title">Corrección respecto al documento funcional v1.0</div>
+  <p style="margin-bottom:0;">El capítulo 3 de la Propuesta <strong>v1.0 del 5 de noviembre</strong> (ref. TOF-2026-001)
+  atribuía la excusa al artículo 24. Los plazos de tres y cinco días están en el <strong>artículo 31</strong>
+  (Obligaciones profesionales); el 24 regula la distribución por turnos y la guardia del detenido. Se corrige en la
+  <strong>v1.1</strong> del documento funcional.</p>
+  <p style="margin:1.6mm 0 0;">La ley tampoco fija la antelación de publicación, los pesos de equidad ni el órgano
+  que resuelve la excusa: los tres se fijan como parámetros, en la página 2.</p>
+</div>
+
+<!-- ==================== PÁGINA 2 ==================== -->
+
+<h1 class="dtitle pagebreak" style="font-size:13.6pt;">Catorce reglas que el producto debe cumplir</h1>
+<p class="dlead" style="margin-bottom:2.4mm;">Cada regla lleva su base legal y su consecuencia verificable. Las catorce son de obligado cumplimiento: no son recomendaciones de diseño que puedan rebajarse si el plazo aprieta.</p>
+
+<table class="grid rules">
+  <thead><tr><th style="width:7%">#</th><th style="width:38%">Regla</th><th style="width:14%">Base</th><th style="width:41%">Consecuencia en la aplicación</th></tr></thead>
+  <tbody>
+    <tr><td>R-01</td><td><strong>La organización del servicio es colegial.</strong> La plataforma no organiza.</td>
+      <td>L1/96 art. 22</td><td>Vía manual de designación siempre disponible, también con el sistema caído, y registrada con autor y hora.</td></tr>
+    <tr><td>R-02</td><td><strong>El reparto debe ser objetivo y equitativo.</strong></td>
+      <td>L1/96 art. 24</td><td>Pantalla «Cómo se reparten las guardias» con criterios, pesos vigentes y acuerdo que los aprobó.</td></tr>
+    <tr><td>R-03</td><td><strong>El sistema de distribución es público y consultable.</strong></td>
+      <td>L1/96 art. 24</td><td>Versión pública de los criterios, sin datos personales de letrados ni cómputos individuales.</td></tr>
+    <tr><td>R-04</td><td><strong>Guardia permanente de asistencia al detenido.</strong></td>
+      <td>L1/96 art. 24</td><td>Tipo de guardia obligatorio, cobertura de 24 h y alerta inmediata si la franja queda descubierta.</td></tr>
+    <tr><td>R-05</td><td><strong>La excusa solo cabe en el orden penal.</strong></td>
+      <td>L1/96 art. 31</td><td>El formulario de excusa no se ofrece en civil, social, contencioso ni extranjería: se explica el motivo legal.</td></tr>
+    <tr><td>R-06</td><td><strong>El motivo lo aprecia el Decano, no el sistema.</strong></td>
+      <td>L1/96 art. 31</td><td>La aplicación registra, ordena y eleva; nunca estima ni desestima una excusa.</td></tr>
+    <tr><td>R-07</td><td><strong>Tres días para formular la excusa desde la notificación.</strong></td>
+      <td>L1/96 art. 31</td><td>Cronómetro desde la notificación individual, no desde la publicación; la caducidad queda registrada.</td></tr>
+    <tr><td>R-08</td><td><strong>Cinco días para resolverla.</strong></td>
+      <td>L1/96 art. 31</td><td>Plazo visible en el expediente y alerta al vencer; el silencio no se interpreta como aceptación.</td></tr>
+    <tr><td>R-09</td><td><strong>El desempeño debe ser real y efectivo.</strong></td>
+      <td>L1/96 art. 31</td><td>El letrado no puede «liberar» su guardia: solo la retira una sustitución aprobada por el Colegio.</td></tr>
+    <tr><td>R-10</td><td><strong>No hay derivación libre al compañero.</strong></td>
+      <td>RD 135/2021</td><td>El traspaso privado queda fuera del sistema: sustituto habilitado y resolución colegial expresa.</td></tr>
+    <tr><td>R-11</td><td><strong>Turnos especializados con habilitación.</strong></td>
+      <td>RD 141/2021</td><td>La habilitación por materia es bloqueo duro del filtro de elegibilidad, no una preferencia de orden.</td></tr>
+    <tr><td>R-12</td><td><strong>Actuación inmediata en violencia de género.</strong></td>
+      <td>RD 141/2021</td><td>Circuito urgente: designación fuera del cuadrante con origen, autoridad y hora registrados.</td></tr>
+    <tr><td>R-13</td><td><strong>Los datos de salud son categoría especial.</strong></td>
+      <td>RGPD 9 · LO 3/2018</td><td>Se registra la indisponibilidad, no el diagnóstico; el justificante vive en espacio restringido y auditado.</td></tr>
+    <tr><td>R-14</td><td><strong>Sin decisiones automatizadas con efectos jurídicos.</strong></td>
+      <td>RGPD art. 22</td><td>El cálculo propone y publica una persona; se conservan semilla, criterios y motivo de cada designación.</td></tr>
+  </tbody>
+</table>
+
+<div class="box ok">
+  <div class="box-title">Tres supuestos de partida, en configuración y no en el código</div>
+  <ol class="tight" style="margin-bottom:0;">
+    <li><strong>Plazos del ciclo.</strong> 15 días para publicar el cuadrante y 7 para cerrar la disponibilidad.
+    Determinan los vencimientos, las alertas y el orden de las pantallas.</li>
+    <li><strong>Pesos de equidad.</strong> 1,0 ordinaria · 2,0 detenido de 24 h · 1,5 fin de semana o festivo, con topes
+    mensuales y anuales configurables. Sin un peso declarado, el indicador de equidad no es defendible.</li>
+    <li><strong>Órgano que resuelve.</strong> Decano, con delegación configurable en la Comisión del Turno, y los plazos
+    del art. 31: 3 días para formular y 5 para resolver. De ahí salen la matriz de permisos y las alertas de
+    vencimiento.</li>
+  </ol>
+</div>
+
+<div class="foot-note">Fuentes: Ley 1/1996 de asistencia jurídica gratuita (BOE-A-1996-750), RD 141/2021
+(BOE-A-2021-3698), RD 135/2021 (BOE-A-2021-4568), RGPD (UE 2016/679), LO 3/2018 y Reglament del Torn d'Ofici de
+Catalunya (DOGC 5865). Verificación: 6 de noviembre de 2026. Este mapa fija reglas de producto a partir de la
+normativa citada; los tres valores que la ley deja abiertos se documentan como parámetros de configuración.
+Trazabilidad con el catálogo: R-01 → RN-28; R-02 → RN-08; R-08 → RN-38 (v0.2); R-11 → RN-02/RN-30; R-13 →
+RN-23/RN-24; R-14 → RN-07. La conservación (RN-33) no es regla de este mapa: su plazo es calendario colegial
+configurable, no obligación legal.</div>
+
+</body>
+</html>

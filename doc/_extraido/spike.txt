@@ -1,0 +1,139 @@
+Spike: notificaciones y acuses
+Documento de trabajo · Proyecto de ejercicio «Turno de Oficio» (Tarragona) · 17 de noviembre de 2026
+Ref. TOF-2026-017 · Rol: backend · Tarjeta #45
+Depende de: tabla 16.1 de la Propuesta funcional (TOF-2026-001) y reglas RN-10, RN-11, RN-23, RN-31, RN-38 y RN-39.
+Estado: spike cerrado en su parte de diseño; medición real pendiente de cuentas de envío (§6 y §7).
+1. Qué se preguntaba y qué se responde
+La tarjeta pedía medir antes de decidir: qué canal usar para cada comunicación y cuánto cuesta. Sin cuentas de correo, de SMS y de
+notificaciones no hay nada que medir, y fingir una medición sería peor que no tenerla. Así que este documento separa dos cosas:
+• Lo que se decide ya, porque no depende de ningún proveedor: el diseño, el contrato del envío, el modelo de acuses y qué canal
+corresponde a cada comunicación. Es el §2 a §5.
+• Lo que queda pendiente de cuentas: latencias, tasas de entrega y coste real. Está acotado en el §6 y con un plan de medición listo
+en el §7, para que el día que haya cuentas se ejecute en una tarde y no haya que pensar el experimento.
+2. La distinción que ordena todo: avisar no es notificar
+La Propuesta lo dice en una línea y es la clave del diseño: una notificación sirve cuando puede demostrarse que se produjo, cuándo y
+con qué contenido. De ahí salen tres niveles de constancia, y cada uno exige una técnica distinta:
+Nivel
+Qué acredita
+Cómo se obtiene
+Registro interno
+Que el sistema generó la comunicación, con su
+contenido y su hora
+Fila en la tabla de comunicaciones, con la plantilla y
+los datos exactos enviados
+Envío
+Que el proveedor la aceptó
+Identificador del mensaje que devuelve el proveedor
+Entrega
+Que llegó al buzón o al dispositivo
+Acuse del proveedor (webhook), guardado en la
+propia base
+Lectura
+Que el destinatario la abrió
+Solo fiable dentro de la aplicación; en correo, no
+Esa última fila es el hallazgo práctico de este spike, y conviene decirlo sin adornos: el acuse de lectura por correo no es prueba. Buena
+parte de los clientes de correo bloquean la imagen de seguimiento y otros la precargan sin que nadie lea nada. Si el Colegio tiene que
+responder a un letrado que dice no haber recibido un aviso, lo que le sostiene no es un píxel: es el registro de entrega del proveedor más
+la lectura registrada en la aplicación.
+Consecuencia de diseño: la aplicación es el canal probatorio; el correo es refuerzo, como ya dice la Propuesta. El estado «leída» solo
+se marca cuando el letrado abre la comunicación autenticado en la aplicación.
+3. Asignación de canales
+De las doce comunicaciones de la tabla 16.1, la Propuesta ya fija canal para todas. Lo que faltaba era decidir el refuerzo y, sobre todo, si
+hace falta SMS:
+Grupo
+Comunicaciones
+Canal
+Refuerzo
+Con plazo que corre
+Nueva guardia asignada, cambio
+validado o denegado
+Aplicación + correo
+SMS solo si es urgente (RN-39)
+Sin acuse hay consecuencia
+Guardia sin acuse, recordatorio 72 h y
+24 h
+Aplicación + correo
+Correo con marca de hora; escalado a
+coordinación (RN-11)
+Informativo interno
+Cuadrante publicado, excusa recibida,
+oferta de sustitución, habilitación
+próxima a caducar
+Aplicación + correo
+Ninguno
+Alerta operativa
+Guardia descubierta
+Aplicación + aviso destacado
+SMS a coordinación: aquí cada minuto
+cuenta
+Tres decisiones que se cierran aquí:
+1. Push nativo, fuera. La tabla 16.1 habla de «avisos al dispositivo», pero no hay aplicación móvil en el alcance del proyecto y sin app
+no hay push nativo. Lo que sí es viable —y barato— es notificación web cuando la aplicación está abierta en el navegador. No
+sustituye a nada: sirve para que el aviso se vea sin recargar.
+2. SMS solo en dos casos: designación urgente por violencia de género (RN-39) y guardia descubierta. En los demás, el coste por
+mensaje no compra nada que el correo no dé, y cada SMS es un dato personal saliendo del sistema.
+3. Horario razonable, con excepción registrada. La Propuesta lo pide y hay que implementarlo: nada entre las 22:00 y las 08:00
+salvo urgencia, y cuando se envíe en esa franja, el motivo queda escrito en la fila de la comunicación. Es lo que permite explicar
+después por qué se avisó a las tres de la mañana.
+ 4. Contrato del envío
+Una sola puerta, para que ningún módulo llame a un proveedor por su cuenta:
+notificar(evento, destinatario, canal, datos) -> comunicacion_id
+Y una tabla que es a la vez registro y cola:
+Campo
+Para qué
+`id`, `evento`, `destinatario`, `canal`
+Qué se comunicó, a quién y por dónde
+`plantilla` y `datos` congelados
+El contenido exacto que se envió, no el que la plantilla diría hoy
+`estado`
+creada, aceptada, entregada, leída · o rebotada / fallida
+`id_mensaje_proveedor`
+La prueba de que el proveedor lo aceptó
+`intentos`, `ultimo_error`
+Reintentos con espera creciente, sin duplicar
+`motivo_fuera_de_horario`
+Solo cuando se envía de noche
+Tres reglas que evitan los fallos clásicos: idempotencia por (evento, destinatario, canal) para que un reintento no mande dos correos;
+congelar el contenido en la propia fila, porque la plantilla cambiará y lo que hay que poder demostrar es lo que se envió aquel día; y no
+rebotar la petición del usuario si el proveedor está caído —la designación se publica igual, el aviso se reintenta—, porque RN-10 es
+explícito: el acuse no condiciona los efectos de la designación, y por la misma razón un fallo de envío no puede bloquear la publicación.
+5. Datos personales en el aviso
+RN-23 es bloqueante: ninguna comunicación lleva datos de salud ni documentación clínica. Se traduce en plantillas cerradas que
+solo dicen que hay una novedad, con la guardia, la fecha, la franja, la modalidad y la acción esperada —el contenido mínimo que pide la
+Propuesta— y un enlace a la aplicación. El asunto del correo tampoco puede delatarlo: «Turno de Oficio: novedad en su expediente»,
+nunca «Su justificante de enfermedad ha sido desestimado».
+6. Lo que no se puede concluir sin cuentas
+Con nombres concretos, para que no se confunda con una medición:
+• Latencia de entrega por canal y por operador. Sin enviar, no hay p95.
+• Tasa de entrega y de rebote, que es la que decide si el correo sirve como refuerzo o solo como adorno.
+• Entregabilidad del correo: sin dominio del Colegio con SPF, DKIM y DMARC configurados, buena parte de los avisos acaba en
+spam. Esto no lo arregla el proveedor que se elija; lo arregla el dominio.
+• Coste real por envío, sobre todo el del SMS, que es el único que se paga por unidad.
+• Comportamiento del acuse de lectura en los clientes que use el Colegio, que es justo lo que el §2 desaconseja usar como prueba.
+7. Plan de medición, listo para ejecutar
+El día que haya cuentas, esto se hace en una tarde:
+1. Escenario normal: 30 envíos de correo a tres dominios distintos (gmail, outlook, dominio corporativo) y 10 SMS a dos operadores.
+Se mide latencia hasta el acuse de entrega y tasa de éxito.
+2. Escenario de fallo: dirección inexistente, buzón lleno, número apagado. Se comprueba que el reintento no duplica y que el estado
+final es `rebotada`, no `fallida` para siempre.
+3. Escenario de urgencia: envío fuera de horario con motivo, y comprobación de que la urgencia de RN-39 sale por SMS y las demás
+no.
+4. Criterios de aceptación propuestos: entrega del correo por encima del 98 %, latencia mediana por debajo de 30 segundos,
+ningún duplicado, y el 100 % de las filas con su recibo guardado en base.
+8. Conclusión
+El diseño de notificaciones no necesita proveedor para estar cerrado: un solo puerto de envío, un registro que también es cola, contenido
+congelado, acuse fiable solo dentro de la aplicación y SMS restringido a dos casos. Lo que necesita proveedor es la medición, y ahí el
+proyecto se queda con una deuda explícita, no con una promesa.
+Decisiones tomadas (17/11, backend)
+Las dos que no son técnicas, resueltas para que no queden en el aire:
+1. Dominio remitente: subdominio dedicado, del tipo `avisos.<dominio del proyecto>`. Nunca el dominio raíz del Colegio y nunca un 
+buzón personal o un correo gratuito. Aísla la reputación —un problema de envío masivo no arrastra el correo institucional— y permite 
+firmar con DKIM propio. El registro DMARC se publica primero en `p=none` para observar, y pasa a `quarantine` cuando haya un mes 
+de informes sin anomalías. En un despliegue real sería un subdominio del dominio del Colegio, con su DNS bajo control de quien
+ administre el correo.
+2. Contrato de encargado del tratamiento: lo firma el Colegio, que es el responsable. El equipo técnico no lo firma ni puede
+firmarlo, y por eso queda como condición de despliegue: sin contrato firmado no se activa el canal. Se exige proveedor con
+servidores en la Unión Europea, cláusula de encargado y subencargados declarados; para el SMS, un agregador con contrato y sin
+remitentes genéricos.
+Lo que sigue abierto y no se puede cerrar desde aquí es solo la medición (§6) y el contenido de las plantillas, que es decisión funcional
+del Colegio.

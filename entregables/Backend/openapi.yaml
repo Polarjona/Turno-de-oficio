@@ -1,0 +1,2013 @@
+openapi: 3.0.3
+
+info:
+  title: Turno de Oficio · Contrato de API
+  version: 0.1.0
+  description: |
+    Contrato entre frontend y backend para la gestión del Turno de Oficio (ejercicio TOF).
+    Tarjeta #29 · Backend · Yazan. Documento de trabajo: **v0.1**, sujeto a revisión en
+    la tarjeta #47 (stack) y a los casos de uso de la #22 y la #42.
+
+    **Alcance.** Guardias, designaciones, sustituciones, cuadrante, disponibilidad, panel,
+    notificaciones y auditoría. Queda fuera la elección de tecnología.
+
+    **Convenciones**
+
+    - Los nombres de campo son los del modelo del cap. 21 de TOF-2026-001, en `snake_case`.
+      No se traduce el modelo al JSON: una traducción de nombres es una fuente de errores
+      que nadie mantiene.
+    - Identificadores UUID opacos. El de una guardia **no cambia nunca**, aunque cambie de
+      titular (RN-32): los cambios de titular son designaciones nuevas.
+    - Listados con **paginación por cursor** (`cursor`, `limit`), nunca por `offset`: el
+      cuadrante se mueve mientras se pagina.
+    - Errores en `application/problem+json` (RFC 9457) con `code` de máquina y `regla`
+      (`RN-xx`) cuando el rechazo nace de una regla del catálogo #21 v0.2.
+    - Los cambios de estado son **acciones explícitas** (`POST .../publicacion`), no
+      `PATCH {estado}`: así cada transición tiene su regla, su permiso y su asiento.
+    - Toda operación que crea o mueve algo acepta `Idempotency-Key`; el reintento seguro
+      devuelve la misma respuesta con `Idempotency-Replayed: true`.
+    - El cuadrante viaja con `ETag`. Publicar exige `If-Match`: si el cuadrante cambió
+      desde que se leyó, `412` en vez de pisar cambios ajenos.
+    - Fechas ISO 8601 (`date`, `date-time`) en zona `Europe/Madrid`.
+
+    **Autorización.** OAuth2 (SSO colegial) con JWT. Cuatro roles: `letrado`,
+    `coordinacion`, `junta`, `admin`. Cada operación declara su scope y los roles
+    admitidos en `x-roles`. El backend comprueba el rol, no el frontend.
+
+    **Proyección de datos (RN-25).** El rol `letrado` solo ve de sus compañeros el nombre
+    y la materia de la guardia. El esquema `TitularResumen` documenta esa proyección: el
+    resto de campos se omiten en la respuesta, no se ocultan en el cliente.
+
+    **Trazabilidad.** Toda operación que cambia estado escribe un asiento de auditoría
+    (RN-20). La auditoría es de solo lectura por API: no hay `POST`, `PUT` ni `DELETE`.
+
+    **Revisión 2** (16 de noviembre de 2026). Atiende la revisión de la #29: endpoint de
+    validación de disponibilidad (RN-03 era inalcanzable sin él), reaplicación de los siete
+    filtros en las ofertas de sustitución, `exclusion_hasta` sin tilde, ejemplo de guardia
+    corregido y vocabulario de errores sin códigos muertos.
+  contact:
+    name: Yazan Issa · Backend
+    url: https://trello.com/c/zhEYgn8e
+
+servers:
+  - url: https://api.tof.example/api/v1
+    description: Entorno de ejercicio (sin despliegue real)
+
+tags:
+  - name: Sesión
+    description: Perfil y habilitaciones del usuario autenticado
+  - name: Catálogos
+    description: Especialidades, tipos de guardia, parámetros y criterios de reparto
+  - name: Guardias
+    description: Franjas de cobertura, propuesta asistida, designación y acuse
+  - name: Parte
+    description: Registro de actuaciones y validación
+  - name: Solicitudes
+    description: Excusa, permuta y sustitución
+  - name: Cuadrante
+    description: Versiones, alegaciones, publicación y congelación
+  - name: Disponibilidad
+    description: Ausencias comunicadas por el letrado
+  - name: Control
+    description: Panel de coordinación, equidad y certificación
+  - name: Notificaciones
+    description: Avisos con constancia de envío, entrega y lectura
+  - name: Auditoría
+    description: Registro inmutable de cambios
+
+x-maquinas-estado:
+  guardia:
+    estados: [planificada, propuesta, publicada, confirmada, en_revision, descubierta, en_curso, realizada, validada, anulada]
+    transiciones:
+      - {desde: planificada, evento: asignar_titular, hasta: propuesta, endpoint: "POST /guardias/{guardiaId}/designaciones", reglas: [RN-02, RN-03, RN-04, RN-05, RN-06, RN-08]}
+      - {desde: propuesta, evento: publicar_cuadrante, hasta: publicada, endpoint: "POST /cuadrantes/{anio}/{periodo}/publicacion", reglas: [RN-09, RN-21, RN-35]}
+      - {desde: publicada, evento: acuse, hasta: confirmada, endpoint: "POST /guardias/{guardiaId}/acuse", reglas: [RN-10, RN-11]}
+      - {desde: publicada, evento: solicitar_excusa_o_permuta, hasta: en_revision, endpoint: "POST /solicitudes", reglas: [RN-12, RN-13, RN-36, RN-38]}
+      - {desde: confirmada, evento: solicitar_excusa_o_permuta, hasta: en_revision, endpoint: "POST /solicitudes", reglas: [RN-12, RN-13, RN-36, RN-38]}
+      - {desde: en_revision, evento: resolver_estimando_con_sustituto, hasta: publicada, endpoint: "POST /solicitudes/{solicitudId}/resolucion", reglas: [RN-14, RN-15, RN-16, RN-21]}
+      - {desde: en_revision, evento: resolver_estimando_sin_sustituto, hasta: descubierta, endpoint: "POST /solicitudes/{solicitudId}/resolucion", reglas: [RN-17]}
+      - {desde: en_revision, evento: resolver_desestimando, hasta: publicada, endpoint: "POST /solicitudes/{solicitudId}/resolucion", reglas: [RN-13]}
+      - {desde: publicada, evento: inicio_de_franja, hasta: en_curso, endpoint: "sistema", reglas: [RN-01]}
+      - {desde: confirmada, evento: inicio_de_franja, hasta: en_curso, endpoint: "sistema", reglas: [RN-01]}
+      - {desde: en_curso, evento: incidente_grave, hasta: descubierta, endpoint: "POST /guardias/{guardiaId}/incidencias", reglas: [RN-17]}
+      - {desde: en_curso, evento: cierre_parte, hasta: realizada, endpoint: "PUT /guardias/{guardiaId}/parte", reglas: [RN-18]}
+      - {desde: realizada, evento: validar_parte, hasta: validada, endpoint: "POST /guardias/{guardiaId}/parte/validacion", reglas: [RN-19]}
+      - {desde: publicada, evento: anular, hasta: anulada, endpoint: "POST /guardias/{guardiaId}/anulacion", reglas: [RN-31]}
+      - {desde: confirmada, evento: anular, hasta: anulada, endpoint: "POST /guardias/{guardiaId}/anulacion", reglas: [RN-31]}
+      - {desde: descubierta, evento: anular, hasta: anulada, endpoint: "POST /guardias/{guardiaId}/anulacion", reglas: [RN-31]}
+  cuadrante:
+    estados: [borrador, en_alegaciones, publicado, congelado, cerrado]
+    transiciones:
+      - {desde: borrador, evento: abrir_alegaciones, hasta: en_alegaciones, endpoint: "POST /cuadrantes/{anio}/{periodo}/alegaciones", reglas: [RN-22]}
+      - {desde: en_alegaciones, evento: publicar, hasta: publicado, endpoint: "POST /cuadrantes/{anio}/{periodo}/publicacion", reglas: [RN-09, RN-21, RN-35]}
+      - {desde: publicado, evento: modificar, hasta: publicado, endpoint: "POST /cuadrantes/{anio}/{periodo}/publicacion", reglas: [RN-21, RN-22]}
+      - {desde: publicado, evento: alcanzar_antelacion_minima, hasta: congelado, endpoint: "sistema", reglas: [RN-27]}
+      - {desde: congelado, evento: cerrar_periodo, hasta: cerrado, endpoint: "sistema", reglas: [RN-19]}
+  solicitud:
+    estados: [comunicada, en_revision, oferta_enviada, pendiente_validacion, estimada, desestimada]
+    transiciones:
+      - {desde: comunicada, evento: plazo_y_documentacion_ok, hasta: en_revision, endpoint: "sistema", reglas: [RN-12, RN-38]}
+      - {desde: en_revision, evento: ofrecer_a_candidato, hasta: oferta_enviada, endpoint: "POST /solicitudes/{solicitudId}/ofertas", reglas: [RN-14]}
+      - {desde: oferta_enviada, evento: candidato_acepta, hasta: pendiente_validacion, endpoint: "POST /solicitudes/{solicitudId}/ofertas/{ofertaId}/respuesta", reglas: [RN-14, RN-15]}
+      - {desde: pendiente_validacion, evento: resolver, hasta: estimada, endpoint: "POST /solicitudes/{solicitudId}/resolucion", reglas: [RN-15, RN-16, RN-37]}
+      - {desde: pendiente_validacion, evento: resolver, hasta: desestimada, endpoint: "POST /solicitudes/{solicitudId}/resolucion", reglas: [RN-37]}
+  parte:
+    estados: [sin_parte, abierto, cerrado, validado]
+    transiciones:
+      - {desde: sin_parte, evento: inicio_de_franja, hasta: abierto, endpoint: "sistema", reglas: []}
+      - {desde: abierto, evento: cierre_por_letrado, hasta: cerrado, endpoint: "PUT /guardias/{guardiaId}/parte", reglas: [RN-18]}
+      - {desde: cerrado, evento: validacion_coordinacion, hasta: validado, endpoint: "POST /guardias/{guardiaId}/parte/validacion", reglas: [RN-19]}
+
+paths:
+  /me:
+    get:
+      tags: [Sesión]
+      operationId: obtenerPerfil
+      summary: Perfil, rol y habilitaciones del usuario autenticado
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      responses:
+        '200':
+          description: Perfil del usuario
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Perfil'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+
+  /catalogos/especialidades:
+    get:
+      tags: [Catálogos]
+      operationId: listarEspecialidades
+      summary: Materias del turno
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      parameters:
+        - {name: solo_activas, in: query, schema: {type: boolean, default: true}}
+      responses:
+        '200':
+          description: Lista de especialidades
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CatalogoItem'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+
+  /catalogos/tipos-guardia:
+    get:
+      tags: [Catálogos]
+      operationId: listarTiposGuardia
+      summary: Plantillas de guardia con modalidad y peso de cómputo
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      parameters:
+        - {name: especialidad_id, in: query, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Lista de tipos de guardia
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TipoGuardia'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+
+  /parametros:
+    get:
+      tags: [Catálogos]
+      operationId: listarParametros
+      summary: Parámetros versionados con su vigencia (RN-27)
+      description: |
+        Nunca se sobrescribe un valor: se cierra su vigencia y se abre otra. `vigente_en`
+        permite reconstruir qué criterio se aplicó a un periodo pasado.
+      security: [{oauth2: [turno.read]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-27]
+      parameters:
+        - {name: clave, in: query, schema: {type: string}, example: cupo_mensual}
+        - {name: vigente_en, in: query, schema: {type: string, format: date}, description: Fecha para la que se quiere el valor vigente}
+      responses:
+        '200':
+          description: Parámetros con histórico
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Parametro'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+
+  /criterios-reparto:
+    get:
+      tags: [Catálogos]
+      operationId: obtenerCriteriosReparto
+      summary: Criterios, pesos y cupos vigentes, públicos para todo el turno (RN-26)
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      x-reglas: [RN-26, RN-27]
+      responses:
+        '200':
+          description: Criterios vigentes con fecha del acuerdo que los aprobó
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CriterioReparto'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+
+  /guardias:
+    get:
+      tags: [Guardias]
+      operationId: listarGuardias
+      summary: Guardias del periodo con filtros
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      parameters:
+        - $ref: '#/components/parameters/Desde'
+        - $ref: '#/components/parameters/Hasta'
+        - {name: estado, in: query, style: form, explode: true, schema: {type: array, items: {$ref: '#/components/schemas/EstadoGuardia'}}}
+        - {name: especialidad_id, in: query, schema: {type: string, format: uuid}}
+        - {name: tipo_guardia_id, in: query, schema: {type: string, format: uuid}}
+        - {name: abogado_id, in: query, schema: {type: string, format: uuid}, description: Si no se indica y el rol es letrado, se fuerza al propio}
+        - {name: solo_descubiertas, in: query, schema: {type: boolean, default: false}}
+        - {name: solo_detenido, in: query, schema: {type: boolean, default: false}, description: Franjas de asistencia al detenido (RN-35)}
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+        - {name: orden, in: query, schema: {type: string, enum: [fecha_asc, fecha_desc], default: fecha_asc}}
+      responses:
+        '200':
+          description: Página de guardias
+          headers:
+            X-Total-Estimado: {$ref: '#/components/headers/XTotalEstimado'}
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Guardia'}}
+        '400': {$ref: '#/components/responses/PeticionInvalida'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+    post:
+      tags: [Guardias]
+      operationId: crearGuardia
+      summary: Crea una franja sin titular (estado planificada)
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-01, RN-32, RN-35]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GuardiaRequest'}
+            example:
+              tipo_guardia_id: 9f1c2f7a-8f3b-4a1e-9d2b-1c6a0b5e7d31
+              especialidad_id: 3a7d1e42-5c88-4b0f-8f0a-2d9e6c1b4a55
+              fecha: '2026-12-03'
+              hora_inicio: '09:00'
+              hora_fin: '20:00'
+              es_detenido: false
+      responses:
+        '201':
+          description: Guardia creada en estado planificada
+          headers:
+            Location: {$ref: '#/components/headers/Location'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Guardia'}
+        '400': {$ref: '#/components/responses/PeticionInvalida'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /guardias/{guardiaId}:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    get:
+      tags: [Guardias]
+      operationId: obtenerGuardia
+      summary: Detalle de una guardia
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      x-reglas: [RN-25, RN-32]
+      responses:
+        '200':
+          description: Guardia
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Guardia'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+
+  /guardias/{guardiaId}/propuesta:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    get:
+      tags: [Guardias]
+      operationId: calcularPropuesta
+      summary: Propuesta asistida con los siete filtros y el orden de prelación
+      description: |
+        Calcula y devuelve, no escribe: no crea designaciones ni notifica (RN-07). Cada
+        descarte viaja con el filtro que lo produjo, para poder explicar por qué una
+        persona concreta no salió propuesta.
+      security: [{oauth2: [turno.read]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-02, RN-03, RN-04, RN-05, RN-06, RN-07, RN-08]
+      parameters:
+        - {name: semilla, in: query, schema: {type: string}, description: Semilla reproducible del desempate; si falta, la genera el servidor y la devuelve}
+      responses:
+        '200':
+          description: Candidatos ordenados y descartes motivados
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Propuesta'}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /guardias/{guardiaId}/designaciones:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    post:
+      tags: [Guardias]
+      operationId: designarTitular
+      summary: Designa titular y pasa la guardia a propuesta
+      description: |
+        Aplica los siete filtros dentro de la misma transacción de asignación. Si la
+        designación se aparta de la propuesta, exige motivo tipificado (RN-08).
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-02, RN-03, RN-04, RN-05, RN-06, RN-08, RN-29, RN-32]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DesignacionRequest'}
+            example:
+              abogado_id: c1a0d8b2-3e58-4a9f-9f0d-6b7e2c4d1a83
+              aparta_criterio: true
+              motivo_codigo: conocimiento_asunto
+              detalle: Designación solicitada por el juzgado de instrucción 2
+              semilla: prop-2026-12-03-penal
+      responses:
+        '201':
+          description: Designación registrada
+          headers:
+            Location: {$ref: '#/components/headers/Location'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DesignacionResponse'}
+        '400': {$ref: '#/components/responses/PeticionInvalida'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+        '409':
+          description: |
+            La guardia no admite la transición, o el letrado no supera uno de los filtros.
+            El problema indica la regla incumplida.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/Problem'}
+              example:
+                type: https://api.tof.example/errores/regla
+                title: El letrado tiene otra guardia solapada
+                status: 409
+                code: REGLA_NEGOCIO
+                regla: RN-04
+                detail: Ya cubre la franja de 09:00 a 09:00 del 3 de diciembre en penal.
+                instance: /api/v1/guardias/7b2e9c14-0a6d-4c3b-9f51-2d8e7a1b6c40/designaciones
+
+  /guardias/{guardiaId}/acuse:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    post:
+      tags: [Guardias]
+      operationId: acusarRecibo
+      summary: El letrado acusa recibo de la designación
+      description: |
+        El acuse no es condición de eficacia (RN-10): si no llega, el sistema recuerda y
+        avisa a coordinación (RN-11), pero la designación sigue vigente.
+      security: [{oauth2: [turno.write]}]
+      x-roles: [letrado]
+      x-reglas: [RN-10, RN-11]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [canal]
+              properties:
+                canal: {$ref: '#/components/schemas/CanalNotificacion'}
+      responses:
+        '200':
+          description: Acuse registrado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Guardia'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /guardias/{guardiaId}/anulacion:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    post:
+      tags: [Guardias]
+      operationId: anularGuardia
+      summary: Anula una franja con motivo y aviso a los afectados (RN-31)
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-20, RN-31]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motivo_codigo, detalle]
+              properties:
+                motivo_codigo: {type: string, enum: [error_planificacion, decision_colegial, falta_cobertura, otro]}
+                detalle: {type: string, maxLength: 1000}
+      responses:
+        '200':
+          description: Guardia anulada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Guardia'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /guardias/{guardiaId}/refuerzos:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    post:
+      tags: [Guardias]
+      operationId: anadirRefuerzo
+      summary: Añade un refuerzo sin cambiar al titular (RN-34)
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-02, RN-34]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [abogado_id, motivo_codigo]
+              properties:
+                abogado_id: {type: string, format: uuid}
+                motivo_codigo: {type: string, enum: [acumulacion, complejidad, indicacion_judicial, otro]}
+                detalle: {type: string, maxLength: 1000}
+      responses:
+        '201':
+          description: Cobertura múltiple registrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Guardia'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /guardias/{guardiaId}/incidencias:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    post:
+      tags: [Guardias]
+      operationId: registrarIncidencia
+      summary: Registra una incidencia durante la guardia
+      description: |
+        Una incidencia de gravedad alta deja la franja descubierta y dispara la alerta de
+        máxima prioridad (RN-17).
+      security: [{oauth2: [turno.write]}]
+      x-roles: [letrado, coordinacion, admin]
+      x-reglas: [RN-17, RN-20]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [categoria, gravedad, descripcion]
+              properties:
+                categoria: {type: string, enum: [ausencia, retraso, imposibilidad, material, acceso, otra]}
+                gravedad: {type: string, enum: [baja, media, alta]}
+                descripcion: {type: string, maxLength: 2000}
+      responses:
+        '201':
+          description: Incidencia registrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Incidencia'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /guardias/{guardiaId}/parte:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    get:
+      tags: [Parte]
+      operationId: obtenerParte
+      summary: Parte de guardia
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      responses:
+        '200':
+          description: Parte actual
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Parte'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+    put:
+      tags: [Parte]
+      operationId: guardarParte
+      summary: Registra o cierra el parte
+      description: |
+        Cerrar exige hora de entrada, hora de salida y descripción de actuaciones
+        (RN-18). Sin los tres, `422` con los campos que faltan.
+      security: [{oauth2: [turno.write]}]
+      x-roles: [letrado, coordinacion]
+      x-reglas: [RN-18, RN-20]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ParteRequest'}
+      responses:
+        '200':
+          description: Parte guardado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Parte'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422':
+          description: Faltan datos obligatorios del cierre
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/Problem'}
+              example:
+                type: https://api.tof.example/errores/regla
+                title: No se puede cerrar el parte
+                status: 422
+                code: REGLA_NEGOCIO
+                regla: RN-18
+                detail: Faltan hora de salida y descripción de actuaciones.
+                instance: /api/v1/guardias/7b2e9c14-0a6d-4c3b-9f51-2d8e7a1b6c40/parte
+
+  /guardias/{guardiaId}/parte/validacion:
+    parameters:
+      - $ref: '#/components/parameters/GuardiaId'
+    post:
+      tags: [Parte]
+      operationId: validarParte
+      summary: Valida el parte; entra en certificación (RN-19)
+      security: [{oauth2: [parte.validate]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-19, RN-20]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                observaciones: {type: string, maxLength: 1000}
+      responses:
+        '200':
+          description: Parte validado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Parte'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /solicitudes:
+    get:
+      tags: [Solicitudes]
+      operationId: listarSolicitudes
+      summary: Excusas, permutas y sustituciones
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      parameters:
+        - {name: estado, in: query, style: form, explode: true, schema: {type: array, items: {$ref: '#/components/schemas/EstadoSolicitud'}}}
+        - {name: tipo, in: query, schema: {type: string, enum: [excusa, permuta, sustitucion]}}
+        - {name: guardia_id, in: query, schema: {type: string, format: uuid}}
+        - {name: solicitante_id, in: query, schema: {type: string, format: uuid}}
+        - {name: solo_vencidas, in: query, schema: {type: boolean, default: false}, description: Plazo de resolución vencido (RN-38)}
+        - {name: extemporanea, in: query, schema: {type: boolean}, description: Presentadas fuera de plazo (RN-12)}
+        - $ref: '#/components/parameters/Desde'
+        - $ref: '#/components/parameters/Hasta'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de solicitudes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Solicitud'}}
+        '401': {$ref: '#/components/responses/NoAutenticado'}
+    post:
+      tags: [Solicitudes]
+      operationId: crearSolicitud
+      summary: Registra excusa, permuta o sustitución
+      description: |
+        La excusa solo se admite en el orden penal (RN-36): fuera de él, `422` con el
+        fundamento legal. Registrarla **no libera al titular** hasta la resolución
+        (RN-13). La extemporaneidad se registra, no se oculta (RN-12).
+      security: [{oauth2: [solicitud.create]}]
+      x-roles: [letrado]
+      x-reglas: [RN-12, RN-13, RN-15, RN-36, RN-38]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SolicitudRequest'}
+            example:
+              guardia_id: 7b2e9c14-0a6d-4c3b-9f51-2d8e7a1b6c40
+              tipo: excusa
+              motivo: enfermedad
+              detalle: Ingreso hospitalario documentado
+              sobrevenida: false
+      responses:
+        '201':
+          description: Solicitud registrada
+          headers:
+            Location: {$ref: '#/components/headers/Location'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Solicitud'}
+        '400': {$ref: '#/components/responses/PeticionInvalida'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422':
+          description: Excusa fuera de plazo o materia no admitida
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/Problem'}
+              example:
+                type: https://api.tof.example/errores/regla
+                title: La excusa solo cabe en el orden penal
+                status: 422
+                code: REGLA_NEGOCIO
+                regla: RN-36
+                detail: La guardia es de extranjería; el art. 31 de la Ley 1/1996 no ampara la excusa en esta materia.
+                instance: /api/v1/solicitudes
+
+  /solicitudes/{solicitudId}:
+    parameters:
+      - $ref: '#/components/parameters/SolicitudId'
+    get:
+      tags: [Solicitudes]
+      operationId: obtenerSolicitud
+      summary: Expediente de la solicitud
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      x-reglas: [RN-25]
+      responses:
+        '200':
+          description: Solicitud con su historial
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Solicitud'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+
+  /solicitudes/{solicitudId}/ofertas:
+    parameters:
+      - $ref: '#/components/parameters/SolicitudId'
+    post:
+      tags: [Solicitudes]
+      operationId: ofrecerSustitucion
+      summary: Abre la bolsa y ofrece a los candidatos elegibles
+      description: |
+        El cliente nomina, el servidor valida. Los candidatos del cuerpo se vuelven a
+        comprobar contra los siete filtros antes de crear ninguna oferta (RN-14): si uno
+        no los supera, no se crea ninguna y la petición se rechaza entera con `422`,
+        devolviendo en `candidatos_rechazados` el filtro que descartó a cada uno. Nombrar
+        a un letrado sin habilitación no puede depender de que el frontend se acuerde.
+        Si no queda ningún candidato viable, la solicitud sigue en revisión y la guardia
+        puede pasar a descubierta provisional.
+      security: [{oauth2: [solicitud.resolve]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-14, RN-15]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidatos]
+              properties:
+                candidatos:
+                  type: array
+                  minItems: 1
+                  maxItems: 20
+                  items: {type: string, format: uuid}
+                plazo_respuesta_horas: {type: integer, minimum: 1, maximum: 72, default: 4}
+      responses:
+        '201':
+          description: Ofertas creadas
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Oferta'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422': {$ref: '#/components/responses/ReglaIncumplida'}
+
+  /solicitudes/{solicitudId}/ofertas/{ofertaId}/respuesta:
+    parameters:
+      - $ref: '#/components/parameters/SolicitudId'
+      - {name: ofertaId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [Solicitudes]
+      operationId: responderOferta
+      summary: El candidato acepta o rechaza la oferta
+      security: [{oauth2: [solicitud.create]}]
+      x-roles: [letrado]
+      x-reglas: [RN-14, RN-15]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [respuesta]
+              properties:
+                respuesta: {type: string, enum: [aceptar, rechazar]}
+      responses:
+        '200':
+          description: Respuesta registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  oferta: {$ref: '#/components/schemas/Oferta'}
+                  solicitud: {$ref: '#/components/schemas/Solicitud'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /solicitudes/{solicitudId}/resolucion:
+    parameters:
+      - $ref: '#/components/parameters/SolicitudId'
+    post:
+      tags: [Solicitudes]
+      operationId: resolverSolicitud
+      summary: Resuelve la solicitud; solo un rol humano (RN-37)
+      description: |
+        Estimar con sustituto cambia el titular y genera versión nueva del cuadrante
+        (RN-21). Estimar sin sustituto deja la guardia descubierta (RN-17). Desestimar
+        devuelve la guardia al titular con motivación (RN-13). Ningún proceso automático
+        puede escribir esta transición (RN-37).
+      security: [{oauth2: [solicitud.resolve]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-13, RN-15, RN-16, RN-17, RN-21, RN-37, RN-38]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ResolucionRequest'}
+      responses:
+        '200':
+          description: Solicitud resuelta
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Solicitud'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '412': {$ref: '#/components/responses/VersionDesactualizada'}
+        '422': {$ref: '#/components/responses/ReglaIncumplida'}
+
+  /cuadrantes:
+    get:
+      tags: [Cuadrante]
+      operationId: listarCuadrantes
+      summary: Periodos y versión vigente
+      security: [{oauth2: [cuadrante.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      parameters:
+        - {name: anio, in: query, schema: {type: integer, minimum: 2024, maximum: 2100}}
+        - {name: estado, in: query, schema: {$ref: '#/components/schemas/EstadoCuadrante'}}
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de cuadrantes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Cuadrante'}}
+
+  /cuadrantes/{anio}/{periodo}:
+    parameters:
+      - $ref: '#/components/parameters/Anio'
+      - $ref: '#/components/parameters/Periodo'
+    get:
+      tags: [Cuadrante]
+      operationId: obtenerCuadrante
+      summary: Cuadrante vigente del periodo
+      description: |
+        Devuelve la versión vigente con su `ETag`. Un letrado solo ve su propia fila y,
+        del resto, nombre y materia (RN-25).
+      security: [{oauth2: [cuadrante.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      x-reglas: [RN-21, RN-25]
+      parameters:
+        - {name: incluir, in: query, schema: {type: string, enum: [ninguno, guardias, cobertura], default: cobertura}}
+      responses:
+        '200':
+          description: Cuadrante
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Cuadrante'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+
+  /cuadrantes/{anio}/{periodo}/alegaciones:
+    parameters:
+      - $ref: '#/components/parameters/Anio'
+      - $ref: '#/components/parameters/Periodo'
+    post:
+      tags: [Cuadrante]
+      operationId: abrirAlegaciones
+      summary: Publica internamente el borrador para alegaciones
+      security: [{oauth2: [cuadrante.publish]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-20]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Cuadrante en alegaciones
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Cuadrante'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '412': {$ref: '#/components/responses/VersionDesactualizada'}
+
+  /cuadrantes/{anio}/{periodo}/publicacion:
+    parameters:
+      - $ref: '#/components/parameters/Anio'
+      - $ref: '#/components/parameters/Periodo'
+    post:
+      tags: [Cuadrante]
+      operationId: publicarCuadrante
+      summary: Publica o modifica el cuadrante generando versión nueva
+      description: |
+        No se publica con huecos sin justificar (RN-09) ni sin la franja de detenido
+        cubierta (RN-35). Si ya estaba publicado, la modificación crea versión nueva
+        (RN-21) y conserva las anteriores (RN-22). Exige `If-Match` con el `ETag` leído.
+      security: [{oauth2: [cuadrante.publish]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-09, RN-21, RN-22, RN-35]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PublicacionRequest'}
+      responses:
+        '201':
+          description: Versión publicada
+          headers:
+            ETag: {$ref: '#/components/headers/ETag'}
+            Location: {$ref: '#/components/headers/Location'}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Cuadrante'}
+        '409':
+          description: |
+            Huecos sin justificar o franja de detenido descubierta. La respuesta lista las
+            franjas afectadas para que la coordinación sepa qué corregir.
+          content:
+            application/problem+json:
+              schema: {$ref: '#/components/schemas/Problem'}
+              example:
+                type: https://api.tof.example/errores/regla
+                title: No se puede publicar un cuadrante con huecos
+                status: 409
+                code: REGLA_NEGOCIO
+                regla: RN-09
+                franjas_afectadas:
+                  - {guardia_id: 7b2e9c14-0a6d-4c3b-9f51-2d8e7a1b6c40, fecha: '2026-12-03', motivo: sin_titular}
+                instance: /api/v1/cuadrantes/2026/12/publicacion
+        '412': {$ref: '#/components/responses/VersionDesactualizada'}
+
+  /cuadrantes/{anio}/{periodo}/versiones:
+    parameters:
+      - $ref: '#/components/parameters/Anio'
+      - $ref: '#/components/parameters/Periodo'
+    get:
+      tags: [Cuadrante]
+      operationId: listarVersiones
+      summary: Historial de versiones del periodo (RN-22)
+      security: [{oauth2: [cuadrante.read]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-22]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Versiones de la más reciente a la más antigua
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/VersionCuadrante'}}
+
+  /cuadrantes/{anio}/{periodo}/versiones/{version}:
+    parameters:
+      - $ref: '#/components/parameters/Anio'
+      - $ref: '#/components/parameters/Periodo'
+      - {name: version, in: path, required: true, schema: {type: integer, minimum: 1}}
+    get:
+      tags: [Cuadrante]
+      operationId: obtenerVersion
+      summary: Versión concreta con sus cambios
+      security: [{oauth2: [cuadrante.read]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-22]
+      responses:
+        '200':
+          description: Versión
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/VersionCuadrante'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+
+  /disponibilidad:
+    get:
+      tags: [Disponibilidad]
+      operationId: listarDisponibilidad
+      summary: Ausencias comunicadas
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, admin]
+      parameters:
+        - {name: abogado_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/Desde'
+        - $ref: '#/components/parameters/Hasta'
+        - {name: estado, in: query, schema: {type: string, enum: [comunicada, validada, rechazada]}}
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de disponibilidades
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Disponibilidad'}}
+    post:
+      tags: [Disponibilidad]
+      operationId: comunicarDisponibilidad
+      summary: Comunica una ausencia
+      description: |
+        Fuera del plazo de cierre configurado (parámetro `cierre_disponibilidad_dias`),
+        la ausencia se registra pero no descuenta del reparto: `409` con la fecha límite.
+      security: [{oauth2: [turno.write]}]
+      x-roles: [letrado]
+      x-reglas: [RN-03, RN-27]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/DisponibilidadRequest'}
+      responses:
+        '201':
+          description: Ausencia comunicada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Disponibilidad'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422': {$ref: '#/components/responses/ReglaIncumplida'}
+
+  /disponibilidad/{disponibilidadId}:
+    parameters:
+      - {name: disponibilidadId, in: path, required: true, schema: {type: string, format: uuid}}
+    delete:
+      tags: [Disponibilidad]
+      operationId: anularDisponibilidad
+      summary: Anula una ausencia comunicada
+      security: [{oauth2: [turno.write]}]
+      x-roles: [letrado, coordinacion, admin]
+      x-reglas: [RN-03, RN-20]
+      responses:
+        '204':
+          description: Anulada
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /disponibilidad/{disponibilidadId}/validacion:
+    parameters:
+      - {name: disponibilidadId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [Disponibilidad]
+      operationId: validarDisponibilidad
+      summary: La coordinación valida o rechaza la ausencia comunicada
+      description: |
+        Sin esta transición, `validada` y `rechazada` eran estados inalcanzables y RN-03 no
+        se podía cumplir: solo una ausencia validada bloquea la asignación. Rechazar exige
+        motivación y no borra el registro.
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-03, RN-20, RN-27]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: {type: string, enum: [validar, rechazar]}
+                motivo: {type: string, maxLength: 1000, description: Obligatorio si se rechaza}
+      responses:
+        '200':
+          description: Ausencia validada o rechazada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Disponibilidad'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422': {$ref: '#/components/responses/ReglaIncumplida'}
+
+  /equidad:
+    get:
+      tags: [Control]
+      operationId: consultarEquidad
+      summary: Cómputo e índice por letrado (RN-26)
+      description: |
+        Cualquier colegiado del turno puede ver el criterio y su propio cómputo; la
+        coordinación ve el de todos. Alimenta la pantalla «Cómo se reparten las guardias».
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, junta, admin]
+      x-reglas: [RN-26, RN-27]
+      parameters:
+        - {name: periodo, in: query, schema: {type: string}, example: '2026-12'}
+        - {name: especialidad_id, in: query, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Índice de equidad
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Equidad'}
+
+  /panel:
+    get:
+      tags: [Control]
+      operationId: obtenerPanel
+      summary: Panel de control de la coordinación
+      description: |
+        Responde sin abrir ningún correo: ¿está cubierto todo el mes?, ¿qué queda
+        descubierto?, ¿qué espera resolución?, ¿cuántas urgencias llevamos?
+      security: [{oauth2: [panel.read]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-09, RN-17, RN-30, RN-35, RN-38]
+      parameters:
+        - {name: anio, in: query, required: true, schema: {type: integer}}
+        - {name: periodo, in: query, required: true, schema: {type: string}, example: '12'}
+      responses:
+        '200':
+          description: Indicadores del periodo
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Panel'}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+
+  /notificaciones:
+    get:
+      tags: [Notificaciones]
+      operationId: listarNotificaciones
+      summary: Avisos con constancia de envío, entrega y lectura
+      security: [{oauth2: [turno.read]}]
+      x-roles: [letrado, coordinacion, admin]
+      x-reglas: [RN-23]
+      parameters:
+        - {name: canal, in: query, schema: {$ref: '#/components/schemas/CanalNotificacion'}}
+        - {name: estado, in: query, schema: {type: string, enum: [pendiente, enviada, entregada, leida, fallida]}}
+        - {name: solo_no_leidas, in: query, schema: {type: boolean, default: false}}
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de notificaciones
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/Notificacion'}}
+
+  /notificaciones/{notificacionId}/lectura:
+    parameters:
+      - {name: notificacionId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      tags: [Notificaciones]
+      operationId: marcarLeida
+      summary: Marca leída y deja constancia
+      security: [{oauth2: [turno.write]}]
+      x-roles: [letrado, coordinacion, admin]
+      x-reglas: [RN-11, RN-20]
+      responses:
+        '200':
+          description: Notificación leída
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Notificacion'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+
+  /auditoria:
+    get:
+      tags: [Auditoría]
+      operationId: consultarAuditoria
+      summary: Registro inmutable de cambios (RN-20)
+      description: |
+        Solo lectura: no existe endpoint de escritura ni de borrado, y ningún rol tiene
+        permiso de `UPDATE` o `DELETE` sobre la tabla.
+      security: [{oauth2: [auditoria.read]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-20, RN-33]
+      parameters:
+        - {name: entidad, in: query, schema: {type: string, enum: [guardia, solicitud, cuadrante, parte, disponibilidad, usuario]}}
+        - {name: entidad_id, in: query, schema: {type: string, format: uuid}}
+        - {name: actor_id, in: query, schema: {type: string, format: uuid}}
+        - $ref: '#/components/parameters/Desde'
+        - $ref: '#/components/parameters/Hasta'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limite'
+      responses:
+        '200':
+          description: Página de asientos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      data: {type: array, items: {$ref: '#/components/schemas/EventoAuditoria'}}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+
+  /informes/certificacion:
+    get:
+      tags: [Control]
+      operationId: obtenerCertificacion
+      summary: Certificación del periodo con partes validados (RN-19)
+      description: Solo cuenta lo validado. Un parte sin validar no entra en la cifra.
+      security: [{oauth2: [panel.read]}]
+      x-roles: [coordinacion, junta, admin]
+      x-reglas: [RN-19]
+      parameters:
+        - {name: anio, in: query, required: true, schema: {type: integer}}
+        - {name: periodo, in: query, required: true, schema: {type: string}, example: '12'}
+      responses:
+        '200':
+          description: Certificación
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Certificacion'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+
+  /designaciones-urgentes:
+    post:
+      tags: [Guardias]
+      operationId: designarUrgente
+      summary: Designación urgente fuera del ciclo ordinario (RN-39)
+      description: |
+        Para detenido en dependencias policiales, requerimiento inmediato o
+        indisponibilidad sobrevenida. Registra origen, autoridad y hora exacta, y exige
+        motivo si se aparta del criterio de equidad.
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-08, RN-29, RN-39]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [guardia_id, abogado_id, autoridad_id, motivo_codigo]
+              properties:
+                guardia_id: {type: string, format: uuid}
+                abogado_id: {type: string, format: uuid}
+                autoridad_id: {type: string, format: uuid}
+                motivo_codigo: {type: string, enum: [detenido, requerimiento_judicial, indisponibilidad_sobrevenida, violencia_genero]}
+                detalle: {type: string, maxLength: 1000}
+                registrada_en: {type: string, format: date-time, description: Hora exacta del requerimiento}
+      responses:
+        '201':
+          description: Designación urgente registrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DesignacionResponse'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422': {$ref: '#/components/responses/ReglaIncumplida'}
+
+  /designaciones-manuales:
+    post:
+      tags: [Guardias]
+      operationId: registrarDesignacionManual
+      summary: Registra una designación hecha fuera del sistema (RN-28, RN-29)
+      description: |
+        Para cuando la plataforma no está disponible y la guardia se cubre por teléfono.
+        No crea la designación: la documenta con autoridad, hora exacta y causa, y la
+        incorpora al expediente. Sin este registro, una designación manual es un hueco
+        inexplicable en la trazabilidad.
+      security: [{oauth2: [turno.write]}]
+      x-roles: [coordinacion, admin]
+      x-reglas: [RN-28, RN-29]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [guardia_id, abogado_id, autoridad_id, ocurrida_en, causa]
+              properties:
+                guardia_id: {type: string, format: uuid}
+                abogado_id: {type: string, format: uuid}
+                autoridad_id: {type: string, format: uuid}
+                ocurrida_en: {type: string, format: date-time, description: Hora exacta en que se hizo la designación}
+                causa: {type: string, maxLength: 1000}
+      responses:
+        '201':
+          description: Designación manual registrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DesignacionResponse'}
+        '409': {$ref: '#/components/responses/Conflicto'}
+        '422': {$ref: '#/components/responses/ReglaIncumplida'}
+
+  /solicitudes/{solicitudId}/justificante:
+    parameters:
+      - $ref: '#/components/parameters/SolicitudId'
+    get:
+      tags: [Solicitudes]
+      operationId: obtenerJustificante
+      summary: Justificante de la solicitud, solo para roles autorizados (RN-24)
+      description: |
+        Cada acceso queda registrado en auditoría. El contenido no viaja en las
+        notificaciones: el aviso solo indica que hay una novedad (RN-23).
+      security: [{oauth2: [solicitud.resolve]}]
+      x-roles: [coordinacion, junta]
+      x-reglas: [RN-23, RN-24]
+      responses:
+        '200':
+          description: Documento justificativo
+          content:
+            application/pdf:
+              schema: {type: string, format: binary}
+        '403': {$ref: '#/components/responses/SinPermiso'}
+        '404': {$ref: '#/components/responses/NoEncontrado'}
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: SSO colegial con JWT; los scopes se asignan por rol
+      flows:
+        authorizationCode:
+          authorizationUrl: https://sso.example/oauth2/authorize
+          tokenUrl: https://sso.example/oauth2/token
+          scopes:
+            turno.read: Consultar guardias, catálogos y disponibilidad
+            turno.write: Designar, acusar, anular, reforzar, registrar incidencias
+            solicitud.create: Presentar excusas, permutas y responder ofertas
+            solicitud.resolve: Resolver solicitudes
+            cuadrante.read: Consultar cuadrante y versiones
+            cuadrante.publish: Publicar y modificar el cuadrante
+            parte.validate: Validar partes de guardia
+            panel.read: Panel de control y certificación
+            auditoria.read: Consultar auditoría
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      description: Cursor opaco devuelto en `page.next_cursor`
+      schema: {type: string, maxLength: 512}
+    Limite:
+      name: limit
+      in: query
+      description: Tamaño de página
+      schema: {type: integer, minimum: 1, maximum: 100, default: 25}
+    Desde:
+      name: desde
+      in: query
+      description: Fecha inicial inclusive
+      schema: {type: string, format: date}
+    Hasta:
+      name: hasta
+      in: query
+      description: Fecha final inclusive
+      schema: {type: string, format: date}
+    GuardiaId:
+      name: guardiaId
+      in: path
+      required: true
+      description: Identificador inmutable de la guardia (RN-32)
+      schema: {type: string, format: uuid}
+    SolicitudId:
+      name: solicitudId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+    Anio:
+      name: anio
+      in: path
+      required: true
+      schema: {type: integer, minimum: 2024, maximum: 2100}
+    Periodo:
+      name: periodo
+      in: path
+      required: true
+      description: Mes con dos dígitos
+      schema: {type: string, pattern: '^(0[1-9]|1[0-2])$'}
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: ETag del cuadrante leído; evita pisar cambios ajenos
+      schema: {type: string}
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Clave única del intento; el reintento devuelve la misma respuesta
+      schema: {type: string, minLength: 16, maxLength: 128}
+
+  headers:
+    ETag:
+      description: Versión del recurso
+      schema: {type: string}
+    Location:
+      description: URI del recurso creado
+      schema: {type: string, format: uri}
+    XTotalEstimado:
+      description: Estimación del total, no exacta
+      schema: {type: integer}
+    IdempotencyReplayed:
+      description: |
+        Presente y a `true` cuando la respuesta reproduce un intento anterior con la misma
+        `Idempotency-Key`, en lugar de ejecutar la operación otra vez.
+      schema: {type: boolean}
+
+  responses:
+    NoAutenticado:
+      description: Falta el token o está caducado
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/no-autenticado
+            title: Autenticación requerida
+            status: 401
+            code: NO_AUTENTICADO
+    SinPermiso:
+      description: El rol no alcanza esta operación
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/sin-permiso
+            title: El rol no permite esta acción
+            status: 403
+            code: SIN_PERMISO
+            detail: Un proceso automático no puede estimar ni desestimar una excusa.
+            regla: RN-37
+    NoEncontrado:
+      description: El recurso no existe o no es visible para el rol
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/no-encontrado
+            title: Recurso no encontrado
+            status: 404
+            code: NO_ENCONTRADO
+    PeticionInvalida:
+      description: Parámetros o cuerpo mal formados
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/validacion
+            title: Petición inválida
+            status: 400
+            code: VALIDACION
+            errores:
+              - campo: hora_fin
+                mensaje: Formato esperado HH:MM
+                codigo: FORMATO
+    Conflicto:
+      description: El recurso no admite esta transición en su estado actual
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/conflicto
+            title: Transición no permitida
+            status: 409
+            code: CONFLICTO_ESTADO
+            detail: La guardia está en estado Planificada y no admite acuse.
+            regla: RN-10
+    ReglaIncumplida:
+      description: Regla de negocio incumplida con el dato que la incumple
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/regla
+            title: Regla de negocio incumplida
+            status: 422
+            code: REGLA_NEGOCIO
+            regla: RN-06
+            detail: El letrado ha alcanzado el cupo mensual de 6 guardias.
+    VersionDesactualizada:
+      description: El `If-Match` no coincide con la versión vigente
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          example:
+            type: https://api.tof.example/errores/version
+            title: El cuadrante ha cambiado
+            status: 412
+            code: VERSION_DESACTUALIZADA
+            detail: La versión vigente es la 4; se intentó publicar sobre la 3.
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      description: |
+        Formato de error RFC 9457. `code` es estable y sirve para ramificar en el cliente;
+        `regla` aparece cuando el rechazo nace de una regla del catálogo.
+      properties:
+        type: {type: string, format: uri}
+        title: {type: string}
+        status: {type: integer}
+        detail: {type: string}
+        instance: {type: string}
+        code:
+          type: string
+          enum: [VALIDACION, NO_AUTENTICADO, SIN_PERMISO, NO_ENCONTRADO, CONFLICTO_ESTADO, REGLA_NEGOCIO, VERSION_DESACTUALIZADA]
+        regla: {type: string, pattern: '^RN-[0-9]{2}$'}
+        errores:
+          type: array
+          items:
+            type: object
+            properties:
+              campo: {type: string}
+              mensaje: {type: string}
+              codigo: {type: string}
+        franjas_afectadas:
+          type: array
+          items:
+            type: object
+            properties:
+              guardia_id: {type: string, format: uuid}
+              fecha: {type: string, format: date}
+              motivo: {type: string}
+        candidatos_rechazados:
+          type: array
+          description: Candidatos que no superaron los siete filtros (RN-14)
+          items:
+            type: object
+            properties:
+              abogado_id: {type: string, format: uuid}
+              filtro: {type: string}
+              regla: {type: string, pattern: '^RN-[0-9]{2}$'}
+
+    Pagina:
+      type: object
+      required: [data, page]
+      properties:
+        data: {type: array, items: {}}
+        page:
+          type: object
+          required: [has_more]
+          properties:
+            next_cursor: {type: string, nullable: true}
+            has_more: {type: boolean}
+            size: {type: integer}
+
+    EstadoGuardia:
+      type: string
+      enum: [planificada, propuesta, publicada, confirmada, en_revision, descubierta, en_curso, realizada, validada, anulada]
+
+    EstadoCuadrante:
+      type: string
+      enum: [borrador, en_alegaciones, publicado, congelado, cerrado]
+
+    EstadoSolicitud:
+      type: string
+      enum: [comunicada, en_revision, oferta_enviada, pendiente_validacion, estimada, desestimada]
+
+    CanalNotificacion:
+      type: string
+      enum: [app, email, sms, push]
+      description: |
+        La aplicación es el canal principal; correo y push son refuerzos y no sustituyen
+        al registro interno.
+
+    CatalogoItem:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        codigo: {type: string}
+        nombre: {type: string}
+        activo: {type: boolean}
+
+    TipoGuardia:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        codigo: {type: string, example: PEN-24H}
+        especialidad_id: {type: string, format: uuid}
+        modalidad: {type: string, enum: [presencial, localizada, mixta]}
+        hora_inicio: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+        hora_fin: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+        cruza_medianoche: {type: boolean}
+        letrados_previstos: {type: integer}
+        peso_computo: {type: number, format: double, description: Peso de la plantilla en el cómputo de equidad}
+        descanso_posterior_h: {type: integer, nullable: true}
+        es_detenido: {type: boolean, description: Franja de asistencia al detenido de 24 h (RN-35)}
+
+    Parametro:
+      type: object
+      properties:
+        clave: {type: string, example: cupo_mensual}
+        valor: {description: Valor tipado según la clave}
+        tipo: {type: string, enum: [entero, decimal, texto, booleano]}
+        vigente_desde: {type: string, format: date}
+        vigente_hasta: {type: string, format: date, nullable: true}
+        version: {type: integer}
+        acuerdo: {type: string, description: Referencia del acuerdo de Junta que lo aprueba}
+
+    CriterioReparto:
+      type: object
+      properties:
+        version: {type: integer}
+        acuerdo_fecha: {type: string, format: date}
+        pesos:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo_guardia_codigo: {type: string}
+              peso: {type: number, format: double}
+        cupos:
+          type: object
+          properties:
+            mes: {type: integer}
+            trimestre: {type: integer}
+            anio: {type: integer}
+        plazos:
+          type: object
+          properties:
+            excusa_dias_habiles: {type: integer}
+            resolucion_dias: {type: integer}
+            publicacion_dias_antelacion: {type: integer}
+            cierre_disponibilidad_dias: {type: integer}
+        orden_prelacion:
+          type: array
+          items: {type: string}
+          description: Cascada de desempate aplicada cuando el cómputo empata
+        semilla_publicada: {type: boolean}
+
+    Perfil:
+      type: object
+      properties:
+        usuario_id: {type: string, format: uuid}
+        nombre: {type: string}
+        apellidos: {type: string}
+        email: {type: string, format: email}
+        rol: {type: string, enum: [letrado, coordinacion, junta, admin]}
+        abogado:
+          type: object
+          nullable: true
+          properties:
+            id: {type: string, format: uuid}
+            num_colegiado: {type: string}
+            orden_turno: {type: integer}
+            zona: {type: string}
+            activo: {type: boolean}
+        habilitaciones:
+          type: array
+          items:
+            type: object
+            properties:
+              especialidad_codigo: {type: string}
+              estado: {type: string, enum: [vigente, caducada, suspendida]}
+              caducidad: {type: string, format: date, nullable: true}
+
+    TitularResumen:
+      type: object
+      description: |
+        Proyección mínima del titular para el rol letrado: nombre y materia, nada más
+        (RN-25). La coordinación recibe el objeto completo.
+      properties:
+        abogado_id: {type: string, format: uuid}
+        nombre: {type: string}
+        especialidad_codigo: {type: string}
+
+    Guardia:
+      type: object
+      required: [id, tipo_guardia_id, especialidad_id, fecha, hora_inicio, hora_fin, estado, version]
+      properties:
+        id: {type: string, format: uuid}
+        cuadrante_id: {type: string, format: uuid, nullable: true}
+        tipo_guardia_id: {type: string, format: uuid}
+        especialidad_id: {type: string, format: uuid}
+        abogado_id: {type: string, format: uuid, nullable: true, description: Titular efectivo; nulo en planificada y descubierta}
+        fecha: {type: string, format: date}
+        hora_inicio: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+        hora_fin: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+        estado: {$ref: '#/components/schemas/EstadoGuardia'}
+        origen: {type: string, enum: [planificacion, manual, urgente, refuerzo, cobertura_hueco]}
+        motivo_asignacion: {type: string, nullable: true}
+        es_detenido: {type: boolean}
+        titular: {$ref: '#/components/schemas/TitularResumen'}
+        version: {type: integer}
+        creado_en: {type: string, format: date-time}
+        modificado_en: {type: string, format: date-time}
+
+    GuardiaRequest:
+      type: object
+      required: [tipo_guardia_id, especialidad_id, fecha, hora_inicio, hora_fin]
+      properties:
+        tipo_guardia_id: {type: string, format: uuid}
+        especialidad_id: {type: string, format: uuid}
+        fecha: {type: string, format: date}
+        hora_inicio: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+        hora_fin: {type: string, pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'}
+        es_detenido: {type: boolean, default: false}
+
+    Propuesta:
+      type: object
+      properties:
+        guardia_id: {type: string, format: uuid}
+        generada_en: {type: string, format: date-time}
+        semilla: {type: string, description: Semilla del desempate, reproducible}
+        candidatos:
+          type: array
+          items:
+            type: object
+            properties:
+              abogado_id: {type: string, format: uuid}
+              nombre: {type: string}
+              computo_periodo: {type: number, format: double}
+              guardias_ultimo_mes: {type: integer}
+              excusas_estimadas: {type: integer}
+              orden: {type: integer}
+              criterio_desempate: {type: string}
+        descartes:
+          type: array
+          items:
+            type: object
+            properties:
+              abogado_id: {type: string, format: uuid}
+              filtro: {type: string, enum: [alta_turno, habilitacion, disponibilidad, solapamiento, descanso, cupo, exclusion]}
+              regla: {type: string, pattern: '^RN-[0-9]{2}$'}
+              detalle: {type: string}
+
+    DesignacionRequest:
+      type: object
+      required: [abogado_id]
+      properties:
+        abogado_id: {type: string, format: uuid}
+        aparta_criterio: {type: boolean, default: false, description: Si es true, el motivo es obligatorio (RN-08)}
+        motivo_codigo: {type: string, enum: [continuidad, conocimiento_asunto, indicacion_juzgado, situacion_excepcional]}
+        detalle: {type: string, maxLength: 1000}
+        semilla: {type: string}
+
+    DesignacionResponse:
+      type: object
+      properties:
+        guardia: {$ref: '#/components/schemas/Guardia'}
+        origen: {type: string, enum: [planificacion, manual, urgente, refuerzo, cobertura_hueco]}
+        motivo_codigo: {type: string, nullable: true}
+        autoridad_id: {type: string, format: uuid, nullable: true}
+        registrada_en: {type: string, format: date-time}
+        auditoria_id: {type: string, format: uuid}
+
+    Incidencia:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        guardia_id: {type: string, format: uuid}
+        categoria: {type: string, enum: [ausencia, retraso, imposibilidad, material, acceso, otra]}
+        gravedad: {type: string, enum: [baja, media, alta]}
+        descripcion: {type: string}
+        abierta_por: {type: string, format: uuid}
+        fecha_apertura: {type: string, format: date-time}
+        estado_guardia: {$ref: '#/components/schemas/EstadoGuardia'}
+        escalado: {type: boolean}
+
+    Parte:
+      type: object
+      properties:
+        guardia_id: {type: string, format: uuid}
+        estado: {type: string, enum: [sin_parte, abierto, cerrado, validado]}
+        hora_entrada: {type: string, format: date-time, nullable: true}
+        hora_salida: {type: string, format: date-time, nullable: true}
+        actuaciones: {type: string, nullable: true}
+        incidencias: {type: string, nullable: true}
+        cerrado_en: {type: string, format: date-time, nullable: true}
+        validado_por: {type: string, format: uuid, nullable: true}
+        validado_en: {type: string, format: date-time, nullable: true}
+        version: {type: integer}
+
+    ParteRequest:
+      type: object
+      required: [hora_entrada]
+      properties:
+        hora_entrada: {type: string, format: date-time}
+        hora_salida: {type: string, format: date-time, description: Obligatoria para cerrar (RN-18)}
+        actuaciones: {type: string, maxLength: 8000, description: Obligatoria para cerrar (RN-18)}
+        incidencias: {type: string, maxLength: 4000}
+        cerrar: {type: boolean, default: false}
+
+    Solicitud:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        guardia_id: {type: string, format: uuid}
+        tipo: {type: string, enum: [excusa, permuta, sustitucion]}
+        solicitante_id: {type: string, format: uuid}
+        sustituto_id: {type: string, format: uuid, nullable: true}
+        motivo: {type: string}
+        detalle: {type: string, nullable: true}
+        estado: {$ref: '#/components/schemas/EstadoSolicitud'}
+        extemporanea: {type: boolean, description: Presentada fuera de plazo (RN-12)}
+        sobrevenida: {type: boolean}
+        fecha_solicitud: {type: string, format: date-time}
+        fecha_limite_resolucion: {type: string, format: date-time, description: Cinco días desde la presentación (RN-38)}
+        plazo_vencido: {type: boolean}
+        fecha_resolucion: {type: string, format: date-time, nullable: true}
+        resuelta_por: {type: string, format: uuid, nullable: true}
+        motivo_resolucion: {type: string, nullable: true}
+
+    SolicitudRequest:
+      type: object
+      required: [guardia_id, tipo, motivo]
+      properties:
+        guardia_id: {type: string, format: uuid}
+        tipo: {type: string, enum: [excusa, permuta, sustitucion]}
+        motivo: {type: string, enum: [enfermedad, asunto_propio, conciliacion, fuerza_mayor, otro], description: "Vocabulario unico de solicitud.motivo, identico al CHECK del DDL (TOF-2026-012). Categoria general, sin diagnosticos ni datos clinicos (RN-23)."}
+        detalle: {type: string, maxLength: 2000}
+        sustituto_propuesto_id: {type: string, format: uuid, description: Obligatorio en permuta}
+        sobrevenida: {type: boolean, default: false}
+
+    Oferta:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        solicitud_id: {type: string, format: uuid}
+        candidato_id: {type: string, format: uuid}
+        estado: {type: string, enum: [enviada, aceptada, rechazada, expirada]}
+        enviada_en: {type: string, format: date-time}
+        limite_en: {type: string, format: date-time}
+
+    ResolucionRequest:
+      type: object
+      required: [decision, motivo_resolucion]
+      properties:
+        decision: {type: string, enum: [estimar, desestimar]}
+        sustituto_id: {type: string, format: uuid, description: Obligatorio si se estima con sustituto}
+        motivo_resolucion: {type: string, maxLength: 2000}
+        justificar_hueco: {type: boolean, default: false, description: Si se estima sin sustituto, la guardia pasa a descubierta}
+
+    Cuadrante:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        anio: {type: integer}
+        periodo: {type: string}
+        version: {type: integer}
+        estado: {$ref: '#/components/schemas/EstadoCuadrante'}
+        fecha_publicacion: {type: string, format: date-time, nullable: true}
+        publicado_por: {type: string, format: uuid, nullable: true}
+        motivo_cambio: {type: string, nullable: true}
+        cobertura:
+          type: object
+          properties:
+            franjas: {type: integer}
+            cubiertas: {type: integer}
+            descubiertas: {type: integer}
+            justificadas: {type: integer}
+        etag: {type: string}
+
+    PublicacionRequest:
+      type: object
+      properties:
+        motivo_cambio: {type: string, maxLength: 1000}
+        justificacion_huecos:
+          type: array
+          description: Cada hueco que se publica sin titular exige justificación expresa (RN-09)
+          items:
+            type: object
+            required: [guardia_id, justificacion]
+            properties:
+              guardia_id: {type: string, format: uuid}
+              justificacion: {type: string, maxLength: 1000}
+
+    VersionCuadrante:
+      type: object
+      properties:
+        version: {type: integer}
+        estado: {$ref: '#/components/schemas/EstadoCuadrante'}
+        fecha_publicacion: {type: string, format: date-time}
+        publicado_por: {type: string, format: uuid}
+        motivo_cambio: {type: string, nullable: true}
+        cambios:
+          type: array
+          items:
+            type: object
+            properties:
+              guardia_id: {type: string, format: uuid}
+              campo: {type: string}
+              antes: {type: string, nullable: true}
+              despues: {type: string, nullable: true}
+
+    Disponibilidad:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        abogado_id: {type: string, format: uuid}
+        fecha_inicio: {type: string, format: date}
+        fecha_fin: {type: string, format: date}
+        tipo: {type: string, enum: [vacaciones, asunto_propio, baja, formacion, otra]}
+        estado: {type: string, enum: [comunicada, validada, rechazada]}
+        observaciones: {type: string, nullable: true}
+        validada_por: {type: string, format: uuid, nullable: true}
+
+    DisponibilidadRequest:
+      type: object
+      required: [fecha_inicio, fecha_fin, tipo]
+      properties:
+        fecha_inicio: {type: string, format: date}
+        fecha_fin: {type: string, format: date}
+        tipo: {type: string, enum: [vacaciones, asunto_propio, baja, formacion, otra]}
+        observaciones: {type: string, maxLength: 1000}
+
+    Equidad:
+      type: object
+      properties:
+        periodo: {type: string}
+        generado_en: {type: string, format: date-time}
+        pesos_version: {type: integer}
+        media_computo: {type: number, format: double}
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              abogado_id: {type: string, format: uuid}
+              nombre: {type: string}
+              computo_periodo: {type: number, format: double}
+              guardias_12m: {type: integer}
+              desviacion: {type: number, format: double}
+              posicion: {type: integer}
+              exclusion_hasta: {type: string, format: date, nullable: true}
+
+    Panel:
+      type: object
+      properties:
+        anio: {type: integer}
+        periodo: {type: string}
+        cobertura:
+          type: object
+          properties:
+            franjas: {type: integer}
+            cubiertas: {type: integer}
+            descubiertas: {type: integer}
+            huecos_sin_justificar: {type: integer}
+            detenido_descubierto: {type: boolean, description: Franja de 24 h sin cubrir (RN-35)}
+        alertas:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo: {type: string, enum: [guardia_descubierta, detenido_descubierto, solicitud_vencida, habilitacion_caducada, sin_acuse]}
+              guardia_id: {type: string, format: uuid, nullable: true}
+              solicitud_id: {type: string, format: uuid, nullable: true}
+              desde: {type: string, format: date-time}
+              prioridad: {type: string, enum: [maxima, alta, media]}
+        urgencias:
+          type: object
+          properties:
+            mes: {type: integer}
+            ultimo_trimestre: {type: integer}
+        sustituciones:
+          type: object
+          properties:
+            abiertas: {type: integer}
+            resueltas: {type: integer}
+            vencidas: {type: integer}
+        partes_pendientes_validacion: {type: integer}
+        equidad:
+          type: object
+          properties:
+            desviacion_maxima: {type: number, format: double}
+            aviso: {type: boolean}
+
+    Notificacion:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        evento: {type: string, example: nueva_guardia_asignada}
+        canal: {$ref: '#/components/schemas/CanalNotificacion'}
+        destinatario_id: {type: string, format: uuid}
+        guardia_id: {type: string, format: uuid, nullable: true}
+        estado: {type: string, enum: [pendiente, enviada, entregada, leida, fallida]}
+        enviada_en: {type: string, format: date-time, nullable: true}
+        entregada_en: {type: string, format: date-time, nullable: true}
+        leida_en: {type: string, format: date-time, nullable: true}
+
+    EventoAuditoria:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        fecha: {type: string, format: date-time}
+        actor_id: {type: string, format: uuid}
+        accion: {type: string, example: guardia.designar}
+        entidad: {type: string}
+        entidad_id: {type: string, format: uuid}
+        estado_anterior: {type: string, nullable: true}
+        estado_nuevo: {type: string, nullable: true}
+        detalle: {type: string, nullable: true}
+
+    Certificacion:
+      type: object
+      properties:
+        anio: {type: integer}
+        periodo: {type: string}
+        generado_en: {type: string, format: date-time}
+        solo_validadas: {type: boolean, example: true}
+        letrados:
+          type: array
+          items:
+            type: object
+            properties:
+              abogado_id: {type: string, format: uuid}
+              nombre: {type: string}
+              guardias_validadas: {type: integer}
+              computo: {type: number, format: double}
+              desglose_por_especialidad:
+                type: object
+                additionalProperties: {type: number}

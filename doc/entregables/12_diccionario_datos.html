@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Diccionario de datos y validaciones</title>
+</head>
+<body>
+
+<div class="dkicker">Entregable · Akram (Database) · Tarjeta #27 · Modelo TOF-2026-012</div>
+<h1 class="dtitle">Diccionario de datos y validaciones</h1>
+<p class="dlead">Diccionario campo a campo de las 14 entidades del modelo físico corregido (PostgreSQL 16):
+para cada campo, tipo, nulidad, dominio o clave foránea y ejemplo. Cierra con las reglas de
+validación derivadas de las reglas de negocio (RN) y del catálogo de estados TOF-2026-015 v0.4.
+Sustituye a la versión anterior: los identificadores son <code>uuid</code> (no enteros), los roles son
+los del contrato de API y no existen tablas <code>EXPEDIENTE</code> ni <code>ASIGNACION</code> en el modelo.</p>
+
+<h2>0. Campos comunes a todas las tablas</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:20%">Tipo</th><th style="width:14%">Nulo</th><th style="width:50%">Dominio / ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td><code>uuid</code></td><td>No</td><td>Clave primaria, generada con <code>gen_random_uuid()</code> (núcleo desde PostgreSQL 13). Ej.: <code>9f1c…c41a</code>.</td></tr>
+<tr><td><code>creado_en</code></td><td><code>timestamptz</code></td><td>No</td><td>Momento de creación de la fila. Ej.: <code>2026-11-17 09:41:12+01</code>.</td></tr>
+<tr><td><code>creado_por</code></td><td><code>uuid</code></td><td>No</td><td>Usuario que creó la fila (auditoría de borrado lógico y origen en el ETL).</td></tr>
+<tr><td><code>modificado_en</code></td><td><code>timestamptz</code></td><td>Sí</td><td>Última modificación; nulo si nunca se modificó.</td></tr>
+<tr><td><code>version</code></td><td><code>int</code></td><td>No</td><td>Control de concurrencia optimista; empieza en 1 y se incrementa por edición.</td></tr>
+</tbody>
+</table>
+<p class="small">Todas las foráneas usan <code>ON DELETE RESTRICT</code>: no se borra lo referenciado. Las columnas
+<code>text</code> con <code>CHECK</code> materializan los enums; los estados copian literalmente el catálogo
+TOF-2026-015 v0.4 y el contrato de API (#29).</p>
+
+<h2>1. USUARIO — cuenta y credenciales</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>nombre</code>, <code>apellidos</code></td><td><code>text</code></td><td>No</td><td>Nombre y apellidos tal como constan en la colegiación. Ej.: «Marta», «Serra Vidal».</td></tr>
+<tr><td><code>email</code></td><td><code>text</code></td><td>No</td><td>Único, con formato de correo válido. Ej.: <code>m.serra@ejemplo.es</code>.</td></tr>
+<tr><td><code>password_hash</code></td><td><code>text</code></td><td>No</td><td>Hash de la contraseña; nunca la contraseña en claro.</td></tr>
+<tr><td><code>rol</code></td><td><code>text</code></td><td>No</td><td><code>abogado | coordinacion | junta | sistema | auditoria</code>. Ej.: <code>abogado</code>.</td></tr>
+<tr><td><code>estado</code></td><td><code>text</code></td><td>No</td><td><code>activo | bloqueado | inactivo</code> (defecto <code>activo</code>). Manda sobre la <em>cuenta</em>, no sobre el turno (RN-40, ver ABOGADO).</td></tr>
+<tr><td><code>fecha_alta</code></td><td><code>date</code></td><td>No</td><td>Fecha de alta de la cuenta. Ej.: <code>2026-01-15</code>.</td></tr>
+<tr><td><code>ultimo_acceso</code></td><td><code>timestamptz</code></td><td>Sí</td><td>Último acceso registrado; nulo si nunca entró.</td></tr>
+</tbody>
+</table>
+
+<h2>2. ABOGADO — colegiado en el turno</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>usuario_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → USUARIO, único: un usuario con rol abogado tiene un único registro de abogado. Ej.: <code>9f1c…c41a</code>.</td></tr>
+<tr><td><code>num_colegiado</code></td><td><code>text</code></td><td>No</td><td>Número de colegiado, único. Ej.: <code>12345</code>.</td></tr>
+<tr><td><code>telefono_guardia</code></td><td><code>text</code></td><td>Sí</td><td>Teléfono de guardia. Ej.: <code>+34612345678</code>.</td></tr>
+<tr><td><code>orden_turno</code></td><td><code>int</code></td><td>No</td><td>Posición en el orden del turno; alimenta la equidad (por defecto 0). Ej.: <code>7</code>.</td></tr>
+<tr><td><code>fecha_alta_turno</code></td><td><code>date</code></td><td>No</td><td>Alta en el turno de oficio. Ej.: <code>2024-03-01</code>.</td></tr>
+<tr><td><code>activo</code></td><td><code>boolean</code></td><td>No</td><td>Manda sobre la <em>pertenencia al turno</em> (RN-40 «alta vigente»): por defecto <code>true</code>.</td></tr>
+<tr><td><code>zona</code></td><td><code>text</code></td><td>Sí</td><td>Zona de ejercicio. Ej.: <code>Tarragona ciudad</code>.</td></tr>
+</tbody>
+</table>
+<p class="small">La especialidad <b>no</b> es un campo de ABOGADO: se acredita por HABILITACION (la N:M abogado–especialidad).</p>
+
+<h2>3. ESPECIALIDAD — materia del turno</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>codigo</code></td><td><code>text</code></td><td>No</td><td>Código único y estable. Ej.: <code>PENAL</code>, <code>VG</code>, <code>MEN</code>.</td></tr>
+<tr><td><code>nombre</code></td><td><code>text</code></td><td>No</td><td>Nombre para mostrar. Ej.: «Violencia de género».</td></tr>
+<tr><td><code>descripcion</code></td><td><code>text</code></td><td>Sí</td><td>Descripción libre.</td></tr>
+<tr><td><code>requiere_formacion</code></td><td><code>boolean</code></td><td>No</td><td>Si la materia exige acreditación formativa (por defecto <code>false</code>).</td></tr>
+<tr><td><code>activa</code></td><td><code>boolean</code></td><td>No</td><td>Si sigue admitiendo habilitaciones (por defecto <code>true</code>); no se borra si tiene habilitaciones.</td></tr>
+</tbody>
+</table>
+
+<h2>4. HABILITACION — acreditación por materia</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>abogado_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → ABOGADO.</td></tr>
+<tr><td><code>especialidad_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → ESPECIALIDAD.</td></tr>
+<tr><td><code>fecha_habilitacion</code></td><td><code>date</code></td><td>No</td><td>Fecha de la acreditación. Ej.: <code>2023-05-20</code>.</td></tr>
+<tr><td><code>caducidad</code></td><td><code>date</code></td><td>Sí</td><td>Fecha de caducidad; si existe, <code>≥ fecha_habilitacion</code>.</td></tr>
+<tr><td><code>estado</code></td><td><code>text</code></td><td>No</td><td><code>vigente | caducada | suspendida | pendiente</code> (defecto <code>vigente</code>). Índice único parcial: una sola vigente por (abogado, especialidad).</td></tr>
+<tr><td><code>soporte</code></td><td><code>text</code></td><td>Sí</td><td>Referencia al documento acreditativo. Ej.: «Título de especialización, reg. 112».</td></tr>
+</tbody>
+</table>
+
+<h2>5. TIPO_GUARDIA — plantilla de servicio</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>codigo</code></td><td><code>text</code></td><td>No</td><td>Código único. Ej.: <code>PEN-24</code>.</td></tr>
+<tr><td><code>especialidad_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → ESPECIALIDAD: toda guardia de esta plantilla tiene materia.</td></tr>
+<tr><td><code>modalidad</code></td><td><code>text</code></td><td>No</td><td><code>localizada | presencial | telefonica</code>.</td></tr>
+<tr><td><code>hora_inicio</code> / <code>hora_fin</code></td><td><code>time</code></td><td>No</td><td>Franja horaria de la plantilla. Ej.: <code>08:00</code> / <code>20:00</code>.</td></tr>
+<tr><td><code>cruza_medianoche</code></td><td><code>boolean</code></td><td>No</td><td><code>true</code> si la franja termina al día siguiente (por defecto <code>false</code>).</td></tr>
+<tr><td><code>letrados_previstos</code></td><td><code>int</code></td><td>No</td><td>Letrados previstos por franja; <code>&gt; 0</code> (por defecto 1).</td></tr>
+<tr><td><code>peso_computo</code></td><td><code>numeric(4,2)</code></td><td>No</td><td>Peso de la franja en el cómputo de equidad; <code>≥ 0</code> (por defecto 1,00).</td></tr>
+<tr><td><code>descanso_posterior_h</code></td><td><code>int</code></td><td>No</td><td>Horas de descanso exigidas después; <code>≥ 0</code> (por defecto 0).</td></tr>
+</tbody>
+</table>
+<p class="small"><code>UNIQUE (id, especialidad_id)</code> permite la FK compuesta desde GUARDIA: la materia no puede divergir entre plantilla y guardia.</p>
+
+<h2>6. CUADRANTE — versión del calendario</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>anio</code> / <code>periodo</code> / <code>version</code></td><td><code>int</code> / <code>text</code> / <code>int</code></td><td>No</td><td>Tripla única: un cuadrante por (año, periodo, versión). <code>version &gt; 0</code>. Ej.: <code>2027, «marzo», 2</code>.</td></tr>
+<tr><td><code>estado</code></td><td><code>text</code></td><td>No</td><td>Catálogo: <code>borrador | en_alegaciones | publicado | congelado | cerrado</code> (defecto <code>borrador</code>). <code>en_alegaciones</code> = el letrado opone causa antes de publicar; <code>congelado</code> = alcanzada la antelación mínima (RN-22/RN-27).</td></tr>
+<tr><td><code>fecha_publicacion</code></td><td><code>timestamptz</code></td><td>Sí</td><td>Cuándo se publicó; nulo en borrador.</td></tr>
+<tr><td><code>publicado_por</code></td><td><code>uuid</code></td><td>Sí</td><td>FK → USUARIO que publicó.</td></tr>
+<tr><td><code>motivo_cambio</code></td><td><code>text</code></td><td>Sí</td><td>Motivo de la nueva versión. Ej.: «Sustitución validada EX-2027-0311».</td></tr>
+</tbody>
+</table>
+
+<h2>7. GUARDIA — servicio a cubrir (centro del modelo)</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>cuadrante_id</code></td><td><code>uuid</code></td><td>Sí*</td><td>FK → CUADRANTE. Nulo <b>solo</b> si <code>origen = 'urgente'</code> (RN-39); en cualquier otro caso, obligatorio (CHECK).</td></tr>
+<tr><td><code>tipo_guardia_id</code> + <code>especialidad_id</code></td><td><code>uuid</code></td><td>No</td><td>FK compuesta → TIPO_GUARDIA (<code>id, especialidad_id</code>): la guardia hereda la materia de su plantilla.</td></tr>
+<tr><td><code>abogado_id</code></td><td><code>uuid</code></td><td>Sí</td><td>FK → ABOGADO: titular. Nulo en <code>planificada</code> y <code>descubierta</code>.</td></tr>
+<tr><td><code>fecha</code></td><td><code>date</code></td><td>No</td><td>Día de la guardia. Ej.: <code>2027-03-17</code>.</td></tr>
+<tr><td><code>hora_inicio</code> / <code>hora_fin</code></td><td><code>time</code></td><td>No</td><td>Franja de la plantilla. Ej.: <code>08:00</code> / <code>08:00</code> (24 h).</td></tr>
+<tr><td><code>inicio_en</code> / <code>fin_en</code></td><td><code>timestamptz</code></td><td>No</td><td>Instantes absolutos: <code>fin_en &gt; inicio_en</code>. Con <code>cruza_medianoche</code>, <code>fin_en</code> es fecha+1 — no se deriva de la plantilla, queda guardado.</td></tr>
+<tr><td><code>cruza_medianoche</code></td><td><code>boolean</code></td><td>No</td><td>Copia de la plantilla al crear la guardia (no cambia si se edita la plantilla después).</td></tr>
+<tr><td><code>estado</code></td><td><code>text</code></td><td>No</td><td>Catálogo (10): <code>planificada | propuesta | publicada | confirmada | en_revision | descubierta | en_curso | realizada | validada | anulada</code> (defecto <code>planificada</code>). <code>en_revision</code> mantiene al titular como responsable (RN-13/15); solo <code>validada</code> cuenta para certificación y estadísticas (RN-19); <code>anulada</code> lleva motivo (RN-31).</td></tr>
+<tr><td><code>origen</code></td><td><code>text</code></td><td>No</td><td><code>ordinaria | urgente | refuerzo</code> (defecto <code>ordinaria</code>).</td></tr>
+<tr><td><code>motivo_asignacion</code></td><td><code>text</code></td><td>Sí</td><td>En <code>origen = 'urgente'</code>: origen, autoridad y hora de la designación fuera de cuadrante (RN-39).</td></tr>
+</tbody>
+</table>
+<p class="small">Restricción del motor (RN-04): <code>EXCLUDE USING gist (abogado_id WITH =, tsrange(inicio_en, fin_en) WITH &amp;&amp;) WHERE (estado &lt;&gt; 'anulada' AND abogado_id IS NOT NULL)</code> — un mismo abogado no puede tener dos guardias solapadas.</p>
+
+<h2>8. DISPONIBILIDAD — ausencia comunicada</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>abogado_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → ABOGADO.</td></tr>
+<tr><td><code>fecha_inicio</code> / <code>fecha_fin</code></td><td><code>date</code></td><td>No</td><td>Rango con <code>fecha_fin ≥ fecha_inicio</code>. Ej.: <code>2027-03-10</code> a <code>2027-03-14</code>.</td></tr>
+<tr><td><code>tipo</code></td><td><code>text</code></td><td>No</td><td><code>vacaciones | baja | permiso | formacion | otros</code>. Categoría, nunca causa clínica (RGPD art. 9).</td></tr>
+<tr><td><code>estado</code></td><td><code>text</code></td><td>No</td><td><code>pendiente | validada | rechazada | anulada</code> (defecto <code>pendiente</code>).</td></tr>
+<tr><td><code>observaciones</code></td><td><code>text</code></td><td>Sí</td><td>Texto libre, sin datos de salud.</td></tr>
+<tr><td><code>validada_por</code></td><td><code>uuid</code></td><td>Sí</td><td>FK → USUARIO que validó.</td></tr>
+</tbody>
+</table>
+
+<h2>9. SOLICITUD — excusa, permuta o sustitución</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>guardia_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → GUARDIA. Solo una solicitud activa por guardia (índice parcial único).</td></tr>
+<tr><td><code>tipo</code></td><td><code>text</code></td><td>No</td><td><code>excusa | permuta | sustitucion</code>.</td></tr>
+<tr><td><code>solicitante_id</code> / <code>sustituto_id</code></td><td><code>uuid</code></td><td>No / Sí</td><td>FK → ABOGADO. El sustituto es obligatorio en permuta (doble conformidad, RN-16) y en sustitución con candidato propuesto.</td></tr>
+<tr><td><code>motivo</code></td><td><code>text</code></td><td>No</td><td><code>enfermedad | asunto_propio | conciliacion | fuerza_mayor | otro</code> — vocabulario único de <code>solicitud.motivo</code>, idéntico al contrato #29. Categoría general, sin diagnósticos ni datos clínicos (RN-23).</td></tr>
+<tr><td><code>detalle</code></td><td><code>text</code></td><td>Sí</td><td>Detalle libre, sin diagnósticos ni datos clínicos (RN-23).</td></tr>
+<tr><td><code>estado</code></td><td><code>text</code></td><td>No</td><td>Catálogo: <code>comunicada | en_revision | oferta_enviada | pendiente_validacion | estimada | desestimada</code> (defecto <code>comunicada</code>). Activas: las cuatro primeras.</td></tr>
+<tr><td><code>extemporanea</code></td><td><code>boolean</code></td><td>No</td><td>Presentada fuera de plazo (RN-12); por defecto <code>false</code>.</td></tr>
+<tr><td><code>sobrevenida</code></td><td><code>boolean</code></td><td>No</td><td>Indisponibilidad sobrevenida; por defecto <code>false</code>.</td></tr>
+<tr><td><code>fecha_solicitud</code></td><td><code>timestamptz</code></td><td>No</td><td>Momento de la solicitud (defecto <code>now()</code>).</td></tr>
+<tr><td><code>fecha_resolucion</code> / <code>resuelta_por</code></td><td><code>timestamptz</code> / <code>uuid</code></td><td>Sí</td><td>Cuándo y quién resolvió; nulos hasta la resolución.</td></tr>
+<tr><td><code>motivo_resolucion</code></td><td><code>text</code></td><td>Sí</td><td>Motivación obligatoria de la decisión (RN-13/37); se muestra también en la notificación al letrado.</td></tr>
+</tbody>
+</table>
+
+<h2>10. INCIDENCIA — evento en la guardia</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>guardia_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → GUARDIA.</td></tr>
+<tr><td><code>categoria</code></td><td><code>text</code></td><td>No</td><td><code>localizacion | cobertura | escalado | material | otro</code>.</td></tr>
+<tr><td><code>gravedad</code></td><td><code>text</code></td><td>No</td><td><code>baja | media | alta</code>.</td></tr>
+<tr><td><code>descripcion</code></td><td><code>text</code></td><td>No</td><td>Qué ocurrió. Ej.: «No localizable tras dos llamadas».</td></tr>
+<tr><td><code>abierta_por</code></td><td><code>uuid</code></td><td>No</td><td>FK → USUARIO que la abrió.</td></tr>
+<tr><td><code>fecha_apertura</code> / <code>fecha_cierre</code></td><td><code>timestamptz</code></td><td>No / Sí</td><td>Apertura (defecto <code>now()</code>); el acuse de cierre es <code>fecha_cierre</code> — la incidencia no tiene estado propio.</td></tr>
+<tr><td><code>resolucion</code></td><td><code>text</code></td><td>Sí</td><td>Cómo se resolvió.</td></tr>
+</tbody>
+</table>
+
+<h2>11. PARTE_GUARDIA — cierre y acreditación (1:1 con guardia)</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>guardia_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → GUARDIA, único: un parte por guardia.</td></tr>
+<tr><td><code>realizada</code></td><td><code>boolean</code></td><td>No</td><td>Si el servicio se realizó (por defecto <code>false</code>).</td></tr>
+<tr><td><code>hora_entrada</code> / <code>hora_salida</code></td><td><code>time</code></td><td>Sí</td><td>Horas reales; obligatorias para validar (RN-18).</td></tr>
+<tr><td><code>actuaciones</code></td><td><code>text</code></td><td>Sí</td><td>Actuaciones realizadas; obligatorias para validar (RN-18).</td></tr>
+<tr><td><code>observaciones</code></td><td><code>text</code></td><td>Sí</td><td>Texto libre.</td></tr>
+<tr><td><code>validado</code></td><td><code>boolean</code></td><td>No</td><td><code>CHECK (NOT validado OR (hora_entrada AND hora_salida AND actuaciones NOT NULL))</code>: el parte no se valida vacío.</td></tr>
+<tr><td><code>validado_por</code></td><td><code>uuid</code></td><td>Sí</td><td>FK → USUARIO que validó.</td></tr>
+</tbody>
+</table>
+
+<h2>12. JUSTIFICANTE — documento acreditativo</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>solicitud_id</code> / <code>disponibilidad_id</code></td><td><code>uuid</code></td><td>Sí</td><td>FK → SOLICITUD / DISPONIBILIDAD. CHECK: al menos uno de los dos no nulo.</td></tr>
+<tr><td><code>referencia_fichero</code></td><td><code>text</code></td><td>No</td><td>Ruta o referencia al fichero. Ej.: <code>justificantes/2027/0311.pdf</code>.</td></tr>
+<tr><td><code>tipo_documento</code></td><td><code>text</code></td><td>No</td><td><code>medico | formacion | colegiacion | otro</code>.</td></tr>
+<tr><td><code>fecha_subida</code></td><td><code>timestamptz</code></td><td>No</td><td>Momento de la subida (defecto <code>now()</code>).</td></tr>
+<tr><td><code>acceso_restringido</code></td><td><code>boolean</code></td><td>No</td><td>Acceso limitado por rol (por defecto <code>true</code>); nunca se muestra junto a la causa clínica.</td></tr>
+</tbody>
+</table>
+
+<h2>13. NOTIFICACION — aviso y acuse</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>usuario_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → USUARIO destinatario.</td></tr>
+<tr><td><code>tipo</code></td><td><code>text</code></td><td>No</td><td><code>designacion | cambio | incidencia | cuadrante | recordatorio</code>.</td></tr>
+<tr><td><code>referencia_tipo</code> / <code>referencia_id</code></td><td><code>text</code> / <code>uuid</code></td><td>No / Sí</td><td>Referencia polimórfica (sin FK) al hecho notificado. Ej.: <code>guardia</code> / <code>9f1c…c41a</code>.</td></tr>
+<tr><td><code>canal</code></td><td><code>text</code></td><td>No</td><td><code>email | sms | in_app</code>.</td></tr>
+<tr><td><code>estado_entrega</code></td><td><code>text</code></td><td>No</td><td><code>pendiente | enviada | entregada | error</code> (defecto <code>pendiente</code>). Índice de cola por este campo.</td></tr>
+<tr><td><code>fecha_envio</code> / <code>fecha_lectura</code></td><td><code>timestamptz</code></td><td>Sí</td><td>Envío y lectura; en correo, la lectura no es prueba (spike #45).</td></tr>
+<tr><td><code>leida</code></td><td><code>boolean</code></td><td>No</td><td>Leída en la aplicación (por defecto <code>false</code>).</td></tr>
+</tbody>
+</table>
+<p class="small"><code>UNIQUE (referencia_tipo, referencia_id, usuario_id, canal)</code>: idempotencia evento–destinatario–canal — un reintento no duplica el envío.</p>
+
+<h2>14. AUDITORIA — registro append-only e inmutable</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>entidad</code> / <code>entidad_id</code></td><td><code>text</code> / <code>uuid</code></td><td>No</td><td>Referencia polimórfica sin FK. Índices <code>(entidad, entidad_id)</code>, <code>(actor_id, fecha)</code> y <code>(fecha)</code>.</td></tr>
+<tr><td><code>accion</code></td><td><code>text</code></td><td>No</td><td><code>crear | modificar | publicar | resolver | cerrar | consultar</code>.</td></tr>
+<tr><td><code>estado_anterior</code> / <code>estado_nuevo</code></td><td><code>text</code></td><td>Sí</td><td>Estados del catálogo antes y después. Ej.: <code>publicada</code> → <code>confirmada</code>.</td></tr>
+<tr><td><code>motivo</code></td><td><code>text</code></td><td>Sí</td><td>Motivo del cambio (obligatorio en anulaciones y resoluciones).</td></tr>
+<tr><td><code>actor_id</code></td><td><code>uuid</code></td><td>No</td><td>FK → USUARIO que actuó.</td></tr>
+<tr><td><code>fecha</code></td><td><code>timestamptz</code></td><td>No</td><td>Momento del acto (defecto <code>now()</code>).</td></tr>
+<tr><td><code>origen</code></td><td><code>text</code></td><td>No</td><td><code>aplicacion | etl | migracion | manual</code> (defecto <code>aplicacion</code>).</td></tr>
+</tbody>
+</table>
+<p class="small">Sin <code>UPDATE</code>, <code>DELETE</code> ni <code>TRUNCATE</code> para los roles de aplicación (<code>REVOKE</code> sobre <code>app_role</code>, que debe existir antes de ejecutar la migración).</p>
+
+<h2>15. PARAMETRO — pieza aparte (fuera de las 14 del cap. 21)</h2>
+<table class="grid">
+<thead><tr><th style="width:16%">Campo</th><th style="width:16%">Tipo</th><th style="width:10%">Nulo</th><th style="width:58%">Dominio / FK · ejemplo</th></tr></thead>
+<tbody>
+<tr><td><code>clave</code></td><td><code>text</code></td><td>No</td><td>Nombre del parámetro. Ej.: <code>antelacion_minima_dias</code>, <code>peso_localizada</code>, <code>umbral_equidad</code>.</td></tr>
+<tr><td><code>valor</code></td><td><code>jsonb</code></td><td>No</td><td>Valor versionado (RN-27). Ej.: <code>10</code>.</td></tr>
+<tr><td><code>version</code></td><td><code>int</code></td><td>No</td><td><code>&gt; 0</code>; <code>(clave, version)</code> único: el histórico no se sobrescribe.</td></tr>
+<tr><td><code>vigente_desde</code> / <code>vigente_hasta</code></td><td><code>date</code></td><td>No / Sí</td><td>Vigencia; si hay hasta, <code>≥ vigente_desde</code>. Ej.: <code>2027-01-01</code> → <code>2027-06-30</code>.</td></tr>
+</tbody>
+</table>
+
+<h2>16. Reglas de validación derivadas de las reglas de negocio</h2>
+<table class="grid">
+<thead><tr><th style="width:12%">Regla</th><th style="width:43%">Qué exige</th><th style="width:45%">Dónde se garantiza</th></tr></thead>
+<tbody>
+<tr><td><b>RN-02</b></td><td>Solo se asigna a quien tiene habilitación vigente en la materia.</td><td>FK compuesta por la materia + índice único parcial de habilitación vigente; comprobación de servicio al asignar.</td></tr>
+<tr><td><b>RN-04</b></td><td>Un abogado no puede tener dos guardias solapadas.</td><td><code>EXCLUDE USING gist</code> sobre <code>tsrange(inicio_en, fin_en)</code> en el motor.</td></tr>
+<tr><td><b>RN-10</b></td><td>El acuse no condiciona los efectos de la designación.</td><td>La designación se publica sin esperar el acuse; <code>estado_entrega</code> de NOTIFICACION es independiente.</td></tr>
+<tr><td><b>RN-11</b></td><td>Sin acuse hay escalado a coordinación.</td><td>GUARDIA <code>confirmada</code> vs. sin acuse + recordatorios de NOTIFICACION (72 h / 24 h).</td></tr>
+<tr><td><b>RN-12</b></td><td>La excusa fuera de plazo se admite pero se registra como extemporánea.</td><td><code>solicitud.extemporanea</code>; una sola solicitud activa por guardia.</td></tr>
+<tr><td><b>RN-13 / RN-15</b></td><td>En revisión, el titular sigue siendo responsable hasta la validación del Colegio.</td><td>GUARDIA <code>en_revision</code> y SOLICITUD <code>en_revision</code>; la titularidad no cambia hasta <code>estimada</code>.</td></tr>
+<tr><td><b>RN-16</b></td><td>La permuta exige doble conformidad.</td><td>SOLICITUD <code>pendiente_validacion</code> antes de <code>estimada</code>, con <code>sustituto_id</code> obligatorio.</td></tr>
+<tr><td><b>RN-18</b></td><td>El parte no cierra sin horas y actuaciones.</td><td><code>CHECK</code> en PARTE_GUARDIA: <code>validado</code> exige horas y actuaciones.</td></tr>
+<tr><td><b>RN-19</b></td><td>Solo los partes validados cuentan para certificación y estadísticas.</td><td>GUARDIA <code>realizada</code> ≠ <code>validada</code>; las consultas agregan solo <code>validada</code>.</td></tr>
+<tr><td><b>RN-21 / RN-22</b></td><td>Publicado inmutable; los cambios son nueva versión; antelación mínima de 10 días.</td><td><code>(anio, periodo, version)</code> único + CUADRANTE <code>congelado</code> y parámetros versionados (RN-27).</td></tr>
+<tr><td><b>RN-23</b></td><td>Ninguna comunicación lleva datos de salud ni documentación clínica.</td><td>DISPONIBILIDAD sin causa clínica; plantillas de NOTIFICACION con contenido mínimo; JUSTIFICANTE con <code>acceso_restringido</code>.</td></tr>
+<tr><td><b>RN-27</b></td><td>Pesos, cupos, descanso, antelación y umbrales versionados con vigencia.</td><td>Tabla PARAMETRO <code>(clave, version)</code> con <code>vigente_desde/hasta</code>.</td></tr>
+<tr><td><b>RN-31</b></td><td>La guardia anulada se registra con motivo.</td><td>GUARDIA <code>anulada</code> + <code>motivo_asignacion</code>; excluida del solapamiento.</td></tr>
+<tr><td><b>RN-32 / RN-22</b></td><td>El histórico no puede cambiar si se edita la plantilla.</td><td><code>fin_en</code> y <code>cruza_medianoche</code> copiados en la guardia al crearla.</td></tr>
+<tr><td><b>RN-39</b></td><td>La designación urgente por violencia de género se registra fuera del cuadrante, con origen, autoridad y hora.</td><td><code>origen = 'urgente'</code> exige <code>cuadrante_id IS NULL</code>; el registro va en <code>motivo_asignacion</code>.</td></tr>
+<tr><td><b>RN-40</b></td><td>«Alta vigente en el turno».</td><td><code>abogado.activo</code> manda sobre el turno; <code>usuario.estado</code>, sobre la cuenta.</td></tr>
+</tbody>
+</table>
+
+<div class="box">
+<div class="box-title">Qué garantiza el esquema</div>
+<ul class="tight" style="margin-bottom:0;">
+<li><strong>Una sola interpretación por campo:</strong> tipo, nulidad y dominio están cerrados en el diccionario; los estados son los del catálogo, sin traducciones manuales.</li>
+<li><strong>Integridad en el motor, no en el servicio:</strong> unicidades, FK con <code>RESTRICT</code>, CHECK de RN-18 y exclusión por solapamiento se imponen en PostgreSQL.</li>
+<li><strong>Sin datos clínicos:</strong> la indisponibilidad guarda la categoría, no la causa; los avisos llevan el contenido mínimo.</li>
+<li><strong>Auditoría inmutable y consultable</strong> por entidad, actor y fechas, sin <code>UPDATE/DELETE/TRUNCATE</code> para la aplicación.</li>
+</ul>
+</div>
+
+<p class="footnote">Diccionario de la versión corregida del modelo TOF-2026-012 (DDL con estados del catálogo,
+<code>fin_en</code> + <code>EXCLUDE USING gist</code>, <code>cuadrante_id</code> nulo para <code>origen='urgente'</code> y
+<code>CHECK</code> de RN-18). Fuente literal del modelo: Propuesta funcional TOF-2026-001, págs. 36-40.
+Tarjeta #27 — Akram (Database). Documento de ejercicio, sin interlocución con el Colegio.</p>
+
+</body>
+</html>

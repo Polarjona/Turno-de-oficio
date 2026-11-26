@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Propuesta, diseño funcional y stack · Turno de Oficio</title>
+</head>
+<body>
+<div class="entregable">
+<div class="dkicker">Documento consolidado · Turno de Oficio Tarragona · Funcionamiento y stack</div>
+<h1 class="dtitle">Propuesta, diseño funcional y stack tecnológico</h1>
+
+<h2>1. Qué es y a quién sirve</h2>
+<p>El Turno de Oficio es el servicio por el que el Colegio de Abogados de Tarragona designa letrados
+de guardia: quién está de guardia cada día y hora, quién designa, quién cubre una sustitución y cómo
+se acredita después. La aplicación responde a tres preguntas, sin que nadie tenga que llamar en una
+guardia de noche:</p>
+<div class="box ok">
+<div class="box-title">Las tres preguntas que responde</div>
+<ul class="tight" style="margin-bottom:0;">
+<li><strong>¿Cuál es mi guardia de hoy?</strong> — vista del día servida en servidor, sin depender de JavaScript.</li>
+<li><strong>¿Qué pasa si no puedo?</strong> — circuito de solicitud, oferta de sustituto y resolución motivada por la coordinación.</li>
+<li><strong>¿Quién lo decidió y por qué?</strong> — cuadrante versionado y auditoría inmutable de cada acto.</li>
+</ul>
+</div>
+<p><strong>Volumen de referencia:</strong> 900 letrados, 124 franjas de servicio al mes, 25 usuarios
+simultáneos en hora punta.</p>
+
+<h2>2. Actores y roles</h2>
+<table class="grid">
+<thead><tr><th style="width:26%">Actor</th><th style="width:74%">Qué puede hacer (y qué no)</th></tr></thead>
+<tbody>
+<tr><td><strong>Letrado</strong> (<code>abogado</code>)</td><td>Ver su guardia de hoy y su calendario; comunicar disponibilidad y excusas; proponer sustitutos; cerrar el parte con horas y actuaciones; acusar recepción de los avisos. No ve causas clínicas ni decide sobre su propia solicitud.</td></tr>
+<tr><td><strong>Coordinación</strong> (<code>coordinacion</code>)</td><td>Publicar y congelar cuadrantes; resolver solicitudes con motivación obligatoria; validar partes y disponibilidades; designar refuerzos y urgencias. No edita lo publicado: versiona.</td></tr>
+<tr><td><strong>Junta de Gobierno</strong> (<code>junta</code>)</td><td>Aprueba el cuadrante; solo lectura del resto salvo su ámbito. No designa guardias.</td></tr>
+<tr><td><strong>Administración técnica</strong> (<code>sistema</code>)</td><td>Usuarios, parámetros versionados (pesos, cupos, antelación) y las tareas diferidas. No ve contenido clínico.</td></tr>
+<tr><td><strong>Auditoría</strong> (<code>auditoria</code>)</td><td>Consulta sin modificar: historial por entidad, actor y fechas. Sin <code>UPDATE/DELETE</code> en la tabla de auditoría.</td></tr>
+</tbody>
+</table>
+<p class="small">La pertenencia al turno (<code>abogado.activo</code>) y la cuenta (<code>usuario.estado</code>)
+se gestionan por separado (RN-40). La especialidad no es un campo del letrado: se acredita por
+<code>habilitacion</code> (la relación N:M letrado–materia).</p>
+
+<h2>3. Modelo de datos (las 14 entidades + PARAMETRO)</h2>
+<table class="grid">
+<thead><tr><th style="width:26%">Entidad</th><th style="width:74%">Qué guarda (una línea)</th></tr></thead>
+<tbody>
+<tr><td><code>usuario</code></td><td>Cuenta y credenciales: email único, <code>password_hash</code>, rol del catálogo, estado de la cuenta.</td></tr>
+<tr><td><code>abogado</code></td><td>Colegiado: <code>num_colegiado</code> único, teléfono de guardia, orden del turno, <code>activo</code> (alta vigente, RN-40).</td></tr>
+<tr><td><code>especialidad</code></td><td>Materia del turno (penal, violencia de género, menores…): código único y si exige formación.</td></tr>
+<tr><td><code>habilitacion</code></td><td>Acreditación por materia: estados <code>vigente/caducada/suspendida/pendiente</code>; solo una vigente por (letrado, materia).</td></tr>
+<tr><td><code>tipo_guardia</code></td><td>Plantilla de servicio: modalidad, franja horaria, letrados previstos, <code>peso_computo</code> y descanso posterior.</td></tr>
+<tr><td><code>cuadrante</code></td><td>Versión del calendario: <code>(anio, periodo, version)</code> únicos; estados <code>borrador → en_alegaciones → publicado → congelado → cerrado</code> (RN-21).</td></tr>
+<tr><td><code>guardia</code></td><td>El centro del modelo: día, instantes absolutos <code>inicio_en/fin_en</code>, titular, estado (10) y origen (<code>ordinaria/urgente/refuerzo</code>). <code>cuadrante_id</code> nulo solo en urgente (RN-39).</td></tr>
+<tr><td><code>disponibilidad</code></td><td>Ausencia comunicada: rango de fechas, categoría (<code>vacaciones/baja/permiso/formacion/otros</code>) y estado. Nunca la causa clínica (RGPD art. 9, RN-23).</td></tr>
+<tr><td><code>solicitud</code></td><td>Excusa, permuta o sustitución sobre una guardia: estados <code>comunicada → en_revision → oferta_enviada → pendiente_validacion → estimada/desestimada</code>, motivo categórico (<code>enfermedad / asunto_propio / conciliacion / fuerza_mayor / otro</code>, idéntico en el DDL y en la API) y resolución motivada.</td></tr>
+<tr><td><code>incidencia</code></td><td>Evento en la guardia: categoría, gravedad, apertura y cierre (acuse de cierre = <code>fecha_cierre</code>).</td></tr>
+<tr><td><code>parte_guardia</code></td><td>Cierre y acreditación, 1:1 con la guardia: horas reales y actuaciones; no se valida vacío (RN-18).</td></tr>
+<tr><td><code>justificante</code></td><td>Referencia al documento acreditativo (no el binario), acceso restringido por rol (RN-24).</td></tr>
+<tr><td><code>notificacion</code></td><td>Aviso y acuse: tipo, canal (<code>email/sms/in_app</code>), estado de entrega y lectura; unicidad evento–destinatario–canal (idempotencia, spike #45).</td></tr>
+<tr><td><code>auditoria</code></td><td>Registro <em>append-only</em> e inmutable: entidad, acción, estados, motivo, actor, fecha y origen (<code>aplicacion/etl/migracion/manual</code>). <code>REVOKE UPDATE/DELETE</code>.</td></tr>
+<tr><td><code>parametro</code></td><td>Parámetros versionados con vigencia (<code>antelacion_minima_dias</code>, <code>peso_localizada</code>, <code>umbral_equidad</code>…), en <code>jsonb</code> (RN-27).</td></tr>
+</tbody>
+</table>
+<p><strong>Restricciones que el motor impone (no la aplicación):</strong> un abogado no puede tener dos
+guardias solapadas (<code>EXCLUDE USING gist</code> sobre <code>tsrange(inicio_en, fin_en)</code>, RN-04);
+la guardia guarda <code>fin_en</code> absoluto —la que cruza la medianoche es fecha+1— y se copia
+<code>cruza_medianoche</code> al crearla, así el histórico no cambia si se edita la plantilla (RN-32);
+toda foránea con <code>ON DELETE RESTRICT</code>; el parte no se valida sin horas y actuaciones (RN-18).</p>
+
+<h2>4. Reglas de negocio (catálogo TOF-2026-015, RN-01…RN-39)</h2>
+<table class="grid">
+<thead><tr><th style="width:34%">Grupo</th><th style="width:66%">Reglas clave</th></tr></thead>
+<tbody>
+<tr><td>Asignación y equidad</td><td>Solo se asigna a quien tiene habilitación vigente (RN-02); sin solapamiento (RN-04); el reparto ordena por: guardias recientes, carga en los últimos 30 días, excusas estimadas y desempate reproducible con semilla registrada; solo los partes validados cuentan para certificación y estadísticas (RN-19).</td></tr>
+<tr><td>Sustitución</td><td>La excusa fuera de plazo se admite pero queda registrada como extemporánea (RN-12); en revisión, el titular sigue siendo responsable hasta la validación (RN-13/15); la permuta exige doble conformidad (RN-16); una sola solicitud activa por guardia.</td></tr>
+<tr><td>Cuadrante e inmutabilidad</td><td>Publicado no se edita: se versiona, con antelación mínima de 10 días (RN-21/22); parámetros versionados con vigencia (RN-27); la guardia urgente se registra fuera del cuadrante con origen, autoridad y hora (RN-39).</td></tr>
+<tr><td>Notificaciones y acuse</td><td>La designación se publica sin esperar el acuse (RN-10); sin acuse hay escalado a coordinación y recordatorios 72 h / 24 h (RN-11); alerta de excusa a los 5 días (RN-38).</td></tr>
+<tr><td>Auditoría, seguridad y RGPD</td><td>Todo acto deja asiento inmutable (RN-20); cada rol ve solo lo suyo, con RLS (RN-25); ninguna comunicación lleva datos de salud, y los justificantes tienen acceso restringido (RN-23/24); la guardia anulada se registra con motivo (RN-31).</td></tr>
+</tbody>
+</table>
+
+<h2>5. Flujos principales</h2>
+<h3>5.1 Circuito de sustitución (el corazón de la app)</h3>
+<p>El letrado comunica la solicitud → coordinación la pone <code>en_revision</code> (el titular sigue
+responsable) → se envía la <code>oferta_enviada</code> al sustituto propuesto → queda
+<code>pendiente_validacion</code> (en permuta, con doble conformidad) → la coordinación
+<code>estima</code> o <code>desestima</code> con <code>motivo_resolucion</code> obligatoria; la resolución
+genera la notificación con la motivación. En todo el circuito, la guardia no queda descubierta de facto:
+<code>en_revision</code> mantiene al titular como responsable hasta la validación del Colegio.</p>
+<h3>5.2 Cuadrante</h3>
+<p><code>borrador</code> (edición libre) → <code>en_alegaciones</code> (el letrado opone causa antes de
+publicar; el sistema alerta de excusa a los 5 días) → <code>publicado</code> (inmutable, con
+<code>fecha_publicacion</code> y <code>publicado_por</code>) → <code>congelado</code> (alcanzada la
+antelación mínima) → <code>cerrado</code>. Cada cambio genera una <code>version</code> nueva; las
+anteriores se conservan y se consultan.</p>
+<h3>5.3 Guardia</h3>
+<p><code>planificada → propuesta → publicada → confirmada → en_curso → realizada → validada</code>, con
+<code>en_revision</code> (con titular responsable), <code>descubierta</code> (sin acuse, escalada) y
+<code>anulada</code> (con motivo). El acuse de recepción es independiente de la designación (RN-10);
+si no hay acuse, recordatorios y escalado (RN-11). El parte se cierra con horas de entrada/salida y
+actuaciones; solo el parte validado certifica.</p>
+
+<h2>6. Contrato de API (OpenAPI v0.1, tarjeta #29)</h2>
+<table class="grid">
+<thead><tr><th style="width:34%">Grupo</th><th style="width:66%">Endpoints (38 rutas)</th></tr></thead>
+<tbody>
+<tr><td>Consultas base</td><td><code>/me</code>, <code>/catalogos/especialidades</code>, <code>/catalogos/tipos-guardia</code>, <code>/parametros</code>, <code>/criterios-reparto</code></td></tr>
+<tr><td>Guardias</td><td><code>/guardias</code>, <code>/guardias/{id}</code>, propuesta, designaciones, acuse, anulación, refuerzos, incidencias, parte y validación del parte</td></tr>
+<tr><td>Solicitudes</td><td><code>/solicitudes</code>, ofertas y respuesta a ofertas, resolución, justificante</td></tr>
+<tr><td>Cuadrantes</td><td><code>/cuadrantes</code>, alegaciones, publicación, versiones</td></tr>
+<tr><td>Resto</td><td><code>/disponibilidad</code> (+ validación), <code>/equidad</code>, <code>/panel</code>, <code>/notificaciones</code> (+ lectura), <code>/auditoria</code>, <code>/informes/certificacion</code>, <code>/designaciones-urgentes</code> y <code>/designaciones-manuales</code></td></tr>
+</tbody>
+</table>
+<p><strong>Convenciones:</strong> campos en <code>snake_case</code> sin traducción (el nombre del JSON es
+el del modelo); UUID opacos que no cambian nunca aunque cambie el titular (RN-32); paginación por
+cursor, nunca por <code>offset</code> (el cuadrante se mueve mientras se pagina); errores en
+<code>application/problem+json</code> (RFC 9457) con <code>code</code> y <code>regla</code> cuando
+procede de una RN; las transiciones son acciones explícitas (<code>POST …/publicacion</code>), no
+<code>PATCH {estado}</code>; <code>Idempotency-Key</code> en toda operación que crea o mueve algo;
+el cuadrante viaja con <code>ETag</code> y publicar exige <code>If-Match</code> (412 si cambió).</p>
+
+<h2>7. ETL y migración inicial</h2>
+<p>Pipeline <strong>origen → staging → validado → carga</strong> (Flujo ETL TOF-2026-007): el Excel del
+Colegio (letrados, cuadrantes e histórico de guardias) entra en esquema <code>staging</code> del propio
+PostgreSQL, se limpian formatos y se validan unicidades (<code>num_colegiado</code>, <code>email</code>)
+y claves foráneas; la deduplicación unifica por número de colegiado y registra las coincidencias
+ambiguas como incidencias para revisión manual según las reglas de rechazo (CUENTA/FRANJA/ESTADO).
+La <code>habilitacion</code> <b>no</b> se carga desde el Excel (sin fuente fiable de acreditaciones):
+se crea desde la aplicación. Toda fila migrada queda marcada con
+<code>auditoria.origen = 'migracion'</code>, distinguible de la carga diaria (<code>aplicacion</code>).
+Los totales se reconcilian (letrados, guardias, cuadrantes) y las consultas de aceptación verifican
+que no hay duplicados ni filas huérfanas.</p>
+
+<h2>8. Requisitos no funcionales (TOF-2026-014)</h2>
+<table class="grid">
+<thead><tr><th style="width:40%">Requisito</th><th style="width:60%">Qué decide</th></tr></thead>
+<tbody>
+<tr><td>Vista de «guardia de hoy» sin dependencia de JavaScript (SSR)</td><td>Frontend Next.js, no SPA ni app nativa</td></tr>
+<tr><td>Paquete inicial &lt; 250 KB comprimido</td><td>Presupuesto de rendimiento del frontend</td></tr>
+<tr><td>p95 &lt; 400 ms (calendario y equidad)</td><td>Índices de <code>guardia</code> y cálculo de equidad en SQL visible</td></tr>
+<tr><td>Disponibilidad 99,5 %; carga 900 letrados / 124 franjas / 25 concurrentes</td><td>Hosting gestionado, PgBouncer y réplicas de contenedor</td></tr>
+<tr><td>Degradación sin cobertura; cierre de parte con sincronización móvil offline-first</td><td>PWA instalable, no app nativa</td></tr>
+<tr><td>Sin motivos clínicos ni venta de datos; datos en la UE; auditoría completa</td><td>PostgreSQL con auditoría append-only, RGPD sin excepciones</td></tr>
+</tbody>
+</table>
+
+<h2>9. Stack tecnológico (TOF-2026-017)</h2>
+<p>El ADR TOF-2026-008 ya decidió la base de datos —<strong>PostgreSQL 16 gestionado (32/35)</strong>,
+frente a MySQL (30/35) y NoSQL (21/35)— y la revisión #47 (TOF-2026-016) lo acepta con cuatro
+condiciones: rol de aplicación no propietario, tareas diferidas con planificador, copias con
+<strong>RPO ≤ 5 min / RTO ≤ 2 h</strong> y pooling. Sobre esa base, aquí se decidió lo que faltaba
+(frontend, backend, autenticación, ETL, notificaciones, hosting, observabilidad), con el criterio del
+ADR: la decisión la toman los requisitos medibles (catálogo, contrato #29, NFR), no el gusto del
+equipo. <strong>Flutter queda descartado</strong> por decisión del equipo y por el NFR (SSR sin-JS);
+Vite SPA, React Native, Spring Boot, FastAPI y Go, por incumplir el NFR o partir el tipado TypeScript.</p>
+<table class="grid">
+<thead><tr><th style="width:20%">Capa</th><th style="width:34%">Decisión</th><th style="width:46%">Por qué gana aquí</th></tr></thead>
+<tbody>
+<tr><td><strong>Frontend</strong></td><td><strong>React 19 + TypeScript + Next.js 15 (SSR)</strong>, Tailwind (tokens T4), TanStack Query, PWA instalable</td><td>El NFR exige la vista de «guardia de hoy» sin JavaScript y &lt; 250 KB: eso es SSR, no SPA. Pre­ferencia declarada del equipo; el prototipo ya vive en este ecosistema.</td></tr>
+<tr><td><strong>Backend</strong></td><td><strong>Node.js 22 LTS + NestJS 11</strong>, Drizzle (SQL-first) + SQL puro, Zod, migraciones SQL versionadas</td><td>Un solo lenguaje y un solo tipado de extremo a extremo; NestJS da guards (RN-25), interceptores de auditoría (RN-20) y módulos por agregado, sin ocultar el SQL de la equidad.</td></tr>
+<tr><td><strong>Base de datos</strong></td><td><strong>PostgreSQL 16</strong> (Docker local en la versión gratuita; gestionado en la UE en la de presupuesto)</td><td>La imagen <code>postgres:16</code> es la misma en ambas; el DDL TOF-2026-012 corre igual. Garantiza la exclusión por solapamiento (RN-04) y la auditoría append-only en el motor.</td></tr>
+<tr><td><strong>Autenticación</strong></td><td><strong>Keycloak 26 (OIDC)</strong>, MFA TOTP, JWT validado en NestJS, federable con el IdP del Colegio</td><td>Open source, sin per-seat ni lock-in; corre en el portátil mañana va a la región UE.</td></tr>
+<tr><td><strong>ETL</strong></td><td><strong>Python 3.12 + SQLAlchemy</strong>, staging en el propio PostgreSQL, cron o GitHub Actions</td><td>120 letrados base / 900 estrés: Airflow o Talend sería infraestructura sin carga que la justifique.</td></tr>
+<tr><td><strong>Notificaciones</strong></td><td>Tabla <code>notificacion</code> + outbox; correo (Mailpit local + Resend/SES), SMS (simulado + Twilio trial), Web Push VAPID (PWA)</td><td>Mailpit captura el SMTP en local para desarrollar y la demo sin cuentas reales; la medición del spike #45 queda pendiente de las cuentas del Colegio.</td></tr>
+<tr><td><strong>Ficheros</strong></td><td><strong>MinIO</strong> local (S3-compatible) / S3 con KMS en producción; URLs firmadas, <code>acceso_restringido</code></td><td>Lo mismo se desarrolla contra MinIO que contra S3 real.</td></tr>
+<tr><td><strong>Infraestructura</strong></td><td>Docker Compose local (0 €) / contenedores gestionados en la UE con balanceador + WAF</td><td>Un solo <code>docker compose up -d</code> levanta todo; el 99,5 % no necesita Kubernetes propio para 25 concurrentes.</td></tr>
+<tr><td><strong>CI/CD y secretos</strong></td><td>GitHub Actions (contrato vs. rutas, tests ETL y designación, axe/Lighthouse, Trivy); secretos en <code>.env</code> local o gestor del proveedor</td><td>Gratis para repos públicos; <code>EXCLUDE USING gist</code> se crea en una migración, nunca a mano.</td></tr>
+<tr><td><strong>Observabilidad</strong></td><td>Prometheus + Grafana (Compose local / gestionados en la UE), logs JSON, Sentry opcional</td><td>Las mismas dashboards de p95 que en producción: sin métricas no se defiende el 99,5 % ni los p95 del NFR.</td></tr>
+</tbody>
+</table>
+<p><strong>Dos versiones, un solo código.</strong> <em>Gratuita (ejercicio):</em> todo en Docker Compose local
+(<code>docker compose up -d</code> levanta postgres:16, pgbouncer, keycloak:26, mailpit, minio y
+prometheus/grafana; app con <code>npm run dev</code> y ETL con <code>python -m etl</code>) y free tiers
+si se quiere URL pública de demo. <em>Con presupuesto (producción real):</em> RDS PostgreSQL 16
+Multi-AZ + PITR (≈ 700 €/año), compute + WAF (300–500 €), SES (≈ 10 €), Twilio (20–50 €), S3/copias
+(≈ 50 €) y dominio/certificados (≈ 30 €): <strong>1.100–1.300 €/año</strong> orientativos. Cambiar de
+versión es cambiar el operador, no la tecnología: código, migraciones y variables de entorno compartidos.</p>
+
+<h2 class="pagebreak">10. Anexos</h2>
+<p>Tabla de anexos: dónde se encuentra completo cada contenido resumido en este documento.</p>
+<table class="grid">
+<thead><tr><th style="width:48%">Contenido</th><th style="width:52%">Documento completo</th></tr></thead>
+<tbody>
+<tr><td>La propuesta funcional completa: alcance, lógica de negocio y análisis</td><td><code>Propuesta_Funcional_Turno_de_Oficio_Tarragona.pdf</code></td></tr>
+<tr><td>El diseño funcional completo: vistas, algoritmo de equidad y flujos</td><td><code>Diseno_Funcional_Turno_de_Oficio_Tarragona.pdf</code></td></tr>
+<tr><td>El modelo entidad-relación completo y el DDL físico corregido (14 entidades + PARAMETRO)</td><td><code>Modelo_ER_DDL_TOF-2026-012.pdf</code></td></tr>
+<tr><td>El diccionario de datos campo a campo y las validaciones RN</td><td><code>Documentacion_Diccionario_Datos_Turno_Oficio.pdf</code></td></tr>
+<tr><td>Las reglas de negocio RN-01…RN-39 y los catálogos de estado</td><td><code>Catalogo_Reglas_y_Estados_TOF_v0.3.pdf</code></td></tr>
+<tr><td>Los requisitos no funcionales: SSR sin JS, &lt; 250 KB, p95 &lt; 400 ms, 99,5 %</td><td><code>Requisitos_No_Funcionales_TOF_v0.1.pdf</code></td></tr>
+<tr><td>El contrato de API completo (38 endpoints OpenAPI)</td><td><code>openapi.yaml</code></td></tr>
+<tr><td>El flujo ETL completo: pipeline, mapeos CUENTA/FRANJA/ESTADO y reglas de rechazo</td><td><code>Flujo_ETL.pdf</code></td></tr>
+<tr><td>La decisión de base de datos PostgreSQL 16 (32/35) y sus 4 condiciones</td><td><code>ADR_Stack.pdf</code> y <code>Revision_Tecnica_Stack_TOF_v0.1.pdf</code></td></tr>
+<tr><td>La propuesta de stack completa, versión gratuita de ejercicio</td><td><code>Stack_Tecnologico_Gratuito.pdf</code></td></tr>
+<tr><td>La propuesta de stack completa, versión con presupuesto</td><td><code>Stack_Tecnologico_Presupuesto.pdf</code></td></tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>

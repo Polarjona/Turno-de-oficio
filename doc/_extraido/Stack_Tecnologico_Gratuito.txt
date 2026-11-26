@@ -1,0 +1,335 @@
+E N T R E G A B L E · S T A C K C O M P L E T O · R E F . T O F - 2 0 2 6 - 0 1 7 · T A R J E T A S # 3 3 Y # 4 7
+Stack tecnológico completo: lo decidido y lo
+que faltaba por decidir
+Este documento cierra el ADR TOF-2026-008 y su revisión TOF-2026-016. La base de datos ya
+estaba decidida y revisada; faltaban frontend, backend, autenticación, ETL, notificaciones,
+hosting y observabilidad. Aquí se decide todo, con el criterio que ya fijó el ADR: ninguna opción
+que obligue a registrar motivos clínicos, a vender datos o a subirlos fuera de la Unión Europea
+se evalúa como opción, y la decisión la toman los requisitos medibles del catálogo TOF-2026-
+015, el contrato de API v0.1 (tarjeta #29) y los requisitos no funcionales TOF-2026-014 — no el
+gusto del equipo.
+Principio de este stack: se puede empezar hoy con 0 €. Es un proyecto de ejercicio, sin
+contratación ni presupuesto del Colegio. Por eso toda la infraestructura corre en local con
+Docker Compose (gratis, sin cuentas, sin tarjeta) y, si se quiere una URL pública de demo, en free
+tiers. El camino de producción real (RDS Multi-AZ, SES/Twilio) queda documentado al final, pero
+no condiciona el primer día de código: el mismo docker compose up que hoy corre en el portátil
+es el que mañana se despliega en la nube. "
+Resumen en una tabla (la decisión)
+Capa
+Decisión
+Por qué gana aquí
+Frontend web
+React 19 + TypeScript + Next.js 15
+(App Router, SSR), Tailwind CSS
+(tokens T4), TanStack Query, PWA
+instalable
+El NFR exige la vista de «guardia de hoy» sin
+dependencia de JavaScript y paquete inicial <
+250 KB: eso es SSR, no una SPA. React es además
+la preferencia declarada del equipo y la que ya
+usa el prototipo.
+Backend / API
+Node.js 22 LTS + TypeScript +
+NestJS 11, Drizzle ORM (SQL-first) +
+SQL puro, Zod, migraciones SQL
+versionadas
+Mismo lenguaje que el frontend: un solo tipado de
+extremo a extremo, un solo toolchain. NestJS da
+módulos, guards e interceptores —exactamente
+lo que necesita RN-20/RN-25— sin ocultar el SQL
+que el cálculo de equidad exige.
+Base de datos
+PostgreSQL 16 en Docker Compose
+local (0 €); free tier en la nube si se
+quiere demo pública
+(Neon/Supabase UE, gratis)
+Ver §1. La imagen postgres:16 es la misma que en
+producción; el DDL de TOF-2026-012 corre igual en
+local. Neon free (0,5 GB, región UE) es la
+alternativa sin instalar nada.
+Autenticación
+Keycloak 26 (OIDC) en Docker
+Compose local (0 €), MFA TOTP,
+JWT validado en NestJS
+Open source, sin per-seat, sin cuentas de pago.
+Corre en el portátil; mañana el mismo contenedor
+va a la región UE del Colegio.
+ETL
+Python 3.12 + SQLAlchemy en local,
+staging dentro del propio
+PostgreSQL, cron del sistema o
+scheduler de GitHub Actions
+El volumen es 120 letrados base / 900 estrés: un
+Airflow o un Talend sería infraestructura sin carga
+que justifique. Python es la herramienta del rol ETL
+y no cuesta nada.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión gratuita, 0 €)
+Classification: Internal
+1 / 6
+
+Capa
+Decisión
+Por qué gana aquí
+Notificaciones
+Tabla notificacion + patrón outbox;
+correo Mailpit local (0 €) + Resend
+free tier, SMS simulado (webhook
+local) + Twilio trial, Web Push VAPID
+(PWA)
+Mailpit captura el SMTP en local y muestra los
+correos en un panel: sirve para desarrollar y para
+la demo sin gastar ni una cuenta real. La
+medición del spike #45 queda pendiente de
+cuentas del Colegio, como ya decía el spike.
+Ficheros
+MinIO en Docker Compose local (0
+€, S3-compatible); Cloudflare R2
+free tier (10 GB) si se quiere nube
+gratis
+URLs firmadas y acceso_restringido se
+desarrollan igual contra MinIO que contra S3 real.
+Infraestructura
+Docker Compose local (0 €) para
+desarrollar; Vercel Hobby / Render
+free / Fly.io free si se quiere URL
+pública de demo
+Todo el stack corre en el portátil con un solo
+comando. Los free tiers de nube son solo para
+enseñar la demo, no para producción.
+CI/CD y secretos
+GitHub Actions gratis (repos
+públicos: 2.000 min/mes), Trivy,
+migraciones en pipeline; secretos
+en .env local (nunca en el repo)
+Es lo que ya pide Entornos_CI_CD (TOF-2026-010)
+sin pagar el gestor de secretos del proveedor.
+Observabilidad
+Grafana + Prometheus en Docker
+Compose local (0 €), logs JSON a
+consola, Sentry free tier opcional
+Las mismas dashboards de p95 que en
+producción, sin suscripción.
+1. Lo que ya estaba decidido (no se reabre)
+El ADR TOF-2026-008 comparó PostgreSQL gestionado (32/35), MySQL con ORM (30/35) y NoSQL
+documental (21/35) y recomendó PostgreSQL por el doble peso del cumplimiento RGPD y de la
+adecuación al modelo: histórico inmutable, auditoría append-only (RN-20) y trazabilidad de
+designaciones son relacionales por naturaleza. La revisión TOF-2026-016 (#47) lo acepta con
+cuatro condiciones, que este stack incorpora como requisitos de construcción:
+Condición de la revisión
+Cómo se cierra en este stack
+Rol de aplicación no
+propietario
+Dos roles en PostgreSQL: migration_owner (ejecuta migraciones, dueño de tablas)
+y app_role (sin DDL, sin UPDATE/DELETE en auditoria). NestJS conecta siempre
+como app_role: así el Row Level Security de RN-25 no es decorativo.
+Tareas diferidas
+Tabla de tareas + planificador del proveedor cada minuto (alerta de excusa a los 5
+días RN-38, avisos de cuadrante, recálculo de equidad). Sin cola dedicada hasta
+que el volumen la pida.
+Copias con números
+En desarrollo: volumen Docker + pg_dump antes de cada migración importante. En
+producción futura: RPO ≤ 5 min (WAL), RTO ≤ 2 h, restauración probada
+trimestralmente (TOF-2026-010).
+Pooling de conexiones
+PgBouncer en modo transacción (también en Compose, gratis); NestJS con pool
+limitado y statement_timeout. Sin esto, el backend escala por réplicas y
+PostgreSQL se queda sin conexiones antes que sin CPU.
+2. Frontend: React + Next.js (SSR), no SPA, no Flutter
+El requisito que decide el frontend no es de gusto: TOF-2026-014 exige «sin dependencia de
+JavaScript para leer la guardia de hoy en el peor caso: la vista de hoy se sirve renderizada» y
+paquete inicial por debajo de 250 KB comprimido. Una SPA en Vite/React puro incumple ambos:
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión gratuita, 0 €)
+Classification: Internal
+2 / 6
+
+sin JS no hay guardia. Next.js 15 con App Router sirve esa vista en servidor y entrega el resto
+hidratado, con React 19 y TypeScript compartidos con el backend.
+Opción
+Veredicto
+Motivo
+A · Next.js 15 +
+React 19 + TS ✅
+Elegida
+Cumple el SSR sin-JS, el presupuesto de 250 KB y la
+accesibilidad (axe en CI). Un solo lenguaje con el
+backend. Los tokens del sistema de diseño T4 (colores
+Poppins-navy/amarillo/magenta) y el prototipo de
+Dhruva ya están en este ecosistema.
+B · Vite + SPA React
+Descartada
+Más ligera de operar, pero la vista de hoy queda vacía
+sin JS. Incumple un NFR explícito; no es una cuestión
+de rendimiento.
+C · Flutter
+Descartada
+Descartada por decisión del equipo y por el NFR:
+obliga a app nativa para un caso de uso web
+(letrados en el portal del Colegio, benchmark T1),
+duplica el código de pantallas y no aporta nada al SSR
+sin-JS.
+D · React Native
+Descartada
+El único requisito «móvil» del NFR es el cierre de parte
+con sincronización desde móvil. Se resuelve con PWA
+instalable (offline-first con service worker), sin tienda
+ni doble codebase.
+Piezas: Tailwind CSS con los tokens de T4 compilados (sin Google Fonts: stack del sistema, como
+ya exige el diseño); TanStack Query para el estado de servidor contra el contrato #29; formularios
+con React Hook Form + Zod (mismo esquema en cliente y servidor); i18n lista para ES/CA con el
+catálogo de estados como fuente única. La PWA usa Web Push (VAPID) como canal principal de
+notificaciones.
+3. Backend: Node.js 22 + NestJS, SQL primero
+Node.js 22 LTS + TypeScript + NestJS 11. La razón no es la moda: es continuidad. El equipo ya
+trabaja en React/TypeScript, el contrato OpenAPI de la tarjeta #29 se genera desde el código y se
+valida en CI contra las rutas, y un solo tipado compartido entre frontend y backend elimina una
+clase entera de errores de contrato. NestJS aporta lo que el catálogo necesita en estructura:
+módulos por agregado (guardia, cuadrante, solicitud, turno), guards para RN-25, interceptores
+para el asiento de auditoría append-only de RN-20 y filtrado de las 13 transiciones prohibidas en
+un único punto.
+Opción
+Veredicto
+Motivo
+A · Node 22 +
+NestJS + Drizzle ✅
+Elegida
+Drizzle es SQL-first: el cálculo de equidad, los
+agregados por materia y la exclusión de RN-04 se
+escriben en SQL visible, no escondidos en un ORM. Zod
+valida la entrada con el mismo esquema que usa el
+frontend.
+B · Spring Boot
+(Java)
+Descartada
+Excelente en empresa, pero obliga a un segundo
+lenguaje y toolchain para un equipo pequeño que ya
+domina TypeScript. El time-to-market del ADR pesaba
+a favor de lo que el equipo opera sin ayuda externa.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión gratuita, 0 €)
+Classification: Internal
+3 / 6
+
+Opción
+Veredicto
+Motivo
+C · Python FastAPI
+Descartada
+Buena para el ETL, mala para la API: partiría el tipado
+en dos lenguajes (TS en front, Python en back) y
+duplicaría la validación del contrato. Python se queda
+en el ETL, donde es la mejor herramienta.
+D · Go
+Descartada
+Rendimiento sobrado que este sistema no necesita
+(25 concurrentes en hora punta) y curva de
+aprendizaje que el ADR ya puntuó en contra.
+Reglas de construcción: migraciones SQL versionadas con node-pg-migrate (la restricción EXCLUDE
+USING gist de RN-04 se crea en una migración, nunca a mano, como exige la tarjeta #40); SQL
+puro para cómputo y equidad; pool con PgBouncer en transacción; timeouts fijados; y el contrato
+generado con @nestjs/swagger debe diferir en cero del openapi.yaml de la tarjeta #29 antes del
+merge.
+4. Autenticación, ETL, notificaciones y hosting (versión gratuita)
+La regla de este apartado es: todo lo que hoy cuesta dinero se sustituye por una alternativa
+abierta que corre en local. No se cambia la tecnología —sigue siendo Keycloak, S3-compatible,
+SMTP—, se cambia quién la opera: el portátil en vez del proveedor. El código no distingue: lee las
+mismas variables de entorno en ambos casos.
+Capa
+Decisión gratuita y justificación
+Identidad
+Keycloak 26 en Docker Compose local, MFA TOTP, JWT RS256 validado en NestJS y
+mapeado a los roles del catálogo. Se descarta Auth0/Okta por coste per-seat y lock-
+in; se descarta la autenticación propia por reinventar MFA y recuperación. Cuando el
+Colegio tenga IdP, Keycloak se federica por OIDC/SAML sin tocar el backend.
+ETL
+Python 3.12 + SQLAlchemy en local, extracción de las fuentes del Inventario (TOF-2026-
+004), validación con Great Expectations y carga en esquema staging del propio
+PostgreSQL, de donde se promueve a public con las reglas del Flujo ETL. Orquestación:
+cron local o workflow de GitHub Actions programado. Se descartan Airflow
+(infraestructura sin la carga que la justifique: 120 letrados base) y Talend/NiFi (licencia
+y operación externalizada para un flujo batch diario).
+Notificaciones
+El envío sale por la tabla notificacion con patrón outbox (UNIQUE (referencia_tipo,
+referencia_id, usuario_id, canal)) y un worker que consume la cola estado_entrega.
+Canales gratuitos: correo Mailpit local (captura SMTP y panel web con los correos
+enviados, 0 €) — con alternativa en la nube Resend free tier (3.000 correos/mes); SMS
+simulado con un webhook local que registra el mensaje (Twilio Trial solo si se quiere
+número real, con crédito de prueba); Web Push VAPID desde la PWA, gratis por diseño.
+La medición del spike #45 sigue bloqueada hasta que el Colegio contrate cuentas
+reales — decisión del Colegio, no del stack.
+Ficheros
+MinIO en Docker Compose (S3-compatible, open source, 0 €). URLs firmadas y
+acceso_restringido se desarrollan igual contra MinIO que contra S3. Alternativa en la
+nube gratis: Cloudflare R2 (10 GB free, sin egress).
+Hosting (demo)
+Desarrollo: Docker Compose en el portátil (frontend Next.js, backend NestJS, Postgres,
+Keycloak, Mailpit, MinIO, PgBouncer, Grafana). Demo pública si se quiere: Vercel Hobby
+para el Next.js, Render free / Fly.io free para NestJS y Neon free (Postgres 16, región UE,
+0,5 GB) para la base. Todo free tier, sin tarjeta en el caso de Neon/Vercel Hobby. Se
+descarta un Kubernetes propio y cualquier región fuera de la UE.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión gratuita, 0 €)
+Classification: Internal
+4 / 6
+
+Capa
+Decisión gratuita y justificación
+CI/CD
+GitHub Actions gratis (repos públicos: 2.000 min/mes): por PR, contrato OpenAPI contra
+rutas, tests del flujo ETL y de designación, axe/Lighthouse y Trivy. Secretos en .env local
+y en los Secrets del repo, nunca en el código.
+Observabilidad
+Prometheus + Grafana en Docker Compose con las mismas dashboards de p95 que
+en producción, logs JSON a consola y Sentry free tier opcional (5.000 eventos/mes).
+Tests: Vitest, Testcontainers contra PostgreSQL real (RN-04, RLS, auditoría), Playwright,
+k6 para los p95 del NFR.
+5. Cómo se arranca hoy, con 0 €
+Un único fichero docker-compose.yml levanta toda la infraestructura. El código de la aplicación
+(Next.js y NestJS) corre en el host con npm run dev, que es como se desarrolla de verdad;
+# 1) Infraestructura (gratis, sin cuentas, sin tarjeta)
+docker compose up -d
+#   postgres:16      → localhost:5432   (base de datos, con el DDL de TOF-2026-012)
+#   pgbouncer        → localhost:6432   (pooling, condición de la revisión TOF-2026-016)
+#   keycloak:26      → localhost:8080   (OIDC, MFA TOTP)
+#   mailpit          → localhost:8025   (panel de correos enviados, SMTP en 1025)
+#   minio            → localhost:9000   (S3-compatible para justificantes)
+#   prometheus/grafana → 9090 / 3001    (métricas p95 y errores)
+# 2) Base de datos y migraciones
+npm run (nest / node-pg-migrate) migrate up
+# 3) Aplicación (en el host, hot-reload)
+npm run dev          # Next.js en localhost:3000 + NestJS en localhost:4000
+# 4) ETL (Python, en el host)
+python -m etl --source fuentes/ --staging
+Coste: 0 €. Todo lo anterior es open source y corre en local; GitHub Actions es gratis para repos
+públicos. Si mañana se quiere una URL pública para la demo, los free tiers (Vercel Hobby, Neon,
+Render/Fly.io, Resend, Cloudflare R2) también son 0 € a este volumen.
+6. Cuando sea un proyecto real (no ahora)
+El camino de producción no cambia de tecnología, solo de operador: RDS PostgreSQL 16 Multi-AZ
+en región UE (≈ 700 €/año), compute en contenedores gestionados tras balanceador + WAF, SES
+(UE) para correo, Twilio (UE) para SMS, S3 con KMS y secretos en el gestor del proveedor. Total
+orientativo: 1.100–1.300 €/año. Ese gasto solo se justifica cuando el Colegio contrate el servicio;
+hasta entonces, el stack de arriba es el que se usa.
+Son estimaciones orientativas, no cotizaciones — igual que ya advertía el ADR.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión gratuita, 0 €)
+Classification: Internal
+5 / 6
+
+Dependencias abiertas (no de este documento)
+#45 (notificaciones): sin cuentas reales de correo/SMS contratadas por el Colegio no hay
+métricas del §6 del spike. El stack ya deja el hueco (outbox + SES/Twilio), pero la contratación es
+del Colegio.
+#34 / #48: RN-40/RN-41 (catálogo v0.4) y la volumetría 120 base + 900 estrés pendientes de
+cerrar; afectan a parámetros, no al stack.
+solicitud.motivo unificado: vocabulario único enfermedad / asunto_propio / conciliacion /
+fuerza_mayor / otro, idéntico en el DDL (TOF-2026-012) y en el contrato #29; categoría general,
+sin datos clínicos (RN-23).
+Encargados de tratamiento: en producción real, SES, Twilio, el proveedor de hosting y Keycloak
+exigen contrato de encargado firmado; la verificación es de la tarjeta #41. En local (ejercicio) no
+hay tratamiento de datos reales.
+Documento de trabajo dentro de un proyecto de ejercicio: no implica la compra de ningún
+servicio. Cierra el stack abierto por el ADR TOF-2026-008 y aceptado en TOF-2026-016 (#47):
+PostgreSQL 16 gestionado con sus cuatro condiciones, React/Next.js SSR para el frontend,
+Node.js/NestJS para el backend, Keycloak para la identidad, Python para el ETL y Web Push para
+las notificaciones — todo arrancable hoy con 0 € en Docker Compose local (§5), con el camino de
+producción documentado en §6. Ref. TOF-2026-017. Tarjetas #33 y #47 — propuesta de stack
+completo para revisión en Review. Sin interlocución con el Colegio.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión gratuita, 0 €)
+Classification: Internal
+6 / 6

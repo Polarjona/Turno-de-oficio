@@ -1,0 +1,356 @@
+T6 · Test de usabilidad con 2 letrados
+​Nov 17, 2026 · ​@BOUBA
+Objetivo y estado
+Este documento es el plan, el guion y las plantillas del test con 2 letrados; todavía no hay
+sesiones hechas, así que no contiene resultados ni grabaciones.
+Se prueba el prototipo del circuito de sustitución (T5): solicitud, propuesta de sustituto,
+resolución de la coordinación y notificación. Se mide si un letrado completa el circuito sin
+ayuda y si entiende dos reglas: la guardia sigue siendo suya hasta que el Colegio valida, y
+un acuerdo entre letrados no cambia el cuadrante.
+Las sesiones se hacen con la guardia y los nombres de ejemplo del prototipo, nunca con
+casos reales.
+Participantes y consentimiento
+Se necesitan 2 letrados ejercientes que hagan o hayan hecho guardias del turno de oficio,
+con perfiles distintos para ver dos formas de usar el móvil. Con 2 personas no hay
+estadística: los resultados son indicios cualitativos, y un problema visto en una sola sesión
+ya es candidato a corregir.
+Qué
+Cuándo
+Quién
+Reclutar a los 2 letrados
+17 nov
+Dhruva
+Sesiones de 30 min (móvil, de pie)
+18 y 19
+nov
+Dhruva modera; si hay otra persona del
+equipo, observa y anota
+Informe con hallazgos y correcciones
+priorizadas
+20 nov
+Dhruva
+Participante 1
+Participante 2
+Perfil buscado
+Letrado con experiencia en
+guardias, acostumbrado al
+sistema actual
+Letrado con menos guardias o
+menos soltura con el móvil
+Materias (por rellenar)
+Dispositivo propio (por
+rellenar)
+T6 · Test de usabilidad con 2 letrados
+Page 1 of 6
+ Antes de empezar, cada participante recibe por escrito y acepta estos puntos:
+Se prueba la aplicación, no a la persona; puede parar cuando quiera.
+Se graba la pantalla y la voz, solo para el análisis del proyecto académico.
+Los datos del prototipo son de ejemplo; no hay que usar casos ni datos de clientes
+reales.
+Las grabaciones se guardan en un lugar con acceso solo del equipo y se borran al
+terminar el proyecto.
+Se cita al participante como P1 o P2, sin nombre en el informe.
+Tareas y criterios de éxito
+Cinco tareas de 3 minutos cada una, en este orden. El participante hace de J. Roca (titular)
+salvo en la tarea 3, en la que hace de M. Serra (sustituto). La resolución de la coordinación
+la ejecuta el moderador en el prototipo.
+Participante 1
+Participante 2
+Fecha y hora de la
+sesión
+Consentimiento
+firmado
+#
+Escenario que se lee al
+participante
+Éxito
+Qué comprueba
+1
+"El 17 de marzo tienes
+guardia de penal y un
+juzgado te cita ese día.
+Pídele a un compañero que
+te sustituya."
+Llega a "Solicitud
+enviada" sin ayuda, con
+motivo y candidato
+elegidos
+Encuentra la acción en la
+guardia; entiende los 3
+pasos
+2
+"Ya has enviado la
+solicitud. ¿De quién es
+ahora esa guardia y qué
+falta para que el cambio
+sea efectivo?"
+Responde que sigue
+siendo suya hasta que el
+Colegio valide
+El aviso legal se ve y se
+entiende
+3
+"Eres M. Serra y te han
+ofrecido esa guardia.
+Responde a la oferta."
+Encuentra el aviso, abre la
+oferta y acepta; dice que
+la guardia aún no es suya
+Los avisos se localizan;
+Publicada no es
+Confirmada
+T6 · Test de usabilidad con 2 letrados
+Page 2 of 6
+ Para cada tarea se registra el resultado en tres niveles: lo logra sin ayuda, lo logra con
+ayuda o no lo logra. Tras cada tarea el participante puntúa de 1 (muy difícil) a 7 (muy fácil)
+la pregunta "¿Qué tan fácil te ha resultado?".
+Guion de la sesión (30 minutos)
+#
+Escenario que se lee al
+participante
+Éxito
+Qué comprueba
+4
+"Vuelves a ser J. Roca. La
+coordinación ya ha
+resuelto. Mira tus avisos:
+¿qué ha pasado y tienes
+que hacer algo?"
+Dice que la sustitución
+está validada y que no
+tiene que hacer nada
+La notificación se
+entiende sin datos de
+salud
+5
+"Empieza otra solicitud,
+pero esta vez que sea el
+Colegio quien proponga al
+compañero."
+Elige esa opción en el
+paso 2 y comprueba que
+el candidato lo propone el
+Colegio
+La segunda vía es visible y
+no confunde
+Min
+Bloque
+Texto del moderador
+0–3
+Bienvenida y consentimiento
+"Gracias por venir. Probamos una aplicación para
+las guardias del turno de oficio, no te evaluamos a
+ti: si algo no se entiende, es culpa de la aplicación.
+Puedes parar cuando quieras. ¿Te parece bien que
+grabemos la pantalla y la voz?"
+3–7
+Preguntas previas
+"¿Cómo te enteras hoy de que tienes una guardia?
+¿Has pedido alguna vez que te sustituyeran?
+¿Cómo lo hiciste y qué fue lo más molesto?"
+7–10
+Presentación del prototipo
+"Esto es un prototipo con datos de ejemplo.
+Algunas cosas no funcionan. Ve diciendo en voz
+alta lo que piensas y lo que esperas que pase al
+pulsar." Se entrega el móvil y se pide que lo
+sostenga de pie, con una mano.
+10–25
+Tareas 1 a 5
+Se lee el escenario de cada tarea sin señalar
+pantallas. Tras cada una: "¿Qué tan fácil te ha
+resultado, de 1 a 7?"
+T6 · Test de usabilidad con 2 letrados
+Page 3 of 6
+ Reglas para el moderador:
+No explica pantallas ni sugiere dónde pulsar. Si el participante calla 60 segundos,
+pregunta "¿qué esperas que ocurra?" y marca la tarea como "con ayuda" solo si hay
+que dar una pista.
+No defiende el diseño ni corrige respuestas; anota la cita literal.
+Pasa de J. Roca a M. Serra o a Coordinación con los botones de arriba del prototipo; el
+participante no los usa.
+Antes de dar el móvil, pulsa «Modo test» en la barra superior del prototipo (o abre la
+dirección con ?test al final) para ocultar el guion lateral y las pistas.
+Hoja de observación y grabaciones
+Una fila por tarea y participante. Resultado: S = sin ayuda, A = con ayuda, F = no lo logra.
+Toques = número de pulsaciones hasta completar la tarea. Todo se rellena durante o justo
+después de la sesión.
+Min
+Bloque
+Texto del moderador
+25–30
+Cierre
+"¿Qué fue lo más difícil? ¿Qué echas en falta? ¿Lo
+usarías en una guardia real? ¿Por qué?" Agradecer
+y recordar que las grabaciones se borrarán al
+acabar el proyecto.
+Tarea
+Participante
+Resultado
+Tiempo (min:s)
+Toques
+Dudas, errores y cita literal
+Facilidad (1–7)
+1
+P1
+1
+P2
+2
+P1
+2
+P2
+3
+P1
+3
+P2
+4
+P1
+4
+P2
+5
+P1
+5
+P2
+T6 · Test de usabilidad con 2 letrados
+Page 4 of 6
+ Registro de grabaciones
+Informe de hallazgos (por rellenar tras las sesiones)
+Resumen: pendiente. Se completa con cuántas tareas se lograron sin ayuda de las 10 (5
+por participante), los tiempos y la media de facilidad.
+Severidad de cada hallazgo:
+Crítico: impide completar la tarea o hace creer algo falso sobre la guardia (por
+ejemplo, que ya está cubierta).
+Grave: se completa solo con ayuda o tras un error.
+Moderado: provoca duda o retraso, pero se resuelve.
+Leve: molestia estética o de redacción.
+Prioridad = severidad primero; a igual severidad, antes lo que ocurrió con los 2
+participantes. Cada corrección indica la pantalla y la tarea.
+También se anotan las cosas que funcionaron bien y no hay que tocar, y las ideas del
+participante que no sean errores.
+Riesgos ya detectados en el prototipo (hipótesis, no resultados)
+Salen de revisar el prototipo antes de las sesiones, no de usuarios. Ninguno está
+confirmado: cada uno es algo concreto que observar y, si se confirma, pasa a la tabla de
+hallazgos.
+Participante
+Archivo
+Fecha
+Duración
+Dónde se guarda
+Borrar antes de
+P1
+P2
+#
+Hallazgo
+Tarea
+P1
+P2
+Severidad
+Corrección
+propuesta
+Grabación (archivo y
+minuto)
+1
+2
+3
+4
+5
+T6 · Test de usabilidad con 2 letrados
+Page 5 of 6
+ No se prueba en estas sesiones: el tema de exterior con luz solar, el modo sin conexión ni
+la escalada por retraso. Quedan para una segunda ronda.
+#
+Hipótesis
+Dónde
+Qué observar
+Corrección si se
+confirma
+1
+Si el participante ve
+el guion lateral y las
+pistas, las tareas
+salen "guiadas"
+Todo el
+prototipo
+Que no lea el panel
+durante la sesión
+Ya aplicado: el botón
+«Modo test» oculta
+guion y pistas
+2
+Al elegir "Que el
+Colegio proponga
+candidato", la lista
+de compañeros se
+desactiva y puede
+parecer un fallo
+Paso 2 de la
+solicitud
+(tarea 5)
+Si duda o intenta
+pulsar la lista
+desactivada
+Añadir una línea que
+explique por qué
+está inactiva
+3
+El aviso "La guardia
+sigue siendo tuya"
+puede leerse como
+texto legal y saltarse
+Pasos 1 a 3
+(tarea 2)
+Si responde bien a la
+pregunta de la tarea
+2 sin volver a mirar
+Subir el aviso sobre
+el botón o repetirlo
+en la confirmación
+4
+La oferta llega solo
+como "Avisos (1)" en
+la barra inferior y el
+sustituto puede no
+verla
+Barra inferior
+(tarea 3)
+Cuánto tarda en
+abrir Avisos y
+cuántos toques usa
+Notificación externa
+que lleve a la oferta;
+avisos también en la
+pantalla de inicio
+5
+El plazo de
+respuesta de la
+oferta aparece como
+dato por fijar
+Oferta al
+sustituto
+(tarea 3)
+Si pregunta cuánto
+tiempo tiene
+Decidir con el equipo
+de diseño funcional
+el valor real y
+mostrarlo
+6
+La frase "No es
+necesario realizar
+ninguna actuación
+adicional" puede no
+bastar para saber
+que la guardia ya no
+es suya
+Aviso al
+titular (tarea
+4)
+Si dice que debe
+hacer algo o duda
+de quién tiene la
+guardia
+Texto más directo:
+"Ya no tienes esta
+guardia"
+T6 · Test de usabilidad con 2 letrados
+Page 6 of 6

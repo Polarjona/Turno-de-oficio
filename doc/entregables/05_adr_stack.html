@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Comparativa de stack y ADR de arquitectura</title>
+</head>
+<body>
+
+<h1 class="dtitle">Comparativa de stack y ADR de arquitectura</h1>
+<p class="dlead">La decisión de arquitectura no la toma el gusto del equipo: la toman los requisitos de la aplicación —
+el modelo de datos, el contrato de API y el hecho de que la información es personal. Este ADR pondera tres opciones y
+recomienda una.</p>
+
+<div class="box">
+  <div class="box-title">Qué se está decidiendo</div>
+  <ul class="tight" style="margin-bottom:0;">
+    <li><strong>Motor de base de datos.</strong> PostgreSQL 16 gestionado, con sus extensiones, sus copias y su restauración probadas.</li>
+    <li><strong>Regla de oro.</strong> Ninguna opción que obligue a registrar motivos clínicos, a vender datos o a subirlos fuera de la Unión Europea se evalúa como opción, sea cual sea su precio.</li>
+    <li><strong>Alcance.</strong> Solo centrado en persistencia y backend; el frontend y los entornos se deciden en documentos propios.</li>
+  </ul>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:15%">Opción</th><th style="width:43%">Qué es</th><th style="width:21%">Puntos fuertes</th><th style="width:21%">Puntos débiles</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A · PostgreSQL gestionado</strong></td><td>Base relacional gestionada con conexiones del backend; copias diarias y restauración a un instante</td>
+      <td>Mapea 1 a 1 con las 14 entidades del modelo (cap. 21); transacciones, FK y las consultas de auditoría son naturales</td>
+      <td>Sin licencia de per-seat ni exportación sin coste; operar sin ayuda externa (ver tarjetas #40 y #41)</td></tr>
+    <tr><td><strong>B · MySQL con ORM</strong></td><td>Base relacional de la familia MySQL/MariaDB gestionada, con ORM completo</td>
+      <td>Aprendizaje bajo; muchos ejemplos y hostings baratos</td>
+      <td>Las consultas de equidad y de planificación, con agregaciones por varias tablas, son más costosas de expresar; el ORM ayuda al CRUD, no al cálculo de cómputo</td></tr>
+    <tr><td><strong>C · Firebase/Supabase orientado a documento</strong></td><td>NoSQL documental con API generada y sincronización en cliente</td>
+      <td>Time-to-market muy corto para pantallas simples</td>
+      <td>El modelo histórico inmutable, la auditoría y la trazabilidad de designaciones son relacionales por naturaleza; la API generada no sabe de RN ni de roles finos</td></tr>
+  </tbody>
+</table>
+
+<h1 class="dtitle pagebreak" style="font-size:13.6pt;">Ponderación y recomendación</h1>
+<p class="dlead" style="margin-bottom:2.4mm;">Puntuación de 1 a 5 en cada criterio, con el mismo peso para todos: es una herramienta
+de decisión, no una verdad.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:23%">Criterio</th><th style="width:10%">Peso</th><th style="width:22%">A · PostgreSQL</th><th style="width:22%">B · MySQL</th><th style="width:23%">C · NoSQL</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Coste a 3 años</strong> (gestionado, copias, egress)</td><td>×1</td><td>4 · ~600–900 €/año sin egress</td><td>4 · ~550–800 €/año</td><td>3 · cuota por batería de consultas y egress</td></tr>
+    <tr><td><strong>Curva de aprendizaje</strong> para el equipo</td><td>×1</td><td>4 · conocidos los otros roles lo manejan</td><td>5 · el ORM lo simplifica</td><td>3 · esquema no tipado, hay que disciplinarlo</td></tr>
+    <tr><td><strong>Time-to-market</strong> hasta el primer despliegue</td><td>×1</td><td>4 · esquema directo, sin capas</td><td>5 · ORM acelera el CRUD</td><td>5 · API generada lista el día uno</td></tr>
+    <tr><td><strong>Cumplimiento RGPD</strong> (minimizar, alojar en la UE, no vender)</td><td>×2</td><td>5 · región en la UE, encargados del tratamiento con contrato, sin egress a terceros</td><td>4 · razonable, si el gestor lo permite</td><td>3 · extremo barato y rápido, a costa de la trazabilidad</td></tr>
+    <tr><td><strong>Adecuación al modelo</strong> (histórico inmutable, auditoría, FK)</td><td>×2</td><td>5 · el modelo, la auditoría y las transiciones son SQL puros</td><td>4 · puede, pero a más coste en consultas</td><td>2 · no es relacional: una designación histórica no es un documento</td></tr>
+    <tr><td><strong>Total ponderado</strong></td><td>×7</td><td><strong>32</strong></td><td><strong>30</strong></td><td><strong>21</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Recomendación: A · PostgreSQL gestionado</div>
+  <ul class="tight" style="margin-bottom:0;">
+    <li><strong>Es la única opción que no obliga a adaptar el modelo a la herramienta.</strong> El contrato de API (trazabilidad, 13 transiciones prohibidas, designaciones urgentes y manuales) exige relaciones, FK, historia inmutable y consultas de cómputo: todo respeta la naturaleza relacional sin trucos.</li>
+    <li><strong>Gana A por 2 puntos sobre 35</strong> (32 frente a 30 de B): no es un margen holgado, y conviene decirlo así. La diferencia vive en el doble peso del cumplimiento y de la adecuación al modelo, que es justo lo que hay que defender si alguien pregunta.</li>
+    <li><strong>Coste total estimado del primer año:</strong> instancia gestionada (≈ 700 €), copias y retención, sin egress a terceros: el dato no sale de la jurisdicción ni de la mano del Colegio.</li>
+    <li><strong>Qué se descarta y por qué:</strong> B por el cálculo de cómputo; C porque una API documental no sabe nada de RN-37 (nadie automático pude estimar ni desestimar) ni de los 13 códigos de transición prohibida.</li>
+  </ul>
+</div>
+
+<p class="footnote">Documento de trabajo dentro de un proyecto de ejercicio: no implica la compra de ningún servicio. Los precios son
+estimaciones orientativas del proveedor que toque en su momento, no cotizaciones. La decisión se revisa con la #47 (revisión técnica
+del stack por el backend) y con las tarjetas #40 y #41, que fijan entornos, CI/CD y cumplimiento sobre esta elección. Ref. TOF-2026-008.</p>
+
+</body>
+</html>

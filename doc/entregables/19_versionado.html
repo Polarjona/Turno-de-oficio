@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Versionado e inmutabilidad del cuadrante</title>
+</head>
+<body>
+<div class="entregable">
+<div class="dkicker">Entregable · Akram (Database) · Modelo TOF-2026-012</div>
+<h1 class="dtitle">Versionado e inmutabilidad del cuadrante</h1>
+<p class="dlead">Diseño de versiones del cuadrante, histórico de cambios y borrado lógico, con las consultas
+de auditoría que lo prueban. Sustituye a la versión anterior: ya no existen las tablas
+<code>versiones_cuadrante</code>, <code>historial_cambios</code> ni el campo <code>activo</code> en el
+cuadrante; el versionado y la trazabilidad se apoyan en <code>cuadrante.version</code> y en la tabla
+<code>auditoria</code> (append-only, con <code>REVOKE</code>).</p>
+
+<h2>1. Diseño de versiones</h2>
+<table class="grid">
+<thead><tr><th style="width:38%">Hecho</th><th style="width:62%">Cómo se garantiza</th></tr></thead>
+<tbody>
+<tr><td>Nueva versión del cuadrante</td><td><code>cuadrante (anio, periodo, version)</code> con unicidad: cada publicación o cambio genera una fila nueva con <code>version</code> incrementada; las anteriores se conservan intactas.</td></tr>
+<tr><td>Qué se publicó, cuándo y quién</td><td><code>cuadrante.fecha_publicacion</code>, <code>publicado_por</code> (FK → <code>usuario</code>) y <code>motivo_cambio</code>. En borrador, <code>fecha_publicacion</code> es nulo.</td></tr>
+<tr><td>Ciclo de estado</td><td><code>borrador → en_alegaciones → publicado → congelado → cerrado</code>. La publicación es inmutable (RN-21): publicado no se edita, se versiona; congelado llega al alcanzarse la antelación mínima.</td></tr>
+<tr><td>El histórico no cambia si se edita la plantilla</td><td><code>guardia.fin_en</code> y <code>guardia.cruza_medianoche</code> se copian al crear la guardia (RN-32): la fila publicada guarda el instante real, no una derivación.</td></tr>
+</tbody>
+</table>
+
+<h2>2. Histórico de cambios (tabla <code>auditoria</code>)</h2>
+<table class="grid">
+<thead><tr><th style="width:30%">Dato</th><th style="width:70%">Campo en AUDITORIA</th></tr></thead>
+<tbody>
+<tr><td>Entidad y fila afectadas</td><td><code>entidad</code> (texto, p. ej. <code>guardia</code>) y <code>entidad_id</code> (uuid).</td></tr>
+<tr><td>Tipo de acto</td><td><code>accion</code>: <code>crear | modificar | publicar | resolver | cerrar | consultar</code>.</td></tr>
+<tr><td>Qué cambió</td><td><code>estado_anterior</code> → <code>estado_nuevo</code> con los estados del catálogo, más <code>motivo</code>.</td></tr>
+<tr><td>Quién y cuándo</td><td><code>actor_id</code> (FK → <code>usuario</code>) y <code>fecha</code>.</td></tr>
+<tr><td>Origen del cambio</td><td><code>origen</code>: <code>aplicacion | etl | migracion | manual</code>. La migración histórica se distingue de la carga diaria.</td></tr>
+</tbody>
+</table>
+<p class="small">La tabla es <em>append-only</em>: los roles de aplicación tienen <code>REVOKE UPDATE, DELETE,
+TRUNCATE</code> sobre ella (el rol <code>app_role</code> debe existir antes de ejecutar el DDL).</p>
+
+<h2>3. Borrado lógico</h2>
+<p>No se borra el histórico: los estados terminales hacen de borrado lógico.
+<code>guardia.estado = 'anulada'</code> conserva la fila con su motivo (RN-31) y queda excluida del
+solapamiento; <code>abogado.activo = false</code> marca la salida del turno sin perder la trazabilidad;
+<code>usuario.estado = 'inactivo'</code> marca la cuenta. Las foráneas usan <code>ON DELETE RESTRICT</code>:
+no se puede borrar lo que el histórico referencia.</p>
+
+<h2>4. Consultas de auditoría que lo prueban</h2>
+<table class="grid">
+<thead><tr><th style="width:44%">Pregunta</th><th style="width:56%">Consulta sobre el modelo real</th></tr></thead>
+<tbody>
+<tr>
+<td>¿Qué se publicó y quién lo publicó?</td>
+<td><code>SELECT anio, periodo, version, fecha_publicacion, publicado_por FROM cuadrante WHERE anio = 2027 ORDER BY version;</code></td>
+</tr>
+<tr>
+<td>¿Qué cambios ha sufrido una guardia?</td>
+<td><code>SELECT accion, estado_anterior, estado_nuevo, actor_id, fecha FROM auditoria WHERE entidad = 'guardia' AND entidad_id = :id ORDER BY fecha;</code></td>
+</tr>
+<tr>
+<td>¿Qué actos ha hecho un usuario?</td>
+<td><code>SELECT entidad, accion, fecha FROM auditoria WHERE actor_id = :usuario ORDER BY fecha DESC;</code></td>
+</tr>
+<tr>
+<td>¿Qué guardias se anularon en el periodo?</td>
+<td><code>SELECT * FROM guardia WHERE estado = 'anulada' AND fecha BETWEEN :desde AND :hasta;</code></td>
+</tr>
+<tr>
+<td>¿Qué vino de la migración?</td>
+<td><code>SELECT COUNT(*) FROM auditoria WHERE origen = 'migracion';</code></td>
+</tr>
+</tbody>
+</table>
+
+<div class="box ok">
+<div class="box-title">Conclusión</div>
+<p style="margin:0;">El diseño garantiza la trazabilidad completa del cuadrante —qué se publicó, cuándo,
+quién lo cambió y desde qué origen— sin tablas inventadas y apoyándose en la unicidad
+<code>(anio, periodo, version)</code> y en <code>auditoria</code> inmutable. Las consultas anteriores lo
+prueban sobre las 14 entidades reales.</p>
+</div>
+<p class="footnote">Tarjeta de Akram (Database) «Versionado e inmutabilidad del cuadrante», plazo 18 de noviembre.
+Modelo: DDL TOF-2026-012. Documento de ejercicio, sin interlocución con el Colegio.</p>
+</div>
+</body>
+</html>

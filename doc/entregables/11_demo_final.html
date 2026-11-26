@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Demo final · Frontend</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Georgia,serif;color:#14202E;background:#fff}
+.slide{width:1280px;height:720px;padding:56px 72px;page-break-after:always;display:flex;flex-direction:column;justify-content:center}
+.slide:last-child{page-break-after:auto}
+.k{font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#46515F;margin:0 0 10px}
+h1{font-size:52px;margin:0 0 16px;line-height:1.1} h2{font-size:40px;margin:0 0 22px;line-height:1.15}
+p,li{font-size:24px;line-height:1.4} ul,ol{margin:6px 0;padding-left:30px} li{margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:21px} th,td{border:1px solid #6B7686;padding:10px 14px;text-align:left;vertical-align:top} th{background:#EDEFF3}
+.small{font-size:17px;color:#46515F} .big{font-size:30px;line-height:1.35}
+.cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px} .card{border:2px solid #14202E;padding:18px;font-size:21px;line-height:1.4}
+.alert{border:3px solid #8B1022;padding:16px 20px;font-size:22px;line-height:1.4;background:#FBE3E6}
+@page{size:1280px 720px;margin:0}
+</style>
+</head>
+<body>
+
+<section class="slide">
+<p class="k">Demo final · Frontend · 15 minutos</p>
+<h1>Turno de Oficio</h1>
+<p class="big">Gestión del Turno de Oficio — Colegio de la Abogacía de Tarragona<br>Aplicación para letrados y coordinación</p>
+<p class="small">Dhruva · Parte frontend del proyecto</p>
+</section>
+
+<section class="slide">
+<p class="k">Guion</p>
+<h2>15 minutos y dos recorridos en vivo</h2>
+<table>
+<tr><th>Minuto</th><th>Bloque</th><th>Soporte</th></tr>
+<tr><td>0:00–1:30</td><td>Contexto y alcance</td><td>Diapositivas 1–3</td></tr>
+<tr><td>1:30–3:30</td><td>Lo que aprendimos antes de diseñar</td><td>Diapositiva 4</td></tr>
+<tr><td>3:30–5:30</td><td>Pantallas y sistema de diseño</td><td>Diapositivas 5–6</td></tr>
+<tr><td>5:30–10:00</td><td>Demo en vivo: recorrido del letrado</td><td>Prototipo, J. Roca y M. Serra</td></tr>
+<tr><td>10:00–12:30</td><td>Demo en vivo: recorrido de la coordinación</td><td>Prototipo, Coordinación</td></tr>
+<tr><td>12:30–14:00</td><td>Prueba con letrados y límites</td><td>Diapositiva 9</td></tr>
+<tr><td>14:00–15:00</td><td>Pendientes, entregables y preguntas</td><td>Diapositiva 10</td></tr>
+</table>
+<p class="small"><b>Respaldo sin conexión:</b> el prototipo es un único HTML sin recursos externos. Llevar copia en USB y capturas. No activar «Modo test» durante la demo.</p>
+</section>
+
+<section class="slide">
+<p class="k">Contexto</p>
+<h2>Un letrado de pie, con una mano y a plena luz</h2>
+<p class="big">Necesita saber si tiene guardia hoy y si está confirmada.</p>
+<p>Tres reglas mandan en el diseño:</p>
+<ul>
+<li><b>Publicada no es confirmada</b></li>
+<li><b>La guardia es del titular hasta que el Colegio valida</b></li>
+<li><b>Toda decisión lleva motivación</b> — visible también en el aviso al letrado afectado</li>
+</ul>
+</section>
+
+<section class="slide">
+<p class="k">Antes de diseñar</p>
+<h2>Lo que aprendimos antes de dibujar</h2>
+<div class="cols">
+<div class="card"><b>Benchmark</b><br>Cinco referentes: ICAM, ICA Cádiz e ICAB como colegiales, Deputy y PagerDuty como genéricos. Solo información pública, sin probar las aplicaciones.</div>
+<div class="card"><b>Recorrido</b><br>Aviso, acuse, actuación, parte y sustitución. Cada etapa tiene momentos críticos y oportunidades de diseño; las emociones son hipótesis para la prueba.</div>
+<div class="card"><b>Decisiones</b><br>Estados que no dependen solo del color, un aviso legal en cada paso de la sustitución y decisiones de coordinación siempre motivadas.</div>
+</div>
+</section>
+
+<section class="slide">
+<p class="k">Wireframes de baja fidelidad</p>
+<h2>Cuatro pantallas, una por tarea del día</h2>
+<table>
+<tr><th>Pantalla</th><th>Qué hace</th></tr>
+<tr><td>Mi guardia de hoy</td><td>Estado, horario y acciones principales a un toque.</td></tr>
+<tr><td>Calendario personal</td><td>Mes con guardias propias, sustituciones y días sin servicio.</td></tr>
+<tr><td>Solicitud de sustitución</td><td>Tres pasos: motivo, quién la cubre y revisar y enviar.</td></tr>
+<tr><td>Cuadrante de coordinación</td><td>Semana por materias, con pendientes y huecos sin cubrir a la vista.</td></tr>
+</table>
+</section>
+
+<section class="slide">
+<p class="k">Sistema de diseño mínimo</p>
+<h2>Legible de pie, con una mano y a plena luz</h2>
+<table>
+<tr><th>18 px</th><td>Tamaño mínimo del texto principal</td></tr>
+<tr><th>48 px</th><td>Objetivo táctil mínimo; el botón principal, 60 px</td></tr>
+<tr><th>2 temas</th><td>Claro y exterior de alto contraste</td></tr>
+<tr><th>7:1</th><td>Contraste del texto de estado en el tema claro</td></tr>
+</table>
+<p>Estados: <b>Confirmada · Sin acuse · En revisión · Descubierta · Sin servicio</b> — texto y forma del borde, no solo color. Circuito de sustitución: <i>oferta_enviada · pendiente_validacion · estimada · desestimada</i>.</p>
+</section>
+
+<section class="slide">
+<p class="k">Demo en vivo 1 · 4 min 30</p>
+<h2>Recorrido del letrado: de la solicitud al aviso</h2>
+<ol>
+<li>J. Roca abre Mis guardias y pulsa «Solicitar sustitución» en la del 17 de marzo.</li>
+<li>Elige el motivo (categorías cerradas del contrato, sin diagnósticos) y propone a un compañero elegible.</li>
+<li>Revisa y envía: la guardia sigue siendo suya.</li>
+<li>M. Serra abre Avisos, ve la oferta (48 h propuesto) y la acepta.</li>
+</ol>
+<p><b>Qué señalar:</b> aviso legal en cada paso · motivo sin datos de salud · estado «Pendiente de validación», no «Confirmada».</p>
+</section>
+
+<section class="slide">
+<p class="k">Demo en vivo 2 · 2 min 30</p>
+<h2>Recorrido de la coordinación: resolver con motivación</h2>
+<ol>
+<li>En Solicitudes, abrir el expediente pendiente.</li>
+<li>Revisar las comprobaciones: plazo, habilitación, solapamiento y cómputo.</li>
+<li>Escribir la motivación; sin ella no se puede resolver.</li>
+<li>Aprobar: se publica la versión 2 del cuadrante.</li>
+<li>Ver los avisos de los dos letrados: motivación visible en ambos y «Titular anterior: J. Roca».</li>
+</ol>
+<p><b>Qué señalar:</b> la plataforma propone y comprueba; decide la coordinación · el histórico conserva al titular anterior · avisos sin datos de salud.</p>
+</section>
+
+<section class="slide">
+<p class="k">Prueba de usabilidad (T6)</p>
+<h2>Prueba con 2 letrados: cinco tareas de 3 minutos</h2>
+<ol>
+<li>Solicitar una sustitución con motivo y candidato.</li>
+<li>Decir de quién es la guardia tras enviar.</li>
+<li>Aceptar la oferta como sustituto.</li>
+<li>Entender el aviso de resolución (incluida la motivación).</li>
+<li>Pedir que el Colegio proponga candidato.</li>
+</ol>
+<div class="alert"><b>Resultados: pendientes de las sesiones del 18–19 de noviembre.</b> No se presentan cifras hasta tenerlas. Al presentar, sustituir por: tareas sin ayuda (__ de 10), hallazgo más grave (__) y corrección prioritaria (__), contra el criterio del T6 (≥ 9/10 sin ayuda, ningún crítico sin corregir, facilidad media ≥ 5).</div>
+<p class="small">Con 2 letrados no hay estadística; denegación/devolución, exterior, sin conexión y escalada quedan para la segunda ronda.</p>
+</section>
+
+<section class="slide">
+<p class="k">Cierre</p>
+<h2>Pendientes y entregables</h2>
+<div class="cols" style="grid-template-columns:1fr 1fr">
+<div class="card"><b>Todavía pendiente</b><ul>
+<li>Tema exterior a plena luz</li>
+<li>Modo sin conexión</li>
+<li>Escalada por retraso</li>
+<li>Puntos «Verificar» de la checklist WCAG</li>
+<li>Confirmación del Colegio del plazo de respuesta (48 h propuesto)</li>
+<li>Resultados del T6 (18–20 nov)</li></ul></div>
+<div class="card"><b>Entregables</b><ul>
+<li>T1 · Benchmark</li>
+<li>T2 · Mapa de recorrido</li>
+<li>T3 · Wireframes</li>
+<li>T4 · Sistema de diseño</li>
+<li>T5 · Prototipo</li>
+<li>T6 · Prueba de usabilidad</li></ul></div>
+</div>
+</section>
+
+</body>
+</html>

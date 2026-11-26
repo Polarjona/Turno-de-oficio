@@ -1,0 +1,40 @@
+Diccionario de Datos y Validaciones
+Proyecto: Turno de Oficio
+Objetivo
+Definir de forma clara la estructura de los datos utilizados en la aplicación para evitar
+interpretaciones ambiguas y garantizar la integridad y consistencia de la información almacenada.
+Tabla: Usuario
+- id_usuario: INT, obligatorio, entero positivo, ejemplo: 1
+- nombre: VARCHAR(100), obligatorio, ejemplo: Juan Pérez
+- email: VARCHAR(150), obligatorio, ejemplo: juan@gmail.com
+- telefono: VARCHAR(15), opcional, ejemplo: +34612345678
+- rol: VARCHAR(20), obligatorio, valores: ADMIN, ABOGADO, OPERADOR
+- fecha_alta: DATE, obligatorio.
+Validaciones Usuario
+Email único, formato válido, nombre obligatorio y fecha no futura.
+Tabla: Abogado
+- id_abogado: INT
+- id_usuario: referencia a Usuario
+- num_colegiado: VARCHAR(20), único
+- especialidad: VARCHAR(50), opcional.
+Tabla: Expediente
+- id_expediente: INT
+- numero_expediente: VARCHAR(30), único
+- fecha_creacion: DATE
+- estado: ABIERTO, ASIGNADO o CERRADO
+- descripcion: TEXT, opcional.
+Tabla: Asignación
+- id_asignacion: INT
+- id_abogado: referencia a Abogado
+- id_expediente: referencia a Expediente
+- fecha_asignacion: DATE.
+Reglas de negocio
+1. Cada usuario tiene un correo electrónico único.
+2. Cada abogado dispone de un número de colegiado único.
+3. Cada expediente tiene un identificador único.
+4. No se pueden crear asignaciones con registros inexistentes.
+5. No se permiten fechas futuras en registros históricos.
+6. Se mantiene la integridad referencial entre tablas.
+Conclusión
+Se ha documentado la estructura de datos, las restricciones y las validaciones necesarias para
+asegurar la calidad y coherencia de la información del sistema Turno de Oficio.

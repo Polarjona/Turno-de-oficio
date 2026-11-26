@@ -1,0 +1,372 @@
+Mi guardia
+hoy · mar 16 mar
+Variante sin conexión: «Datos guardados a las 
+07:42. Se sincronizará al volver la red».
+1
+Penal · 24 h
+Martes 16 de marzo · localizada
+Estado
+✓ Confirmada
+Inicio
+08:00
+Fin
+08:00 (17/03)
+2
+Juzgado de guardia
+Tarragona · 977 000 000
+Llamar
+3
+Estoy operativo
+4
+Registrar 
+actuación
+Necesito refuerzo
+5
+⚠ No puedo acudir
+abre incidencia grave
+6
+Hoy
+Mis guardias
+Avisos (1)
+Perfil
+WIREFRAME 1 · BAJA FIDELIDAD
+Mi guardia de hoy
+1
+Estado con texto y símbolo, no 
+solo color: Confirmada, Sin acuse 
+o En revisión.
+2
+Teléfono de la sede a un toque; 
+disponible sin conexión.
+3
+Acción principal al alcance del 
+pulgar. Registra hora y dispositivo.
+4
+Acciones secundarias a un toque.
+5
+«No puedo acudir» queda 
+separada para no pulsarla sin 
+querer. Abre incidencia grave y 
+escalado.
+6
+Cuatro destinos fijos. Cualquier 
+acción principal, en dos toques 
+como máximo.
+Fuente: Diseño funcional TOF-2026-002, 
+anexo A y capítulos 12 y 18. Datos de 
+ejemplo.
+ Mis guardias
+marzo 2027
+1
+Calendario
+Lista
+3
+‹ Marzo 2027 ›
+3 guardias · 1 sin acuse
+2
+L
+M
+X
+J
+V
+S
+D
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+P
+16
+17
+18
+V
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+!P
+4
+15 mar
+Penal · 08:00–20:00
+✓ Confirmada
+18 mar
+Violencia de género · 24 
+h
+✓ Confirmada
+23–26
+Vacaciones · validadas
+Rayado
+31 mar
+Penal · 08:00–20:00
+! Confirmar
+5
+Comunicar 
+indisponibilidad
+Exportar a mi 
+calendario
+Hoy
+Mis guardias
+Avisos (1)
+Perfil
+WIREFRAME 2 · BAJA FIDELIDAD
+Calendario personal
+1
+Calendario y lista muestran lo 
+mismo; el letrado elige.
+2
+Marcas por forma y texto: guardia 
+confirmada con borde sólido y 
+letra de materia; sin acuse con 
+borde discontinuo; vacaciones 
+con rayado.
+3
+Resumen del mes: cuántas 
+guardias y cuántas sin acuse.
+4
+Cada guardia lleva su estado. 
+«Confirmar» solo aparece si falta 
+el acuse. De los compañeros solo 
+se ve nombre y materia (RN-25).
+5
+Comunicar vacaciones, formación 
+u otra indisponibilidad, y exportar 
+el calendario en solo lectura.
+Fuente: Diseño funcional TOF-2026-002, 
+figura 9.2 y capítulos 9 y 10. Datos de 
+ejemplo; marzo de 2027 empieza en lunes.
+ WIREFRAME 3 · BAJA FIDELIDAD
+Solicitud de sustitución · 3 pasos
+‹ Solicitar sustitución
+1
+Paso 1 de 3 · Motivo
+Guardia del 17 de marzo
+Penal · 24 h · titular: J. Roca
+2
+Motivo
+Deber inexcusable
+Enfermedad
+Fallecimiento
+Formación
+Otro
+Observaciones
+Comparecencia citada por el juzgado…
+3
+Ten en cuenta: la guardia sigue siendo tuya 
+hasta que el Colegio valide el cambio.
+Continuar
+1
+Paso y progreso visibles. Un solo dato por 
+pantalla en lo posible.
+2
+Motivo tipificado. Para enfermedad no se pide 
+diagnóstico (RN-23).
+3
+El aviso legal va en la propia pantalla (RN-13).
+‹ Solicitar sustitución
+Paso 2 de 3 · ¿Quién la cubre?
+4
+Que el Colegio proponga candidato
+Proponer a un compañero
+5
+Compañeros elegibles
+M. Serra · Penal
+A. Ferrer · Penal
+N. Vidal · Penal
+Solo aparecen compañeros habilitados, disponibles 
+y sin otra guardia solapada. Del compañero se ve 
+solo nombre y materia.
+Un acuerdo entre dos letrados no cambia el 
+cuadrante hasta que el Colegio lo valide.
+Atrás
+Continuar
+4
+Por defecto, propone el Colegio. Proponer a un 
+compañero es opcional.
+5
+Lista ya filtrada por los filtros de elegibilidad (RN-
+14). Solo nombre y materia (RN-25).
+‹ Revisar y enviar
+Paso 3 de 3 · Revisión
+Guardia
+17 mar · Penal 24 h
+Motivo
+Deber inexcusable
+Candidato
+M. Serra
+6
+Qué pasa ahora
+El sistema comprueba plazo y 
+documentación.
+Se ofrece la guardia al candidato.
+La coordinación resuelve y lo motiva.
+Os avisamos a los dos del resultado.
+Hasta la resolución, la guardia del 17 de marzo 
+sigue siendo tuya.
+Atrás
+Enviar solicitud
+6
+El letrado ve el camino completo y quién decide 
+en cada paso. Tras enviar, la guardia pasa a «En 
+revisión» y aparece en Mis guardias con ese 
+estado.
+Fuente: Diseño funcional TOF-2026-002, capítulo 11 y anexo A.3; Propuesta funcional TOF-2026-001, CU-09 y CU-10. Nombres y datos de ejemplo.
+ WIREFRAME 4 · BAJA FIDELIDAD · COORDINACIÓN DEL TURNO
+Turno de Oficio · Coordinación
+Cuadrante
+Disponibilidad
+Solicitudes (3)
+Habilitaciones
+Panel
+4Semana del 15 al 21 de marzo de 2027
+Versión 3 · publicada · estado del cuadrante: Publicado
+‹ Semana
+Semana ›
+Ver v2 con cambios
+Exportar PDF
+Publicar versión
+1
+Cubierta y confirmada ✓
+Cubierta sin acuse !
+Descubierta ✕
+Sin servicio previsto —
+Asistencia detenido
+Penal
+Violencia de género
+Menores
+Civil
+Extranjería
+L 15
+Ferrer
+24 h · ✓
+Serra
+08–20 · ✓
+Roca
+24 h · ✓
+—
+Vidal
+Mañana · ✓
+—
+M 16
+Ferrer
+24 h · ! sin acuse
+Roca
+08–20 · ✓
+Serra
+24 h · ✓
+Mas
+Localizada · ✓
+Vidal
+Mañana · ✓
+—
+X 17
+✕ DESCUBIERTA
+excusa pendiente
+Vidal
+08–20 · ✓
+Roca
+24 h · ✓
+—
+Serra
+Mañana · ✓
+Puig
+Tarde · ✓
+J 18
+Mas
+24 h · ✓
+Ferrer
+08–20 · ✓
+Vidal
+24 h · ✓
+Puig
+Localizada · ✓
+Roca
+Mañana · ✓
+—
+V 19
+Mas
+24 h · ✓
+Serra
+08–20 · ✓
+Ferrer
+24 h · ✓
+—
+Vidal
+Mañana · ✓
+—
+S 20
+Puig
+24 h · ✓
+—
+Serra
+24 h · ✓
+—
+—
+—
+D 21
+Puig
+24 h · ✓
+—
+Serra
+24 h · ✓
+—
+—
+—
+Cada celda abre el detalle de la guardia: quién la cubre, cómo localizarlo, su expediente y por qué se le propuso (cómputo previo y posición en el 
+turno).
+3
+Pendientes de la semana
+Ordenados por gravedad
+2
+✕ Descubierta · X 17 · Asistencia detenido
+Excusa pendiente de resolución. Bolsa de 
+urgencia activa.
+Abrir expediente
+Designar con urgencia
+! Sin acuse · M 16 · Asistencia detenido
+Ferrer · recordatorio enviado, sin respuesta.
+Ver expediente
+3 solicitudes · excusas y permutas
+Cada una con sus comprobaciones 
+automáticas antes de decidir.
+Resolver
+1
+Semáforo único por materia y día con 
+forma y texto, no solo color: relleno 
+liso, borde discontinuo, borde doble 
+con rayado y guion.
+2
+La guardia descubierta es la señal más 
+grave: tratamiento visual propio y 
+enlace al expediente de la excusa que 
+la provocó (RN-17).
+3
+Cola de pendientes con acción directa. 
+Las decisiones exigen motivo y las 
+toma una persona (RN-07, RN-15).
+4
+Versión vigente y comparación con la 
+anterior; exportación en PDF con sello 
+de versión. Publicar exige cobertura 
+completa o justificar cada hueco (RN-
+09).
+Fuente: Diseño funcional TOF-2026-002, figura 9.1 y capítulos 8, 9 y 14. Nombres y datos de ejemplo; las celdas sin estado en la figura original se muestran como confirmadas.

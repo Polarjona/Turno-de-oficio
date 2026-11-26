@@ -1,0 +1,307 @@
+E N T R E G A B L E · S T A C K C O M P L E T O · R E F . T O F - 2 0 2 6 - 0 1 7 · T A R J E T A S # 3 3 Y # 4 7
+Stack tecnológico completo: lo decidido y lo
+que faltaba por decidir
+Este documento cierra el ADR TOF-2026-008 y su revisión TOF-2026-016. La base de datos ya
+estaba decidida y revisada; faltaban frontend, backend, autenticación, ETL, notificaciones,
+hosting y observabilidad. Aquí se decide todo, con el criterio que ya fijó el ADR: ninguna opción
+que obligue a registrar motivos clínicos, a vender datos o a subirlos fuera de la Unión Europea
+se evalúa como opción, y la decisión la toman los requisitos medibles del catálogo TOF-2026-
+015, el contrato de API v0.1 (tarjeta #29) y los requisitos no funcionales TOF-2026-014 — no el
+gusto del equipo.
+Versión con presupuesto: es la misma arquitectura que la versión gratuita, pero operada por el
+proveedor en la nube (RDS Multi-AZ, SES, Twilio, S3 con KMS). Es la versión que se presenta si el
+proyecto se ejecuta de verdad; la versión gratuita sirve para el ejercicio o para la demo. Ambas
+comparten código, migraciones y variables de entorno: cambiar de una a otra es cambiar el
+operador, no la tecnología.
+"
+Resumen en una tabla (la decisión)
+Capa
+Decisión
+Por qué gana aquí
+Frontend web
+React 19 + TypeScript + Next.js 15
+(App Router, SSR), Tailwind CSS
+(tokens T4), TanStack Query, PWA
+instalable
+El NFR exige la vista de «guardia de hoy» sin
+dependencia de JavaScript y paquete inicial <
+250 KB: eso es SSR, no una SPA. React es además
+la preferencia declarada del equipo y la que ya
+usa el prototipo.
+Backend / API
+Node.js 22 LTS + TypeScript +
+NestJS 11, Drizzle ORM (SQL-first) +
+SQL puro, Zod, migraciones SQL
+versionadas
+Mismo lenguaje que el frontend: un solo tipado de
+extremo a extremo, un solo toolchain. NestJS da
+módulos, guards e interceptores —exactamente
+lo que necesita RN-20/RN-25— sin ocultar el SQL
+que el cálculo de equidad exige.
+Base de datos
+PostgreSQL 16 gestionado en la UE
+(RDS Multi-AZ + PITR, ya decidido en
+el ADR TOF-2026-008)
+Ver §1. Copias WAL continuas, alta disponibilidad y
+restauración a un instante sin operar el motor.
+RPO ≤ 5 min, RTO ≤ 2 h.
+Autenticación
+Keycloak 26 (OIDC) en región UE,
+MFA TOTP, JWT validado en NestJS
+Open source, sin per-seat, EU-hosted, federable
+con el IdP del Colegio si existe. Sin vendor lock-in
+de identidad.
+ETL
+Python 3.12 + SQLAlchemy, staging
+dentro del propio PostgreSQL,
+planificador del proveedor cada
+minuto
+El volumen es 120 letrados base / 900 estrés: un
+Airflow o un Talend sería infraestructura sin carga
+que justifique. Python es la herramienta del rol ETL.
+Notificaciones
+Tabla notificacion + patrón outbox;
+correo Amazon SES (región UE),
+SMS Twilio (UE), Web Push VAPID
+(PWA)
+La constancia vive en la base y el envío es externo
+(RN-37, spike #45). SES/Twilio son baratos, EU y
+con encargado de tratamiento firmable; el push
+va por la PWA, sin FCM/APNs.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión con presupuesto)
+Classification: Internal
+1 / 5
+
+Capa
+Decisión
+Por qué gana aquí
+Ficheros
+Bucket S3 en la UE, cifrado en
+reposo (KMS), URLs firmadas,
+antivirus ClamAV en subida
+Los justificantes (RN-24) no pueden vivir junto a la
+causa clínica y se acceden con URL temporal,
+nunca pública.
+Infraestructura
+Contenedores Docker en región UE
+(ej. AWS eu-west-3 París): compute
+gestionado, LB + WAF
+Cumple el 99,5 % de TOF-2026-014 sin montar un
+Kubernetes propio para 25 usuarios concurrentes.
+Escala por réplicas de contenedor, no por
+servidores.
+CI/CD y secretos
+GitHub Actions (el repo ya vive en
+GitHub), Trivy, migraciones en
+pipeline; secretos en el gestor del
+proveedor, nunca en el repo
+Es lo que ya pide Entornos_CI_CD (TOF-2026-
+010): staging automático, prod manual tras
+Review, cada entorno con sus claves.
+Observabilidad
+OpenTelemetry + logs JSON +
+Prometheus/Grafana gestionados
+(UE), alertas p95 y errores
+Sin métricas no se puede defender el 99,5 % ni los
+p95 del NFR. Es la condición menor que dejó la
+revisión TOF-2026-016.
+1. Lo que ya estaba decidido (no se reabre)
+El ADR TOF-2026-008 comparó PostgreSQL gestionado (32/35), MySQL con ORM (30/35) y NoSQL
+documental (21/35) y recomendó PostgreSQL por el doble peso del cumplimiento RGPD y de la
+adecuación al modelo: histórico inmutable, auditoría append-only (RN-20) y trazabilidad de
+designaciones son relacionales por naturaleza. La revisión TOF-2026-016 (#47) lo acepta con
+cuatro condiciones, que este stack incorpora como requisitos de construcción:
+Condición de la revisión
+Cómo se cierra en este stack
+Rol de aplicación no
+propietario
+Dos roles en PostgreSQL: migration_owner (ejecuta migraciones, dueño de tablas)
+y app_role (sin DDL, sin UPDATE/DELETE en auditoria). NestJS conecta siempre
+como app_role: así el Row Level Security de RN-25 no es decorativo.
+Tareas diferidas
+Tabla de tareas + planificador del proveedor cada minuto (alerta de excusa a los 5
+días RN-38, avisos de cuadrante, recálculo de equidad). Sin cola dedicada hasta
+que el volumen la pida.
+Copias con números
+RPO ≤ 5 min (WAL, no solo copia diaria), RTO ≤ 2 h, restauración probada
+trimestralmente — coherente con TOF-2026-010 y con el RDS Multi-AZ + PITR de la
+decisión de hosting.
+Pooling de conexiones
+PgBouncer en modo transacción (también en Compose, gratis); NestJS con pool
+limitado y statement_timeout. Sin esto, el backend escala por réplicas y
+PostgreSQL se queda sin conexiones antes que sin CPU.
+2. Frontend: React + Next.js (SSR), no SPA, no Flutter
+El requisito que decide el frontend no es de gusto: TOF-2026-014 exige «sin dependencia de
+JavaScript para leer la guardia de hoy en el peor caso: la vista de hoy se sirve renderizada» y
+paquete inicial por debajo de 250 KB comprimido. Una SPA en Vite/React puro incumple ambos:
+sin JS no hay guardia. Next.js 15 con App Router sirve esa vista en servidor y entrega el resto
+hidratado, con React 19 y TypeScript compartidos con el backend.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión con presupuesto)
+Classification: Internal
+2 / 5
+
+Opción
+Veredicto
+Motivo
+A · Next.js 15 +
+React 19 + TS ✅
+Elegida
+Cumple el SSR sin-JS, el presupuesto de 250 KB y la
+accesibilidad (axe en CI). Un solo lenguaje con el
+backend. Los tokens del sistema de diseño T4 (colores
+Poppins-navy/amarillo/magenta) y el prototipo de
+Dhruva ya están en este ecosistema.
+B · Vite + SPA React
+Descartada
+Más ligera de operar, pero la vista de hoy queda vacía
+sin JS. Incumple un NFR explícito; no es una cuestión
+de rendimiento.
+C · Flutter
+Descartada
+Descartada por decisión del equipo y por el NFR:
+obliga a app nativa para un caso de uso web
+(letrados en el portal del Colegio, benchmark T1),
+duplica el código de pantallas y no aporta nada al SSR
+sin-JS.
+D · React Native
+Descartada
+El único requisito «móvil» del NFR es el cierre de parte
+con sincronización desde móvil. Se resuelve con PWA
+instalable (offline-first con service worker), sin tienda
+ni doble codebase.
+Piezas: Tailwind CSS con los tokens de T4 compilados (sin Google Fonts: stack del sistema, como
+ya exige el diseño); TanStack Query para el estado de servidor contra el contrato #29; formularios
+con React Hook Form + Zod (mismo esquema en cliente y servidor); i18n lista para ES/CA con el
+catálogo de estados como fuente única. La PWA usa Web Push (VAPID) como canal principal de
+notificaciones.
+3. Backend: Node.js 22 + NestJS, SQL primero
+Node.js 22 LTS + TypeScript + NestJS 11. La razón no es la moda: es continuidad. El equipo ya
+trabaja en React/TypeScript, el contrato OpenAPI de la tarjeta #29 se genera desde el código y se
+valida en CI contra las rutas, y un solo tipado compartido entre frontend y backend elimina una
+clase entera de errores de contrato. NestJS aporta lo que el catálogo necesita en estructura:
+módulos por agregado (guardia, cuadrante, solicitud, turno), guards para RN-25, interceptores
+para el asiento de auditoría append-only de RN-20 y filtrado de las 13 transiciones prohibidas en
+un único punto.
+Opción
+Veredicto
+Motivo
+A · Node 22 +
+NestJS + Drizzle ✅
+Elegida
+Drizzle es SQL-first: el cálculo de equidad, los
+agregados por materia y la exclusión de RN-04 se
+escriben en SQL visible, no escondidos en un ORM. Zod
+valida la entrada con el mismo esquema que usa el
+frontend.
+B · Spring Boot
+(Java)
+Descartada
+Excelente en empresa, pero obliga a un segundo
+lenguaje y toolchain para un equipo pequeño que ya
+domina TypeScript. El time-to-market del ADR pesaba
+a favor de lo que el equipo opera sin ayuda externa.
+C · Python FastAPI
+Descartada
+Buena para el ETL, mala para la API: partiría el tipado
+en dos lenguajes (TS en front, Python en back) y
+duplicaría la validación del contrato. Python se queda
+en el ETL, donde es la mejor herramienta.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión con presupuesto)
+Classification: Internal
+3 / 5
+
+Opción
+Veredicto
+Motivo
+D · Go
+Descartada
+Rendimiento sobrado que este sistema no necesita
+(25 concurrentes en hora punta) y curva de
+aprendizaje que el ADR ya puntuó en contra.
+Reglas de construcción: migraciones SQL versionadas con node-pg-migrate (la restricción EXCLUDE
+USING gist de RN-04 se crea en una migración, nunca a mano, como exige la tarjeta #40); SQL
+puro para cómputo y equidad; pool con PgBouncer en transacción; timeouts fijados; y el contrato
+generado con @nestjs/swagger debe diferir en cero del openapi.yaml de la tarjeta #29 antes del
+merge.
+4. Autenticación, ETL, notificaciones y hosting (con presupuesto)
+La misma arquitectura que la versión gratuita, pero operada por el proveedor en la nube, en
+región UE y con alta disponibilidad. El código es idéntico: solo cambian las variables de entorno y
+quién mantiene cada servicio.
+Capa
+Decisión con presupuesto y justificación
+Identidad
+Keycloak 26 (OIDC) en región UE, MFA TOTP obligatorio para coordinación y
+administración, JWT RS256 validado en NestJS y mapeado a los roles del catálogo
+(letrado, coordinación, junta, sistema). Federación SAML/OIDC con el IdP del Colegio si
+lo tiene. Se descarta Auth0/Okta por coste per-seat y lock-in; se descarta la
+autenticación propia por reinventar MFA, recuperación y bloqueo.
+ETL
+Python 3.12 + SQLAlchemy, extracción de las fuentes del Inventario (TOF-2026-004),
+validación con Great Expectations y carga en esquema staging del propio PostgreSQL,
+de donde se promueve a public con las reglas del Flujo ETL (staging → validado →
+carga). Orquestación: planificador del proveedor cada minuto. Se descartan Airflow
+(infraestructura sin la carga que la justifique: 120 letrados base) y Talend/NiFi (licencia
+y operación externalizada para un flujo batch diario).
+Notificaciones
+El envío sale por la tabla notificacion con patrón outbox (UNIQUE (referencia_tipo,
+referencia_id, usuario_id, canal)) y un worker que consume la cola estado_entrega.
+Canales: correo Amazon SES en región UE, SMS Twilio (UE) solo urgencias y guardias
+descubiertas, Web Push VAPID desde la PWA como canal principal. La medición del
+spike #45 queda pendiente de las cuentas que contrate el Colegio — decisión del
+Colegio, no del stack.
+Ficheros
+Bucket S3 en la UE (justificantes), cifrado en reposo con KMS, URLs firmadas de corta
+duración, escaneo antivirus (ClamAV) en la subida y acceso_restringido en base.
+Nada de ficheros junto al código ni en disco local del contenedor.
+Hosting
+Región UE (referencia: AWS eu-west-3 París), RDS PostgreSQL 16 Multi-AZ + PITR (≈ 700
+€/año según el ADR), compute en contenedores gestionados (réplicas de NestJS y
+Next.js tras balanceador + WAF), Keycloak y workers como servicios del mismo entorno.
+Se descarta un Kubernetes propio (operación sin ayuda externa, tarjeta #41) y
+cualquier región fuera de la UE (regla de oro del ADR).
+CI/CD
+GitHub Actions: por PR, contrato OpenAPI contra rutas, tests del flujo ETL y de
+designación, axe/Lighthouse y Trivy; al mergear a main, despliegue a staging con
+migraciones; a prod, manual tras Review (TOF-2026-010). Secretos en el gestor del
+proveedor (Secrets Manager), rotación trimestral o por despliegue.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión con presupuesto)
+Classification: Internal
+4 / 5
+
+Capa
+Decisión con presupuesto y justificación
+Observabilidad
+Logs JSON estructurados (correlación por request), trazas OpenTelemetry, métricas
+Prometheus/Grafana gestionadas en UE con alertas de p95 y tasa de errores — sin esto
+el 99,5 % de TOF-2026-014 no se puede medir ni defender. Tests: Vitest (unitarios),
+Testcontainers contra PostgreSQL real (RN-04, RLS, auditoría), Playwright (flujo
+designación/sustitución), k6 para los p95 del NFR.
+5. Presupuesto orientativo del primer año
+Todo en región UE, sin egress a terceros y sin per-seat: RDS PostgreSQL 16 Multi-AZ ≈ 700 €,
+compute en contenedor gestionado y balanceador/WAF ≈ 300–500 €, SES ≈ 10 € (volumen
+bajísimo), Twilio SMS ≈ 20–50 €, almacenamiento S3 y copias ≈ 50 €, dominio y certificados ≈ 30 €.
+Total orientativo: 1.100–1.300 €/año, en la horquilla del ADR (600–900 € de base de datos) más el
+resto de capas. Son estimaciones orientativas de ejercicio, no cotizaciones — igual que ya
+advertía el ADR.
+Dependencias abiertas (no de este documento)
+#45 (notificaciones): sin cuentas reales de correo/SMS contratadas por el Colegio no hay
+métricas del §6 del spike. El stack ya deja el hueco (outbox + SES/Twilio), pero la contratación es
+del Colegio.
+#34 / #48: RN-40/RN-41 (catálogo v0.4) y la volumetría 120 base + 900 estrés pendientes de
+cerrar; afectan a parámetros, no al stack.
+solicitud.motivo unificado: vocabulario único enfermedad / asunto_propio / conciliacion /
+fuerza_mayor / otro, idéntico en el DDL (TOF-2026-012) y en el contrato #29; categoría general,
+sin datos clínicos (RN-23).
+Encargados de tratamiento: en producción real, SES, Twilio, el proveedor de hosting y Keycloak
+exigen contrato de encargado firmado; la verificación es de la tarjeta #41. La verificación es de
+la tarjeta #41.
+Documento de trabajo dentro de un proyecto de ejercicio: no implica la compra de ningún
+servicio. Cierra el stack abierto por el ADR TOF-2026-008 y aceptado en TOF-2026-016 (#47):
+PostgreSQL 16 gestionado con sus cuatro condiciones, React/Next.js SSR para el frontend,
+Node.js/NestJS para el backend, Keycloak para la identidad, Python para el ETL, SES/Twilio/Web
+Push para las notificaciones y contenedores gestionados en la UE. Ref. TOF-2026-017. Tarjetas #33
+y #47 — propuesta de stack completo con presupuesto para revisión en Review. Sin interlocución
+con el Colegio.
+19/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-017   |   Stack tecnológico completo (versión con presupuesto)
+Classification: Internal
+5 / 5

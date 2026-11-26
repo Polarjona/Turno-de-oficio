@@ -1,0 +1,55 @@
+BENCHMARK DE APPS DE GUARDIAS Y TURNOS
+Proyecto Turno de Oficio TarragonaDhruva - Frontend10 Noviembre 2026
+1. Introducción
+Se ha realizado un benchmark de aplicaciones de gestión de turnos, calendarios y disponibilidad para identificar buenas prácticas de experiencia de usuario que puedan incorporarse a la futura aplicación del Turno de Oficio.
+2. Aplicaciones analizadas
+Deputy
+When I Work
+Connecteam
+Calendly
+Google Calendar
+3. Tabla comparativa
+Producto
+Lo bueno
+Lo malo
+Qué copiamos
+Deputy
+Calendario muy visual
+Puede parecer complejo
+Vista semanal clara
+When I Work
+Confirmación rápida
+Pocas estadísticas
+Confirmar guardias fácilmente
+Connecteam
+Buenas notificaciones
+Muchos menús
+Centro de avisos
+Calendly
+Gran gestión disponibilidad
+No gestiona guardias
+Bloqueo de disponibilidad
+Google Calendar
+Muy intuitivo
+Sin gestión jurídica
+Calendario mensual
+4. Qué copiamos
+Calendario visual tipo Google Calendar
+Confirmación rápida de guardias
+Notificaciones visibles
+Gestión de disponibilidad intuitiva
+Vista semanal sencilla
+5. Qué evitamos
+Pantallas sobrecargadas
+Formularios largos
+Demasiados clics
+Menús complejos
+Información irrelevante
+6. Qué nadie resuelve todavía
+Gestión específica para abogados de oficio
+Sustituciones validadas por el Colegio
+Reparto equitativo de guardias
+Trazabilidad completa de cambios
+Gestión integrada de incidencias
+7. Conclusión
+Las aplicaciones analizadas ofrecen buenas prácticas de diseño y usabilidad. Sin embargo, ninguna cubre completamente las necesidades del Turno de Oficio. La futura solución deberá combinar calendarios intuitivos, notificaciones efectivas y gestión de disponibilidad con funcionalidades específicas para guardias, sustituciones y trazabilidad legal.

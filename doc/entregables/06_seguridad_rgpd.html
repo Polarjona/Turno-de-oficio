@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Checklist de seguridad y RGPD de la infraestructura</title>
+</head>
+<body>
+
+<h1 class="dtitle">Checklist de seguridad y RGPD de la infraestructura</h1>
+<p class="dlead">La infraestructura cumple desde el primer despliegue, no después. Este checklist fija qué se cifra, quién
+puede entrar y cuánto se conserva antes de que haya código que lo exija de verdad.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:19%">Área</th><th style="width:53%">Requisito</th><th style="width:28%">Cómo se cumple</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cifrado en tránsito</strong></td><td>Todo el tráfico entre cliente, API y base de datos va cifrado; TLS 1.2 o superior, certificados automáticos</td><td>Terminación TLS del proveedor gestionado; sin HTTP sin redirigir</td></tr>
+    <tr><td><strong>Cifrado en reposo</strong></td><td>Los datos personales se almacenan cifrados, y también las copias y las exportaciones</td><td>Cifrado en reposo del motor + claves rotadas; exportaciones solo a canales cifrados</td></tr>
+    <tr><td><strong>Accesos</strong></td><td>SSO colegial con doble factor para roles con capacidad de resolución (RN-37); nadie entra con credenciales compartidas</td><td>OAuth2 + JWT (contrato #29); dominios de servicio con acceso por máquina</td></tr>
+    <tr><td><strong>Auditoría</strong></td><td>Cada cambio de estado deja asiento (RN-20); el registro es de solo lectura y no se borra desde la API</td><td>Tabla de auditoría sin escritura desde la app; el contrato ya está definido en #29</td></tr>
+    <tr><td><strong>Minimizar el dato</strong></td><td>La baja se registra como indisponibilidad, sin motivo clínico (RGPD art. 9); el justificante solo se abre a roles autorizados (RN-24)</td><td>Solo acceso vía la aplicación, con registro de cada apertura en auditoría</td></tr>
+    <tr><td><strong>Encargados del tratamiento</strong></td><td>Todo proveedor que toque datos personales firma su contrato de encargado (art. 28 RGPD); ningún dato sale de la UE</td><td>Contratos firmados con el gestor de base de datos y el correo transaccional antes del primer despliegue</td></tr>
+    <tr><td><strong>Copias y restauración</strong></td><td>Copias diarias con prueba de restauración trimestral; la restauración es un procedimiento, no un deseo. La copia va cifrada y solo puede restaurarla quien tenga rol de responsabilidad de plataforma</td><td>Ver la tarjeta #40 (política de copias y entornos)</td></tr>
+    <tr><td><strong>Gestión de brechas</strong></td><td>Ante una brecha de seguridad, respuesta en 72 horas si es exigible: notificación a la autoridad de control (art. 33 RGPD) y a los afectados si hay riesgo alto (art. 34), con su registro de incidentes (art. 33.5)</td><td>Plan de respuesta documentado, con roles y plantilla de registro; la autoridad de control es la AEPD</td></tr>
+    <tr><td><strong>Evaluación de impacto</strong></td><td>Tratar datos del art. 9 a gran escala es supuesto típico de EIPD (art. 35 RGPD): debe nombrarse antes del primer despliegue real</td><td>Evaluación de impacto incorporada al plan de despliegue; en el ejercicio queda como requisito declarado</td></tr>
+    <tr><td><strong>Retención</strong></td><td>Cada dato tiene su plazo: abierto, cierre y prescripción; lo que no se regula, no se guarda</td><td>Política de retención por tabla, fijada en la #40</td></tr>
+    <tr><td><strong>Ejercicio de derechos</strong></td><td>Acceso, rectificación y supresión se tramitan con el plazo legal, y no rompen el histórico inmutable</td><td>Procedimiento documentado; la supresión es borrado lógico con motivo (RN-20)</td></tr>
+    <tr><td><strong>Supuestos de partida</strong></td><td>Los datos que la ley no fija se fijan como parámetros con versión (RN-27), nunca como silencio</td><td>Los de hoy: 15/7 días, pesos de la tabla 7.1 y Decano con delegación</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Sin infraestructura, no hay cumplimiento</div>
+  <p style="margin:0;">Nada de lo anterior es un brindis: sin cifrado, sin encargados del tratamiento y sin copias con
+  prueba de restauración, el cumplimiento es papel mojado. Esta tarjeta cierra con la decisión de la #33 (stack) y se
+  ejecuta con la #40; sin ambas, no hay primer despliegue.</p>
+</div>
+
+<p class="footnote">Documento de trabajo dentro de un proyecto de ejercicio; no implica la contratación de ningún proveedor. Los
+escenarios y ejemplos citados son ilustrativos y no reproducen datos reales. Ref. TOF-2026-009.</p>
+
+</body>
+</html>

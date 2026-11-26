@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Comparativa de motores de base de datos</title>
+</head>
+<body>
+<div class="entregable">
+<div class="dkicker">Entregable · Akram (Database) · Aporta evidencia al ADR TOF-2026-008</div>
+<h1 class="dtitle">Comparativa de motores de base de datos</h1>
+<p class="dlead">Comparativa por coste, operación, copias y cumplimiento, con recomendación. Sustituye a
+la versión anterior: ya no es una lista genérica de ventajas y desventajas, sino la evidencia
+técnica con las puntuaciones del ADR TOF-2026-008 — <strong>PostgreSQL 16 gestionado: 32/35 ·
+MySQL: 30/35 · NoSQL: 21/35</strong> — y los requisitos concretos del modelo TOF-2026-012.</p>
+
+<h2>1. Requisitos que el motor debe cumplir (del modelo)</h2>
+<table class="grid">
+<thead><tr><th style="width:46%">Requisito</th><th style="width:54%">Por qué</th></tr></thead>
+<tbody>
+<tr><td><code>EXCLUDE USING gist</code> sobre <code>tsrange(inicio_en, fin_en)</code> (RN-04)</td><td>Un abogado no puede tener dos guardias solapadas. MySQL no tiene GiST ni exclusiones; se emularía en la aplicación, sin garantía real.</td></tr>
+<tr><td><code>uuid</code> con <code>gen_random_uuid()</code> y <code>timestamptz</code></td><td>Identificadores de las 14 entidades y estados con instante absoluto (la guardia que cruza la medianoche guarda <code>fin_en</code>, no una hora).</td></tr>
+<tr><td><code>jsonb</code> versionado en PARAMETRO</td><td>Pesos, cupos y umbrales con vigencia (RN-27).</td></tr>
+<tr><td>RPO ≤ 5 min y RTO ≤ 2 h (revisión #47)</td><td>Punto de recuperación casi continuo y bajada en 2 horas; exige copia continua/PITR en el proveedor gestionado.</td></tr>
+<tr><td>Pooling de conexiones y rol de aplicación no propietario</td><td>Condiciones 1 y 4 de la revisión #47: el servicio no migra ni administra, solo opera.</td></tr>
+<tr><td>RGPD: encargado, cifrado y encargado del tratamiento con el proveedor</td><td>Los datos del turno (especialidades VG, indisponibilidades) son sensibles; el proveedor debe ofrecer jurisdicción UE y contrato de encargado.</td></tr>
+</tbody>
+</table>
+
+<h2>2. Puntuación del ADR (criterios: coste, curva de aprendizaje, time-to-market y cumplimiento)</h2>
+<table class="grid">
+<thead><tr><th style="width:24%">Opción</th><th style="width:14%">Puntos</th><th style="width:62%">Criterio decisivo</th></tr></thead>
+<tbody>
+<tr><td><strong>PostgreSQL 16 gestionado</strong></td><td><strong>32 / 35</strong></td><td>Recomendación del ADR: cumple los cuatro criterios y todos los requisitos técnicos de la tabla anterior; copias automáticas y PITR.</td></tr>
+<tr><td>MySQL</td><td>30 / 35</td><td>Perdería 2 puntos frente a PostgreSQL por no cubrir con garantía la exclusión por solapamiento ni JSON versionado como el modelo exige.</td></tr>
+<tr><td>NoSQL</td><td>21 / 35</td><td>Las relaciones del turno (FK, cardinalidades 1:N y N:M, auditoría por entidad) son el modelo natural de un relacional; los documentos romperían la integridad referencial con <code>RESTRICT</code>.</td></tr>
+</tbody>
+</table>
+<p class="small">Las puntuaciones y criterios son los del ADR TOF-2026-008, revisados en la revisión #47
+(TOF-2026-016). Esta tarjeta aporta la evidencia, no cambia la decisión.</p>
+
+<h2>3. Servicios gestionados evaluados</h2>
+<table class="grid">
+<thead><tr><th style="width:28%">Servicio</th><th style="width:36%">Coste y operación</th><th style="width:36%">Cumplimiento</th></tr></thead>
+<tbody>
+<tr><td><strong>RDS PostgreSQL 16 (Multi-AZ)</strong></td><td>Coste medio recurrente; mantenimiento, copias y PITR incluidos.</td><td>Región UE, contrato de encargado; RPO/RTO asumibles.</td></tr>
+<tr><td>Azure Database for PostgreSQL</td><td>Coste medio; alta disponibilidad y copias automáticas.</td><td>Región UE; alternativa válida si el Colegio ya usa Azure.</td></tr>
+<tr><td>Google Cloud SQL PostgreSQL</td><td>Coste medio; gestión simplificada.</td><td>Región UE; alternativa válida si el Colegio ya usa GCP.</td></tr>
+<tr><td>PostgreSQL 16 autoadministrado (docker compose)</td><td><strong>0 €</strong>; la administración corre a cargo del equipo. Es la opción del stack gratuito de ejercicio (TOF-2026-017).</td><td>Sin encargado externo; válido solo para el ejercicio, no para producción real.</td></tr>
+</tbody>
+</table>
+
+<div class="box ok">
+<div class="box-title">Recomendación</div>
+<p style="margin:0;"><strong>PostgreSQL 16, gestionado en producción (32/35) y autoadministrado en el ejercicio
+(0 €).</strong> Es la única opción que garantiza la exclusión por solapamiento en el motor, la
+auditoría append-only con <code>REVOKE</code> y los parámetros versionados, con la operación
+cubierta por el proveedor en producción y sin coste en la versión gratuita de ejercicio.</p>
+</div>
+<p class="footnote">Tarjeta de Akram (Database) «Comparativa de motores de base de datos», plazo 20 de noviembre.
+Decisión de referencia: ADR TOF-2026-008 y revisión #47 (TOF-2026-016). Stack completo: TOF-2026-017.
+Documento de ejercicio, sin interlocución con el Colegio.</p>
+</div>
+</body>
+</html>

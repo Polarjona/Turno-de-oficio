@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Flujo ETL de carga inicial</title>
+</head>
+<body>
+
+<h1 class="dtitle">Flujo ETL de carga inicial</h1>
+<p class="dlead">Cómo entran los datos históricos sin romper el modelo: cuatro estaciones —origen, staging, validado,
+carga— con mapeo de campos, reglas de rechazo y tratamiento de errores que deja rastro de cada fila.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:13%">Estación</th><th style="width:29%">Entrada</th><th style="width:33%">Operación</th><th style="width:25%">Salida y responsable</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1 · Origen</strong></td><td>La hoja del trimestre, el listado colegial y los partes, tal como vienen</td>
+      <td><strong>Sin tocar el origen.</strong> Se copia y se registra el lote: fichero, fuente y fecha de recepción</td>
+      <td>Lote archivado con su suma de control · ETL</td></tr>
+    <tr><td><strong>2 · Staging</strong></td><td>La copia, con todo el texto en bruto</td>
+      <td>Normalización sin reglas de negocio: fechas a ISO, texto recortado, nombres en mayúsculas, sin duplicar ni saltar filas</td>
+      <td>Tabla de staging con la fila original y los campos ya tipados · ETL</td></tr>
+    <tr><td><strong>3 · Validado</strong></td><td>Staging completo</td>
+      <td>Reglas de rechazo (abajo): identidad del letrado, vigencia de la habilitación, franja dentro del cuadrante, solapes y duplicados. Sin excepciones silenciosas</td>
+      <td>Dos conjuntos: filas <strong>aceptadas</strong> y filas en <strong>cuarentena</strong> con el motivo · ETL + Coordinación</td></tr>
+    <tr><td><strong>4 · Carga</strong></td><td>Solo filas aceptadas</td>
+      <td>Inserción en el modelo contra las 14 entidades del cap. 21: <strong>USUARIO, ABOGADO, ESPECIALIDAD</strong> (maestro), <strong>TIPO_GUARDIA, CUADRANTE, GUARDIA y HABILITACION</strong> (operativo) y, cuando la fuente los trae, <strong>DISPONIBILIDAD, SOLICITUD, INCIDENCIA, PARTE_GUARDIA, JUSTIFICANTE, NOTIFICACION y AUDITORIA</strong> —con origen, fecha de carga y responsable; la carga es <strong>idempotente</strong>: repetirla no duplica nada</td>
+      <td>Cuadrante versionado publicado con informe de carga · Coordinación</td></tr>
+  </tbody>
+</table>
+
+<h1 class="dtitle pagebreak" style="font-size:13.6pt;">Equivalencia: de la hoja al modelo</h1>
+<p class="dlead" style="margin-bottom:2.4mm;">La hoja no se parece al modelo: hay que traducir cada columna con una regla escrita.
+Esta tabla es la que usan el mapeo automático y la revisión manual, y no puede cambiar sin nueva versión del flujo.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:16%">Campo en la hoja</th><th style="width:16%">Campo en el modelo</th><th style="width:38%">Transformación</th><th style="width:30%">Ejemplo</th></tr></thead>
+  <tbody>
+    <tr><td>«García»</td><td><strong>USUARIO</strong> + <strong>ABOGADO</strong> (<code>num_colegiado</code>, <code>usuario_id</code>)</td><td>Coincidencia con el listado colegial por apellidos y nombre; <code>num_colegiado</code> es la clave de enlace. Si ambigüedad, cuarentena con motivo «identidad»</td><td>«García López, M» → colegiado 003142</td></tr>
+    <tr><td>«12-nov»</td><td><strong>GUARDIA</strong> (<code>fecha</code>, <code>hora_inicio/hora_fin</code>, <code>cuadrante_id</code>)</td><td>Fechas en formato texto o Excel se convierten a ISO; el año se toma del lote, nunca a ojo</td><td>«12-nov» → 2026-11-12</td></tr>
+    <tr><td>«Penal»</td><td><strong>ESPECIALIDAD</strong> (<code>codigo</code>) → <strong>GUARDIA.especialidad_id</strong></td><td>Normalización contra <code>ESPECIALIDAD.codigo</code>; texto libre no catalogado entra en cuarentena. Nunca «materia» libre</td><td>«Penal» → PENAL</td></tr>
+    <tr><td>«08:00-14:00»</td><td><strong>TIPO_GUARDIA</strong> (<code>codigo</code>, <code>modalidad</code>, <code>hora_inicio/fin</code>, <code>peso_computo</code>) → <strong>GUARDIA.tipo_guardia_id</strong></td><td>La franja se resuelve contra el catálogo de <code>TIPO_GUARDIA</code>; si no existe, cuarentena. No existe «FRANJA» como entidad</td><td>«08:00-14:00» → TG-MANANA</td></tr>
+    <tr><td>Habilitación (listado)</td><td><strong>HABILITACION</strong> (<code>abogado_id</code>, <code>especialidad_id</code>, <code>fecha_habilitacion</code>, <code>caducidad</code>, <code>estado</code>)</td><td>Vigencia por materia y fecha; la caducada bloquea la asignación. <strong>Se inserta en la estación 4</strong> (no solo se valida en la 3)</td><td>Penal vigente hasta 2027-03-31</td></tr>
+    <tr><td>«2026 · T4 · v1» + estado de franja</td><td><strong>CUADRANTE</strong> (<code>anio</code>, <code>periodo</code>, <code>version</code>, <code>estado</code>) + <strong>GUARDIA.estado / origen</strong></td><td>El lote crea la versión del cuadrante; el estado de la hoja se traduce a <code>estado</code> tipificado (<em>pendiente, designada, acusada, en_curso, cerrada, descubierta</em>) y a <code>origen</code> (<em>ordinaria, urgente, refuerzo</em>)</td><td>T4 v1, franja descubierta → <code>descubierta</code></td></tr>
+    <tr><td>Baja / vacaciones / formación (fechas)</td><td><strong>DISPONIBILIDAD</strong> (<code>abogado_id</code>, <code>fecha_inicio/fin</code>, <code>tipo</code>, <code>estado</code>)</td><td>Tipo tipificado, sin motivo clínico (art. 9). Los justificantes van a <strong>JUSTIFICANTE</strong> (<code>referencia_fichero</code>, <code>tipo_documento</code>, <code>acceso_restringido</code>)</td><td>Baja 10-20 nov → indisponibilidad validada</td></tr>
+    <tr><td>Excusa / permuta / sustitución</td><td><strong>SOLICITUD</strong> (<code>guardia_id</code>, <code>tipo</code>, <code>solicitante_id</code>, <code>sustituto_id</code>, <code>motivo</code>, <code>estado</code>)</td><td>Solo una solicitud <em>abierta</code> por guardia; la resolución queda en <code>fecha_resolucion / resuelta_por</code></td><td>Excusa aceptada → <code>resuelta_aceptada</code></td></tr>
+    <tr><td>Incidencias y parte en los partes</td><td><strong>INCIDENCIA</strong> (<code>categoria</code>, <code>gravedad</code>, <code>descripcion</code>) + <strong>PARTE_GUARDIA</strong> (<code>guardia_id</code> único, <code>realizada</code>, <code>hora_entrada/salida</code>, <code>validado</code>)</td><td>Un <code>PARTE_GUARDIA</code> por <code>GUARDIA</code> (1:1); no cierra sin horas y actuaciones. Cada cambio deja asiento en <strong>AUDITORIA</strong> (<code>entidad + entidad_id</code>, inmutable) y aviso en <strong>NOTIFICACION</strong> (<code>usuario_id</code>, <code>canal</code>, <code>leida</code>)</td><td>Parte 08:05-14:02, realizado</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Qué pasa cuando algo no cuadra</div>
+  <ul class="tight" style="margin-bottom:0;">
+    <li><strong>Rechazo de fila:</strong> fecha imposible, letrado no encontrado, materia no catalogada, solape con otra guardia del mismo día o duplicado dentro del mismo lote. La fila entra en cuarentena con motivo y origen.</li>
+    <li><strong>Rechazo de lote:</strong> la plantilla de la hoja no se reconoce o falta una columna obligatoria. Todo el lote se rechaza y se avisa; no se carga «a ver si sale».</li>
+    <li><strong>Nada se arregla en silencio:</strong> el informe de carga lista aceptadas, cuarentena y motivo, y la coordinación firma el lote antes de publicar la versión. Si hay filas en cuarentena, el cuadrante se publica con esa marca y sin ellas.</li>
+    <li><strong>Reversibilidad:</strong> cada carga crea una versión; si la coordinación detecta un error, se descarta la versión y se vuelve a cargar del origen. El origen jamás se sobrescribe.</li>
+  </ul>
+</div>
+
+<p class="footnote">Relación con el inventario (Ref. TOF-2026-005): este flujo exige las fuentes que allí se listan —la hoja del
+trimestre, el listado colegial y los partes— y produce el cuadrante versionado que luego se publica, se notifica y sirve de base
+a la certificación. Sin datos cargados, el reparto no puede explicarse ni defenderse (guía de la píldora, diapositiva 6).</p>
+
+</body>
+</html>

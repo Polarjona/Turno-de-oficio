@@ -1,0 +1,34 @@
+Volumetría y Crecimiento a 5 Años
+Proyecto: Turno de Oficio
+Objetivo
+Dimensionar el volumen de datos esperado antes de seleccionar el motor de base de datos.
+Datos de partida
+- 900 letrados registrados.
+- 124 franjas de servicio al mes.
+- 1.488 franjas al año.
+- Horizonte de análisis: 5 años.
+Estimación de filas por tabla
+Usuarios: 900 filas iniciales, crecimiento anual aproximado de 50 registros.
+Abogados: 900 filas iniciales, crecimiento anual aproximado de 50 registros.
+Franjas: 1.488 registros anuales.
+Asignaciones: 1.488 registros anuales.
+Expedientes: 6.000 registros anuales estimados.
+Historial: 12.000 registros anuales estimados.
+Tamaño estimado en disco
+Usuarios: 0,2 MB/año.
+Abogados: 0,2 MB/año.
+Franjas: 0,3 MB/año.
+Asignaciones: 0,5 MB/año.
+Expedientes: 3 MB/año.
+Historial: 5 MB/año.
+Total estimado primer año: 9 MB.
+Crecimiento previsto
+Año 1: 9 MB.
+Año 2: 18 MB.
+Año 3: 27 MB.
+Año 4: 36 MB.
+Año 5: 45 MB.
+Conclusión
+El crecimiento previsto es moderado y puede ser soportado sin problemas por motores
+relacionales como PostgreSQL o MySQL. La estimación permite dimensionar correctamente el
+almacenamiento y justificar la selección de una base de datos relacional.

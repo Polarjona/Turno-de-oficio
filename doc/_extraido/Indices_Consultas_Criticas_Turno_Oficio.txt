@@ -1,0 +1,45 @@
+Índices y Consultas Críticas
+Proyecto: Turno de Oficio
+Objetivo
+Garantizar que las consultas relacionadas con el calendario de guardias y el cálculo de equidad
+respondan de forma inmediata incluso con el crecimiento previsto de datos.
+Patrones de Consulta Identificados
+1. Consulta de cuadrantes por fecha.
+2. Consulta de guardias asignadas a un letrado concreto.
+3. Búsqueda de expedientes por estado.
+4. Cálculo de equidad en la distribución de guardias.
+5. Obtención de históricos de asignaciones.
+Plan de Índices
+Tabla abogados:
+- Índice sobre num_colegiado.
+- Índice sobre email.
+Tabla cuadrante:
+- Índice sobre fecha_guardia.
+- Índice compuesto sobre fecha_guardia e id_abogado.
+Tabla expedientes:
+- Índice sobre estado.
+- Índice sobre fecha_creacion.
+Tabla asignaciones:
+- Índice sobre id_abogado.
+- Índice sobre id_expediente.
+- Índice compuesto sobre id_abogado y fecha_asignacion.
+Dataset de Pruebas
+- 900 letrados registrados.
+- 124 franjas mensuales.
+- 1.488 franjas anuales.
+- Más de 30.000 registros simulados entre asignaciones e históricos.
+Medición de Rendimiento
+Consulta de cuadrante por fecha: tiempo esperado inferior a 50 ms.
+Búsqueda de guardias por abogado: tiempo esperado inferior a 50 ms.
+Consulta de expedientes por estado: tiempo esperado inferior a 100 ms.
+Cálculo de equidad de reparto: tiempo esperado inferior a 200 ms.
+Consultas Críticas
+SELECT * FROM cuadrante WHERE fecha_guardia = ?;
+SELECT * FROM asignaciones WHERE id_abogado = ?;
+SELECT estado, COUNT(*) FROM expedientes GROUP BY estado;
+SELECT id_abogado, COUNT(*) AS total_guardias FROM asignaciones GROUP BY id_abogado;
+
+Conclusión
+La estrategia de indexación propuesta garantiza tiempos de respuesta reducidos para las
+operaciones más frecuentes del sistema y asegura la escalabilidad necesaria para el crecimiento
+previsto del proyecto.

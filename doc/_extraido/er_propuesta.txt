@@ -1,0 +1,600 @@
+=== PAGE 36 ===
+21 Modelo entidad-relación: diccionario de datos
+Catorce entidades sostienen toda la funcionalidad. La guardia es el centro; a su alrededor se organizan la
+planificación, las personas, la habilitación, la movilidad y el control.
+El diccionario que sigue describe cada entidad con sus campos, su tipo y su papel. Las claves principales se
+marcan en color; las claves ajenas se indican con el sufijo _id. Todas las entidades incorporan, además, los
+campos comunes de auditoría: creado_en, creado_por, modificado_en y version.
+USUARIO · cuenta y credenciales
+id
+UUID · PK
+nombre
+texto
+apellidos
+texto
+email
+texto · único
+password_hash
+hash
+rol
+enum
+estado
+enum
+fecha_alta
+fecha
+ultimo_acceso
+fecha-hora
+ABOGADO · colegiado en el turno
+id
+UUID · PK
+usuario_id
+FK · único
+num_colegiado
+texto · único
+telefono_guardia
+texto
+orden_turno
+entero
+fecha_alta_turno
+fecha
+activo
+booleano
+zona
+texto
+ESPECIALIDAD · materia del turno
+id
+UUID · PK
+codigo
+texto · único
+nombre
+texto
+descripcion
+texto
+requiere_formacion
+booleano
+activa
+booleano
+HABILITACION · acreditación por materia
+id
+UUID · PK
+abogado_id
+FK · ABOGADO
+especialidad_id
+FK · ESPECIALIDAD
+fecha_habilitacion
+fecha
+caducidad
+fecha · nulo
+estado
+enum
+soporte
+texto
+TIPO_GUARDIA · plantilla de servicio
+id
+UUID · PK
+codigo
+texto · único
+especialidad_id
+FK · ESPECIALIDAD
+modalidad
+enum
+hora_inicio / hora_fin
+hora
+cruza_medianoche
+booleano
+letrados_previstos
+entero
+peso_computo
+decimal
+descanso_posterior_h
+entero
+CUADRANTE · versión publicada
+id
+UUID · PK
+anio
+entero
+periodo
+texto
+version
+entero
+estado
+enum
+fecha_publicacion
+fecha-hora
+publicado_por
+FK · USUARIO
+motivo_cambio
+texto
+GUARDIA · servicio a cubrir
+id
+UUID · PK
+cuadrante_id
+FK · CUADRANTE
+tipo_guardia_id
+FK · TIPO_GUARDIA
+especialidad_id
+FK · ESPECIALIDAD
+abogado_id
+FK · ABOGADO
+fecha
+fecha
+hora_inicio / hora_fin
+hora
+estado
+enum
+origen
+enum
+motivo_asignacion
+texto
+DISPONIBILIDAD · ausencia comunicada
+id
+UUID · PK
+abogado_id
+FK · ABOGADO
+fecha_inicio
+fecha
+fecha_fin
+fecha
+tipo
+enum
+estado
+enum
+observaciones
+texto
+validada_por
+FK · USUARIO
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-001   |   Propuesta funcional · Gestión del Turno de Oficio
+Classification: Internal
+36 / 45
+
+
+=== PAGE 37 ===
+SOLICITUD · excusa, permuta, sustitución
+id
+UUID · PK
+guardia_id
+FK · GUARDIA
+tipo
+enum
+solicitante_id
+FK · ABOGADO
+sustituto_id
+FK · ABOGADO · nulo
+motivo
+enum
+detalle
+texto
+estado
+enum
+fecha_solicitud
+fecha-hora
+fecha_resolucion
+fecha-hora
+resuelta_por
+FK · USUARIO
+motivo_resolucion
+texto
+INCIDENCIA · evento en la guardia
+id
+UUID · PK
+guardia_id
+FK · GUARDIA
+categoria
+enum
+gravedad
+enum
+descripcion
+texto
+abierta_por
+FK · USUARIO
+fecha_apertura
+fecha-hora
+fecha_cierre
+fecha-hora
+resolucion
+texto
+PARTE_GUARDIA · cierre y acreditación
+id
+UUID · PK
+guardia_id
+FK · único
+realizada
+booleano
+hora_entrada / hora_salida
+hora
+actuaciones
+texto
+observaciones
+texto
+validado
+booleano
+validado_por
+FK · USUARIO
+JUSTIFICANTE · documento acreditativo
+id
+UUID · PK
+solicitud_id
+FK · nulo
+disponibilidad_id
+FK · nulo
+referencia_fichero
+texto
+tipo_documento
+enum
+fecha_subida
+fecha-hora
+acceso_restringido
+booleano
+NOTIFICACION · aviso y acuse
+id
+UUID · PK
+usuario_id
+FK · USUARIO
+tipo
+enum
+referencia_tipo / id
+texto
+canal
+enum
+estado_entrega
+enum
+fecha_envio
+fecha-hora
+fecha_lectura
+fecha-hora
+leida
+booleano
+AUDITORIA · registro append-only
+id
+UUID · PK
+entidad
+texto
+entidad_id
+UUID
+accion
+enum
+estado_anterior
+texto
+estado_nuevo
+texto
+motivo
+texto
+actor_id
+FK · USUARIO
+fecha
+fecha-hora
+origen
+enum
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-001   |   Propuesta funcional · Gestión del Turno de Oficio
+Classification: Internal
+37 / 45
+
+
+=== PAGE 38 ===
+22 Diagrama entidad-relación
+El diagrama muestra las relaciones principales y las cardinalidades. Para preservar la legibilidad se
+representan los campos identificativos; el detalle completo figura en el diccionario del capítulo anterior.
+1
+1
+1
+N
+N
+1
+1
+N
+1
+N
+1
+N
+1
+N
+1
+N
+1
+N
+1
+1
+1
+N
+1
+N
+USUARIO
+cuenta y credenciales
+id
+UUID
+nombre
+texto
+email
+texto
+rol
+enum
+estado
+enum
+fecha_alta
+fecha
+ABOGADO
+colegiado del turno
+id
+UUID
+usuario_id
+FK
+num_colegiado
+texto
+orden_turno
+entero
+fecha_alta_turno
+fecha
+activo
+bool
+ESPECIALIDAD
+materia del turno
+id
+UUID
+codigo
+texto
+nombre
+texto
+requiere_formacion
+bool
+DISPONIBILIDAD
+ausencia comunicada
+id
+UUID
+abogado_id
+FK
+fecha_inicio
+fecha
+fecha_fin
+fecha
+tipo
+enum
+estado
+enum
+HABILITACION
+acreditación vigente
+id
+UUID
+abogado_id
+FK
+especialidad_id
+FK
+fecha_habilitacion
+fecha
+caducidad
+fecha
+estado
+enum
+TIPO_GUARDIA
+plantilla de servicio
+id
+UUID
+especialidad_id
+FK
+modalidad
+enum
+hora_inicio
+hora
+peso_computo
+decimal
+letrados
+entero
+SOLICITUD
+excusa / permuta
+id
+UUID
+guardia_id
+FK
+tipo
+enum
+solicitante_id
+FK
+sustituto_id
+FK
+estado
+enum
+GUARDIA
+servicio a cubrir
+id
+UUID
+cuadrante_id
+FK
+tipo_guardia_id
+FK
+abogado_id
+FK
+fecha
+fecha
+estado
+enum
+CUADRANTE
+versión publicada
+id
+UUID
+anio
+entero
+periodo
+texto
+version
+entero
+estado
+enum
+JUSTIFICANTE
+documento acreditativo
+id
+UUID
+solicitud_id
+FK
+disponibilidad_id
+FK
+fecha_subida
+fecha-hora
+PARTE_GUARDIA
+cierre del servicio
+id
+UUID
+guardia_id
+FK
+realizada
+bool
+hora_entrada
+hora
+validado
+bool
+INCIDENCIA
+evento en guardia
+id
+UUID
+guardia_id
+FK
+categoria
+enum
+gravedad
+enum
+estado
+enum
+NOTIFICACION
+aviso y acuse
+id
+UUID
+usuario_id
+FK
+tipo
+enum
+canal
+enum
+estado_entrega
+enum
+AUDITORIA
+registro inmutable (*)
+id
+UUID
+entidad
+texto
+entidad_id
+UUID
+accion
+texto
+actor_id
+FK
+Figura 22.1 — Modelo entidad-relación. La guardia (centro) concentra la designación, la movilidad, la incidencia y el cierre del servicio.
+Cómo leer el diagrama
+1 : N — un registro de la entidad origen se relaciona con varios de la destino; por ejemplo, un abogado con
+muchas guardias a lo largo del tiempo.
+1 : 1 — relación única en ambos sentidos; por ejemplo, cada cuenta de usuario corresponde a un único
+abogado, y cada guardia tiene un único parte.
+N : M resuelto — la relación entre abogado y especialidad se materializa en HABILITACION, que además
+conserva la fecha y el estado de la acreditación.
+Relación polimórfica — AUDITORIA referencia cualquier entidad mediante el par entidad + entidad_id; por eso se
+representa sin aristas para no sobrecargar el dibujo.
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-001   |   Propuesta funcional · Gestión del Turno de Oficio
+Classification: Internal
+38 / 45
+
+
+=== PAGE 39 ===
+23 Relaciones, integridad y validaciones
+El modelo no solo describe datos: impone condiciones. Las validaciones que siguen son las que impiden
+que el sistema acepte un estado imposible, como una guardia sin especialidad o un sustituto sin
+habilitación.
+Tabla 23.1 — Relaciones y cardinalidades
+Relación
+Cardinalidad
+Regla de integridad
+USUARIO — ABOGADO
+1 : 1
+Un abogado no puede existir sin cuenta; una cuenta con rol
+«abogado» debe tener su registro asociado.
+ABOGADO — HABILITACION
+1 : N
+Puede tener varias materias; no puede repetirse la misma
+materia con estado vigente.
+ESPECIALIDAD — HABILITACION
+1 : N
+Una materia puede quedar inactiva, pero no puede eliminarse si
+existen habilitaciones asociadas.
+ESPECIALIDAD — TIPO_GUARDIA
+1 : N
+Toda guardia debe tener una materia definida; no se admiten
+guardias genéricas.
+ABOGADO — DISPONIBILIDAD
+1 : N
+Los periodos no pueden solaparse con el mismo tipo salvo
+corrección registrada.
+ABOGADO — GUARDIA
+1 : N
+Un abogado puede tener varias guardias, nunca solapadas; la
+validación se comprueba al asignar y al publicar.
+CUADRANTE — GUARDIA
+1 : N
+Toda guardia pertenece a un cuadrante y a una versión; el
+cambio de titular no la saca de su cuadrante.
+GUARDIA — SOLICITUD
+1 : N
+Puede haber varias solicitudes históricas; solo una puede estar
+abierta a la vez.
+GUARDIA — INCIDENCIA
+1 : N
+Una guardia puede acumular incidencias; cada una exige
+categoría y gravedad.
+GUARDIA — PARTE_GUARDIA
+1 : 1
+Cada guardia tiene un único parte, que se crea al cerrar la franja.
+SOLICITUD — JUSTIFICANTE
+1 : N
+Opcional; si el motivo lo exige, debe existir al menos uno antes de
+resolver.
+DISPONIBILIDAD — JUSTIFICANTE
+1 : N
+Opcional, salvo baja médica si la norma colegial lo requiere;
+acceso restringido.
+USUARIO — NOTIFICACION
+1 : N
+Toda notificación tiene destinatario, canal y estado de entrega.
+AUDITORIA — (todas)
+N : 1 polimórfica
+Cada asiento referencia entidad e identificador; no se actualiza ni
+se elimina.
+Validaciones que el modelo impone
+Validación
+Momento en que se comprueba
+Consecuencia si falla
+Habilitación vigente en la materia
+Al asignar, al sustituir y al publicar
+Operación rechazada con motivo visible
+Ausencia de solapamiento horario
+Al asignar, al permutar y al publicar
+Operación rechazada
+Indisponibilidad validada en la franja
+Al asignar y al publicar
+Operación rechazada
+Cupo de guardias del periodo
+Al asignar
+Operación rechazada salvo excepción
+motivada
+Descanso posterior
+Al asignar
+Operación rechazada si la regla está
+configurada
+Integridad del cuadrante
+Al publicar
+No se publica con huecos sin justificar
+Parte completo
+Al cerrar la guardia
+No se cierra sin horas y actuaciones
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-001   |   Propuesta funcional · Gestión del Turno de Oficio
+Classification: Internal
+39 / 45
+
+
+=== PAGE 40 ===
+Validación
+Momento en que se comprueba
+Consecuencia si falla
+Inmutabilidad de auditoría
+En cualquier modificación
+Operación prohibida para todos los roles
+06/11/2026   |   ©2026 Inetum   |   Ref. TOF-2026-001   |   Propuesta funcional · Gestión del Turno de Oficio
+Classification: Internal
+40 / 45
+
+

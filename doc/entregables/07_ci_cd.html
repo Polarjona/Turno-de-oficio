@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Entornos, CI/CD y gestión de secretos</title>
+</head>
+<body>
+
+<h1 class="dtitle">Entornos, CI/CD y gestión de secretos</h1>
+<p class="dlead">Poder desplegar sin miedo desde el primer día de código: tres entornos separados, un pipeline que no ata
+a nadie a la máquina de uno y una política de secretos que ni el equipo conoce.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:16%">Entorno</th><th style="width:30%">Qué contiene</th><th style="width:28%">Datos y secretos</th><th style="width:26%">Quién despliega</th></tr></thead>
+  <tbody>
+    <tr><td><strong>dev</strong></td><td>Código en ramas, pruebas automáticas y datos de prueba (#38)</td><td>Datos ficticios; credenciales efímeras de servicio</td><td>El desarrollador, contra su rama</td></tr>
+    <tr><td><strong>staging</strong></td><td>El `main` recién mergeado, con las migraciones aplicadas y la prueba del flujo ETL en verde</td><td>Dataset de prueba del #38 (nunca datos reales: el entorno de pruebas no es un tratamiento)</td><td>El pipeline, sin intervención manual</td></tr>
+    <tr><td><strong>prod</strong></td><td>La versión aprobada en Review, con las migraciones verificadas antes</td><td>Secretos reales en el gestor de secretos; acceso con SSO y doble factor</td><td>Solo tras aprobación en Review (tarjetas #25 y #41)</td></tr>
+  </tbody>
+</table>
+
+<div class="box">
+  <div class="box-title">Pipeline mínimo</div>
+  <ul class="tight" style="margin-bottom:0;">
+    <li><strong>Por cada pull request:</strong> chequeo del contrato de API contra las rutas del backend, pruebas automáticas del flujo ETL (staging → validado → carga) y análisis automático de accesibilidad (axe/Lighthouse) sobre las pantallas, revisado a mano si hay contraste (la accesibilidad no se compila).</li>
+    <li><strong>Al mergear a `main`:</strong> despliegue automático a staging, con las migraciones aplicadas y comprobación de que la carga de prueba no produce filas en cuarentena. <strong>Si una migración rompe:</strong> se revierte con su migración inversa en staging; en prod no se despliega hasta que exista y esté verificada, y el último despliegue bueno queda intacto.</li>
+    <li><strong>De staging a prod:</strong> manual, tras la revisión en Review; sin atajos: el pipeline no conoce la contraseña, las claves viven en el gestor de secretos.</li>
+    <li><strong>Reversibilidad:</strong> cada despliegue en prod es una versión del cuadrante y de la app; si algo falla, se vuelve a la versión anterior sin tocar el histórico.</li>
+  </ul>
+</div>
+
+<table class="grid">
+  <thead><tr><th style="width:20%">Política de secretos</th><th style="width:80%">Regla</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sin secretos en el repo</strong></td><td>Las claves viven en el gestor de secretos del proveedor; en local, en variables de entorno, nunca como fichero versionado.</td></tr>
+    <tr><td><strong>Circulación mínima</strong></td><td>Cada entorno tiene las suyas; una clave de dev no sirve en staging ni en prod, ni al revés.</td></tr>
+    <tr><td><strong>Rotación</strong></td><td>Las claves de base de datos y de correo se rotan con cada despliegue en prod y, en cualquier caso, una vez al trimestre.</td></tr>
+    <tr><td><strong>Acceso al gestor</strong></td><td>Solo los roles con responsabilidad de plataforma, con doble factor; el resto del equipo no las ve.</td></tr>
+  </tbody>
+</table>
+
+<h1 class="dtitle pagebreak" style="font-size:13.6pt;">Copias y recuperación</h1>
+<p class="dlead" style="margin-bottom:2.4mm;">La copia que no se ha restaurado no es una copia. Esta política cierra con la
+checklist de seguridad (TOF-2026-009) y con la decisión del stack (TOF-2026-008).</p>
+
+<table class="grid">
+  <thead><tr><th style="width:22%">Ámbito</th><th style="width:78%">Regla</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Frecuencia</strong></td><td>Copias diarias de la base de datos, con retención de 30 días y copia mensual de un año. Nada en texto plano.</td></tr>
+    <tr><td><strong>Prueba de restauración</strong></td><td>Trimestral, en un entorno aislado: se restaura la copia de hace 30 días y se comprueba que abren el último cuadrante y la auditoría.</td></tr>
+    <tr><td><strong>Retención de datos</strong></td><td>Cada tabla tiene su plazo: cerrado, validado y prescrito. Lo que no se regula, no se guarda.</td></tr>
+    <tr><td><strong>Recuperación</strong></td><td>Objetivo: volver a tener el servicio en una jornada laboral tras una caída total, con el último cuadrante publicado íntegro.</td></tr>
+  </tbody>
+</table>
+
+<p class="footnote">Documento de trabajo dentro de un proyecto de ejercicio; no implica la compra de ningún servicio ni la
+subida de datos reales. Los nombres de entornos y las cifras son ilustrativos. Ref. TOF-2026-010.</p>
+
+</body>
+</html>

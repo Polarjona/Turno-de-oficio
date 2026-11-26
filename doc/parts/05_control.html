@@ -1,0 +1,156 @@
+<!-- ============ CAPÍTULO 18 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 18</span>Panel de control e indicadores</h1>
+<p class="chlead">El panel no es un adorno para la presentación: es el instrumento con el que la Junta justifica ante
+el colectivo que el reparto es equitativo y que el servicio está cubierto.</p>
+
+<div class="fig">
+  <div class="wf-window">
+    <div class="wf-bar"><span>Panel de control · Turno de Oficio · Marzo 2027</span><span>Coordinación · datos a 31/03</span></div>
+    <div class="wf-body">
+      <div class="wf-kpis">
+        <div class="wf-kpi"><div class="k">Cobertura</div><div class="v">98,4 %</div><div class="s">2 franjas descubiertas de 124</div></div>
+        <div class="wf-kpi"><div class="k">Sin acuse</div><div class="v">6</div><div class="s">de 124 designaciones</div></div>
+        <div class="wf-kpi"><div class="k">Solicitudes</div><div class="v">11</div><div class="s">3 pendientes de resolución</div></div>
+        <div class="wf-kpi"><div class="k">Equidad</div><div class="v">0,12</div><div class="s">desviación relativa (límite 0,15)</div></div>
+        <div class="wf-kpi"><div class="k">Incidencias</div><div class="v">4</div><div class="s">1 de gravedad alta, cerrada</div></div>
+      </div>
+      <div class="bars">
+        <div class="bar-row"><span class="lbl">Penal</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="num">6,4</span></div>
+        <div class="bar-row"><span class="lbl">Violencia género</span><span class="bar-track"><span class="bar-fill" style="width:78%"></span></span><span class="num">5,1</span></div>
+        <div class="bar-row"><span class="lbl">Menores</span><span class="bar-track"><span class="bar-fill" style="width:64%"></span></span><span class="num">4,2</span></div>
+        <div class="bar-row"><span class="lbl">Civil</span><span class="bar-track"><span class="bar-fill" style="width:58%"></span></span><span class="num">3,8</span></div>
+        <div class="bar-row"><span class="lbl">Extranjería</span><span class="bar-track"><span class="bar-fill" style="width:96%; background:#b5762a;"></span></span><span class="num">6,9</span></div>
+      </div>
+      <div style="font-size:6.4pt; color:var(--muted); margin-top:1.6mm;">Guardias medias por letrado habilitado y
+      materia. La barra en ámbar señala materias con carga por encima de la media del turno.</div>
+    </div>
+  </div>
+  <div class="fig-cap">Figura 18.1 — Panel de control de la coordinación, con los cinco indicadores de seguimiento.</div>
+</div>
+
+<h2>Definición de los indicadores</h2>
+<p>Un indicador vale lo que vale su definición. Estas son las que se aplican, sin ambigüedad:</p>
+
+<table class="grid">
+  <thead><tr><th style="width:24%">Indicador</th><th style="width:34%">Cálculo</th><th style="width:42%">Lectura</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Cobertura</strong></td><td>Guardias con titular efectivo validado ÷ guardias planificadas del periodo.</td>
+      <td>Por debajo del 100 % hay un problema concreto que debe poder nombrarse. No se redondea: se listan las franjas afectadas.</td></tr>
+    <tr><td><strong>Equidad</strong></td><td>(Cómputo máximo − cómputo mínimo) ÷ cómputo medio, entre letrados del mismo turno y materia.</td>
+      <td>Mide la dispersión, no la media. Un valor bajo indica reparto homogéneo; un valor alto identifica concentración.</td></tr>
+    <tr><td><strong>Acuse</strong></td><td>Guardias con acuse ÷ guardias notificadas.</td>
+      <td>Bajo acuse no significa incumplimiento: suele indicar problemas de comunicación que conviene corregir.</td></tr>
+    <tr><td><strong>Tasa de excusas</strong></td><td>Excusas estimadas ÷ guardias designadas.</td>
+      <td>Permite detectar materias o periodos con dificultad estructural de cobertura.</td></tr>
+    <tr><td><strong>Tiempo de respuesta</strong></td><td>Desde el aviso hasta la confirmación de comparecencia.</td>
+      <td>Es el indicador crítico en asistencia al detenido; se analiza por franja y por sede.</td></tr>
+    <tr><td><strong>Urgencias</strong></td><td>Designaciones urgentes ÷ designaciones totales.</td>
+      <td>Un valor alto revela fallos en la planificación previa, no en la ejecución.</td></tr>
+  </tbody>
+</table>
+
+<h2>Informes</h2>
+<ul class="tight">
+  <li><strong>Informe mensual de cobertura</strong>, con las franjas descubiertas y su causa.</li>
+  <li><strong>Informe de equidad</strong> por letrado, materia y periodo, con el cómputo ponderado y su justificación.</li>
+  <li><strong>Informe de movilidad</strong>: excusas, permutas, sustituciones, tiempos de resolución y resultados.</li>
+  <li><strong>Certificación de guardias realizadas</strong> por letrado y periodo, a partir de los partes validados.</li>
+  <li><strong>Informe anual</strong> para la memoria del Colegio y para la planificación del ejercicio siguiente.</li>
+</ul>
+
+<div class="box">
+  <div class="box-title">Un dato que no se publica</div>
+  <p>Los informes muestran cómputos y disponibilidad, nunca causas clínicas ni el detalle de las ausencias. La
+  equidad se explica con números de carga, que es lo que el colectivo necesita para confiar en el reparto; la
+  intimidad de cada letrado queda fuera del informe.</p>
+</div>
+
+<!-- ============ CAPÍTULO 19 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 19</span>Catálogo de casos de uso</h1>
+<p class="chlead">Cada caso de uso describe una interacción completa, con su disparador, su resultado y sus reglas.
+Es la base para priorizar el desarrollo y para redactar las pruebas de aceptación.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:7%">ID</th><th style="width:22%">Caso de uso</th><th style="width:15%">Actor</th><th style="width:34%">Flujo resumido</th><th style="width:22%">Resultado</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">CU-01</td><td>Definir el calendario del periodo</td><td>Coordinación</td><td>Elegir tipos de guardia, fechas, franjas y modalidades; validar contra festivos y disponibles.</td><td>Calendario marco en borrador</td></tr>
+    <tr><td class="mono">CU-02</td><td>Comunicar disponibilidad</td><td>Abogado</td><td>Seleccionar fechas y tipo; adjuntar justificante si procede; enviar.</td><td>Solicitud en estado comunicada</td></tr>
+    <tr><td class="mono">CU-03</td><td>Validar disponibilidad</td><td>Coordinación</td><td>Revisar plazos, cupos y solapamientos; aceptar o rechazar con motivo.</td><td>Indisponibilidad validada o rechazada</td></tr>
+    <tr><td class="mono">CU-04</td><td>Generar propuesta de cuadrante</td><td>Coordinación</td><td>Lanzar el cálculo; revisar la justificación por guardia; ajustar con motivo.</td><td>Borrador de cuadrante</td></tr>
+    <tr><td class="mono">CU-05</td><td>Publicar cuadrante</td><td>Coordinación</td><td>Verificar cobertura completa; publicar versión; notificar.</td><td>Cuadrante vigente y designaciones notificadas</td></tr>
+    <tr><td class="mono">CU-06</td><td>Acusar una designación</td><td>Abogado</td><td>Consultar la guardia y confirmar conocimiento.</td><td>Guardia confirmada</td></tr>
+    <tr><td class="mono">CU-07</td><td>Asignar guardia manualmente</td><td>Coordinación</td><td>Buscar letrado elegible; asignar; registrar motivo si se aparta del criterio.</td><td>Designación con justificación</td></tr>
+    <tr><td class="mono">CU-08</td><td>Designar con urgencia</td><td>Coordinación</td><td>Identificar la franja; designar; notificar de inmediato; registrar origen urgente.</td><td>Guardia cubierta con marca de urgencia</td></tr>
+    <tr><td class="mono">CU-09</td><td>Solicitar excusa</td><td>Abogado</td><td>Indicar motivo tipificado y observaciones; aportar justificante si procede.</td><td>Solicitud en revisión</td></tr>
+    <tr><td class="mono">CU-10</td><td>Ofrecer y aceptar sustitución</td><td>Abogado</td><td>Recibir oferta; aceptar; queda pendiente de validación.</td><td>Sustituto propuesto</td></tr>
+    <tr><td class="mono">CU-11</td><td>Resolver sustitución o permuta</td><td>Coordinación</td><td>Revisar elegibilidad y conformidades; aprobar o denegar con motivación.</td><td>Cambio efectivo y nueva versión</td></tr>
+    <tr><td class="mono">CU-12</td><td>Registrar incidencia en guardia</td><td>Abogado / coordinación</td><td>Elegir categoría y gravedad; describir; adjuntar evidencia si procede.</td><td>Incidencia abierta y escalado</td></tr>
+    <tr><td class="mono">CU-13</td><td>Cerrar parte de guardia</td><td>Abogado</td><td>Registrar horas y actuaciones; firmar el cierre.</td><td>Parte cerrado, pendiente de validación</td></tr>
+    <tr><td class="mono">CU-14</td><td>Validar parte y certificar</td><td>Coordinación</td><td>Revisar partes del periodo; validar; emitir certificación.</td><td>Guardias contabilizadas y certificadas</td></tr>
+    <tr><td class="mono">CU-15</td><td>Gestionar habilitaciones</td><td>Coordinación</td><td>Alta, renovación o revocación por materia; registro del soporte.</td><td>Habilitación vigente o extinta</td></tr>
+    <tr><td class="mono">CU-16</td><td>Consultar expediente y auditoría</td><td>Junta / auditoría</td><td>Buscar por guardia, letrado o periodo; consultar la traza completa.</td><td>Expediente completo en pantalla y exportable</td></tr>
+  </tbody>
+</table>
+
+<h2>Ejemplo de especificación detallada</h2>
+<div class="box">
+  <div class="box-title">CU-10 · Ofrecer y aceptar sustitución</div>
+  <p><strong>Disparador:</strong> el titular registra una excusa y la coordinación autoriza la apertura de la bolsa
+  de sustitución, o el propio titular propone un sustituto.</p>
+  <p><strong>Precondiciones:</strong> la guardia está publicada; el solicitante es el titular; la guardia no ha
+  comenzado salvo urgencia declarada.</p>
+  <p><strong>Flujo principal:</strong> (1) el sistema calcula los letrados elegibles con los siete filtros y el orden
+  de prelación; (2) envía la oferta al primero y abre un plazo de respuesta; (3) si acepta, la solicitud pasa a
+  «pendiente de validación» y se avisa a la coordinación; (4) la coordinación resuelve; (5) si aprueba, se publica
+  nueva versión del cuadrante y se notifica a ambos letrados; (6) si deniega, la guardia vuelve al titular con
+  motivación.</p>
+  <p><strong>Flujos alternativos:</strong> sin respuesta en plazo → siguiente candidato; sin candidatos → guardia
+  descubierta provisional; menos de 24 h → modo urgencia y designación directa.</p>
+  <p><strong>Postcondición:</strong> la guardia tiene un titular único y vigente, y su expediente refleja ambos
+  nombres, el motivo y la resolución.</p>
+</div>
+
+<!-- ============ CAPÍTULO 20 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 20</span>Reglas de negocio</h1>
+<p class="chlead">Las reglas se numeran para que puedan citarse en el pliego, en las pruebas y en las actas. Cada una
+indica si impide la operación (bloqueante) o solo advierte.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:8%">ID</th><th style="width:60%">Regla</th><th style="width:14%">Tipo</th><th style="width:18%">Ámbito</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">RN-01</td><td>Toda guardia planificada debe tener un titular efectivo antes del inicio de la franja.</td><td>Bloqueante</td><td>Planificación</td></tr>
+    <tr><td class="mono">RN-02</td><td>No puede designarse a un letrado sin habilitación vigente en la materia de la guardia.</td><td>Bloqueante</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-03</td><td>No puede designarse a un letrado con indisponibilidad validada que cubra la franja.</td><td>Bloqueante</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-04</td><td>No puede designarse a un letrado con otra guardia que se solape en el tiempo.</td><td>Bloqueante</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-05</td><td>Debe respetarse la regla de descanso posterior que fije la Junta.</td><td>Bloqueante si está configurada</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-06</td><td>Deben respetarse los cupos máximos por mes, trimestre y año.</td><td>Bloqueante</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-07</td><td>La propuesta automática no publica ni notifica por sí misma.</td><td>Bloqueante</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-08</td><td>Toda asignación que se aparte del criterio de equidad exige motivo tipificado.</td><td>Bloqueante</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-09</td><td>La publicación de un cuadrante exige cobertura completa o justificación expresa de cada hueco.</td><td>Bloqueante</td><td>Planificación</td></tr>
+    <tr><td class="mono">RN-10</td><td>El acuse del letrado no es condición para que la designación produzca efectos.</td><td>Informativa</td><td>Designación</td></tr>
+    <tr><td class="mono">RN-11</td><td>La falta de acuse dentro del plazo genera recordatorio y aviso a coordinación.</td><td>Automática</td><td>Comunicación</td></tr>
+    <tr><td class="mono">RN-12</td><td>La excusa se presenta dentro del plazo fijado por la Junta y, en todo caso, en el plazo legal aplicable.</td><td>Bloqueante fuera de plazo (con registro de extemporaneidad)</td><td>Movilidad</td></tr>
+    <tr><td class="mono">RN-13</td><td>La excusa no libera al titular hasta la resolución del Decano o del órgano en quien delegue.</td><td>Bloqueante</td><td>Movilidad</td></tr>
+    <tr><td class="mono">RN-14</td><td>Toda sustitución requiere sustituto habilitado, disponible y sin solapamiento.</td><td>Bloqueante</td><td>Movilidad</td></tr>
+    <tr><td class="mono">RN-15</td><td>Toda sustitución o permuta requiere validación expresa del Colegio.</td><td>Bloqueante</td><td>Movilidad</td></tr>
+    <tr><td class="mono">RN-16</td><td>Una permuta exige conformidad de ambos letrados y misma materia.</td><td>Bloqueante</td><td>Movilidad</td></tr>
+    <tr><td class="mono">RN-17</td><td>Una guardia descubierta genera alerta de máxima prioridad y propuesta de cobertura inmediata.</td><td>Automática</td><td>Operación</td></tr>
+    <tr><td class="mono">RN-18</td><td>El parte de guardia no puede cerrarse sin hora de entrada, hora de salida y descripción de actuaciones.</td><td>Bloqueante</td><td>Operación</td></tr>
+    <tr><td class="mono">RN-19</td><td>Solo los partes validados cuentan para la certificación y para las estadísticas definitivas.</td><td>Bloqueante</td><td>Control</td></tr>
+    <tr><td class="mono">RN-20</td><td>No puede modificarse ni eliminarse un asiento de auditoría.</td><td>Bloqueante</td><td>Trazabilidad</td></tr>
+    <tr><td class="mono">RN-21</td><td>Toda modificación de una guardia publicada genera nueva versión del cuadrante.</td><td>Automática</td><td>Planificación</td></tr>
+    <tr><td class="mono">RN-22</td><td>Las versiones anteriores del cuadrante se conservan y son consultables.</td><td>Bloqueante</td><td>Trazabilidad</td></tr>
+    <tr><td class="mono">RN-23</td><td>Ninguna comunicación contiene datos de salud ni documentación clínica.</td><td>Bloqueante</td><td>Protección de datos</td></tr>
+    <tr><td class="mono">RN-24</td><td>El justificante de salud solo es accesible para los roles autorizados y su acceso se registra.</td><td>Bloqueante</td><td>Protección de datos</td></tr>
+    <tr><td class="mono">RN-25</td><td>Un letrado solo ve de sus compañeros el nombre y la materia de la guardia.</td><td>Bloqueante</td><td>Protección de datos</td></tr>
+    <tr><td class="mono">RN-26</td><td>Los criterios de reparto vigentes son consultables por cualquier colegiado del turno.</td><td>Obligatoria</td><td>Transparencia</td></tr>
+    <tr><td class="mono">RN-27</td><td>Los parámetros de plazos y cupos se versionan y se conserva la versión aplicada en cada periodo.</td><td>Bloqueante</td><td>Configuración</td></tr>
+    <tr><td class="mono">RN-28</td><td>Debe existir un procedimiento manual de designación cuando el sistema no esté disponible.</td><td>Obligatoria</td><td>Continuidad</td></tr>
+    <tr><td class="mono">RN-29</td><td>Toda designación manual de excepción se registra con su causa y su autoridad.</td><td>Bloqueante</td><td>Trazabilidad</td></tr>
+    <tr><td class="mono">RN-30</td><td>La habilitación caducada impide nuevas designaciones y marca para revisión las existentes.</td><td>Automática</td><td>Habilitación</td></tr>
+    <tr><td class="mono">RN-31</td><td>Una guardia anulada exige motivo y notificación a los afectados.</td><td>Bloqueante</td><td>Planificación</td></tr>
+    <tr><td class="mono">RN-32</td><td>El identificador de una guardia no cambia nunca, aunque cambie de titular.</td><td>Bloqueante</td><td>Modelo</td></tr>
+    <tr><td class="mono">RN-33</td><td>Los datos se conservan según el calendario aprobado por el Colegio, con bloqueo de acceso al finalizar.</td><td>Obligatoria</td><td>Protección de datos</td></tr>
+    <tr><td class="mono">RN-34</td><td>Un refuerzo no sustituye al titular: se añade y queda registrado como cobertura múltiple.</td><td>Bloqueante</td><td>Operación</td></tr>
+  </tbody>
+</table>

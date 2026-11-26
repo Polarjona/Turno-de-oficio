@@ -1,0 +1,363 @@
+<!-- ============ CAPÍTULO 21 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 21</span>Modelo entidad-relación: diccionario de datos</h1>
+<p class="chlead">Catorce entidades sostienen toda la funcionalidad. La guardia es el centro; a su alrededor se
+organizan la planificación, las personas, la habilitación, la movilidad y el control.</p>
+
+<p class="lead-in">El diccionario que sigue describe cada entidad con sus campos, su tipo y su papel. Las claves
+principales se marcan en color; las claves ajenas se indican con el sufijo <span class="mono">_id</span>. Todas las
+entidades incorporan, además, los campos comunes de auditoría: <span class="mono">creado_en</span>,
+<span class="mono">creado_por</span>, <span class="mono">modificado_en</span> y <span class="mono">version</span>.</p>
+
+<div class="er-grid">
+
+  <div class="er-card">
+    <div class="er-h">USUARIO <small>· cuenta y credenciales</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>nombre</td><td>texto</td></tr>
+      <tr><td>apellidos</td><td>texto</td></tr>
+      <tr><td>email</td><td>texto · único</td></tr>
+      <tr><td>password_hash</td><td>hash</td></tr>
+      <tr><td>rol</td><td>enum</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>fecha_alta</td><td>fecha</td></tr>
+      <tr><td>ultimo_acceso</td><td>fecha-hora</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">ABOGADO <small>· colegiado en el turno</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>usuario_id</td><td>FK · único</td></tr>
+      <tr><td>num_colegiado</td><td>texto · único</td></tr>
+      <tr><td>telefono_guardia</td><td>texto</td></tr>
+      <tr><td>orden_turno</td><td>entero</td></tr>
+      <tr><td>fecha_alta_turno</td><td>fecha</td></tr>
+      <tr><td>activo</td><td>booleano</td></tr>
+      <tr><td>zona</td><td>texto</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">ESPECIALIDAD <small>· materia del turno</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>codigo</td><td>texto · único</td></tr>
+      <tr><td>nombre</td><td>texto</td></tr>
+      <tr><td>descripcion</td><td>texto</td></tr>
+      <tr><td>requiere_formacion</td><td>booleano</td></tr>
+      <tr><td>activa</td><td>booleano</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">HABILITACION <small>· acreditación por materia</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>fecha_habilitacion</td><td>fecha</td></tr>
+      <tr><td>caducidad</td><td>fecha · nulo</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>soporte</td><td>texto</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">TIPO_GUARDIA <small>· plantilla de servicio</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>codigo</td><td>texto · único</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>modalidad</td><td>enum</td></tr>
+      <tr><td>hora_inicio / hora_fin</td><td>hora</td></tr>
+      <tr><td>cruza_medianoche</td><td>booleano</td></tr>
+      <tr><td>letrados_previstos</td><td>entero</td></tr>
+      <tr><td>peso_computo</td><td>decimal</td></tr>
+      <tr><td>descanso_posterior_h</td><td>entero</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">CUADRANTE <small>· versión publicada</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>anio</td><td>entero</td></tr>
+      <tr><td>periodo</td><td>texto</td></tr>
+      <tr><td>version</td><td>entero</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>fecha_publicacion</td><td>fecha-hora</td></tr>
+      <tr><td>publicado_por</td><td>FK · USUARIO</td></tr>
+      <tr><td>motivo_cambio</td><td>texto</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">GUARDIA <small>· servicio a cubrir</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>cuadrante_id</td><td>FK · CUADRANTE</td></tr>
+      <tr><td>tipo_guardia_id</td><td>FK · TIPO_GUARDIA</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>fecha</td><td>fecha</td></tr>
+      <tr><td>hora_inicio / hora_fin</td><td>hora</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>origen</td><td>enum</td></tr>
+      <tr><td>motivo_asignacion</td><td>texto</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">DISPONIBILIDAD <small>· ausencia comunicada</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>fecha_inicio</td><td>fecha</td></tr>
+      <tr><td>fecha_fin</td><td>fecha</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>observaciones</td><td>texto</td></tr>
+      <tr><td>validada_por</td><td>FK · USUARIO</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">SOLICITUD <small>· excusa, permuta, sustitución</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · GUARDIA</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>solicitante_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>sustituto_id</td><td>FK · ABOGADO · nulo</td></tr>
+      <tr><td>motivo</td><td>enum</td></tr>
+      <tr><td>detalle</td><td>texto</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>fecha_solicitud</td><td>fecha-hora</td></tr>
+      <tr><td>fecha_resolucion</td><td>fecha-hora</td></tr>
+      <tr><td>resuelta_por</td><td>FK · USUARIO</td></tr>
+      <tr><td>motivo_resolucion</td><td>texto</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">INCIDENCIA <small>· evento en la guardia</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · GUARDIA</td></tr>
+      <tr><td>categoria</td><td>enum</td></tr>
+      <tr><td>gravedad</td><td>enum</td></tr>
+      <tr><td>descripcion</td><td>texto</td></tr>
+      <tr><td>abierta_por</td><td>FK · USUARIO</td></tr>
+      <tr><td>fecha_apertura</td><td>fecha-hora</td></tr>
+      <tr><td>fecha_cierre</td><td>fecha-hora</td></tr>
+      <tr><td>resolucion</td><td>texto</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">PARTE_GUARDIA <small>· cierre y acreditación</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · único</td></tr>
+      <tr><td>realizada</td><td>booleano</td></tr>
+      <tr><td>hora_entrada / hora_salida</td><td>hora</td></tr>
+      <tr><td>actuaciones</td><td>texto</td></tr>
+      <tr><td>observaciones</td><td>texto</td></tr>
+      <tr><td>validado</td><td>booleano</td></tr>
+      <tr><td>validado_por</td><td>FK · USUARIO</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">JUSTIFICANTE <small>· documento acreditativo</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>solicitud_id</td><td>FK · nulo</td></tr>
+      <tr><td>disponibilidad_id</td><td>FK · nulo</td></tr>
+      <tr><td>referencia_fichero</td><td>texto</td></tr>
+      <tr><td>tipo_documento</td><td>enum</td></tr>
+      <tr><td>fecha_subida</td><td>fecha-hora</td></tr>
+      <tr><td>acceso_restringido</td><td>booleano</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">NOTIFICACION <small>· aviso y acuse</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>usuario_id</td><td>FK · USUARIO</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>referencia_tipo / id</td><td>texto</td></tr>
+      <tr><td>canal</td><td>enum</td></tr>
+      <tr><td>estado_entrega</td><td>enum</td></tr>
+      <tr><td>fecha_envio</td><td>fecha-hora</td></tr>
+      <tr><td>fecha_lectura</td><td>fecha-hora</td></tr>
+      <tr><td>leida</td><td>booleano</td></tr>
+    </table>
+  </div>
+
+  <div class="er-card">
+    <div class="er-h">AUDITORIA <small>· registro append-only</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>entidad</td><td>texto</td></tr>
+      <tr><td>entidad_id</td><td>UUID</td></tr>
+      <tr><td>accion</td><td>enum</td></tr>
+      <tr><td>estado_anterior</td><td>texto</td></tr>
+      <tr><td>estado_nuevo</td><td>texto</td></tr>
+      <tr><td>motivo</td><td>texto</td></tr>
+      <tr><td>actor_id</td><td>FK · USUARIO</td></tr>
+      <tr><td>fecha</td><td>fecha-hora</td></tr>
+      <tr><td>origen</td><td>enum</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- ============ CAPÍTULO 22 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 22</span>Diagrama entidad-relación</h1>
+<p class="chlead">El diagrama muestra las relaciones principales y las cardinalidades. Para preservar la legibilidad se
+representan los campos identificativos; el detalle completo figura en el diccionario del capítulo anterior.</p>
+
+<div class="fig" style="text-align:center; margin-top:2mm;">
+  {{ER_SVG}}
+  <div class="fig-cap">Figura 22.1 — Modelo entidad-relación. La guardia (centro) concentra la designación, la
+  movilidad, la incidencia y el cierre del servicio.</div>
+</div>
+
+<div class="box" style="margin-top:4mm;">
+  <div class="box-title">Cómo leer el diagrama</div>
+  <ul class="tight">
+    <li><strong>1 : N</strong> — un registro de la entidad origen se relaciona con varios de la destino; por ejemplo,
+    un abogado con muchas guardias a lo largo del tiempo.</li>
+    <li><strong>1 : 1</strong> — relación única en ambos sentidos; por ejemplo, cada cuenta de usuario corresponde a un
+    único abogado, y cada guardia tiene un único parte.</li>
+    <li><strong>N : M resuelto</strong> — la relación entre abogado y especialidad se materializa en
+    <span class="mono">HABILITACION</span>, que además conserva la fecha y el estado de la acreditación.</li>
+    <li><strong>Relación polimórfica</strong> — <span class="mono">AUDITORIA</span> referencia cualquier entidad
+    mediante el par <span class="mono">entidad</span> + <span class="mono">entidad_id</span>; por eso se representa sin
+    aristas para no sobrecargar el dibujo.</li>
+  </ul>
+</div>
+
+<!-- ============ CAPÍTULO 23 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 23</span>Relaciones, integridad y validaciones</h1>
+<p class="chlead">El modelo no solo describe datos: impone condiciones. Las validaciones que siguen son las que
+impiden que el sistema acepte un estado imposible, como una guardia sin especialidad o un sustituto sin habilitación.</p>
+
+<table class="grid">
+  <caption>Tabla 23.1 — Relaciones y cardinalidades</caption>
+  <thead><tr><th style="width:34%">Relación</th><th style="width:14%" class="c">Cardinalidad</th><th style="width:52%">Regla de integridad</th></tr></thead>
+  <tbody>
+    <tr><td>USUARIO — ABOGADO</td><td class="c">1 : 1</td><td>Un abogado no puede existir sin cuenta; una cuenta con rol «abogado» debe tener su registro asociado.</td></tr>
+    <tr><td>ABOGADO — HABILITACION</td><td class="c">1 : N</td><td>Puede tener varias materias; no puede repetirse la misma materia con estado vigente.</td></tr>
+    <tr><td>ESPECIALIDAD — HABILITACION</td><td class="c">1 : N</td><td>Una materia puede quedar inactiva, pero no puede eliminarse si existen habilitaciones asociadas.</td></tr>
+    <tr><td>ESPECIALIDAD — TIPO_GUARDIA</td><td class="c">1 : N</td><td>Toda guardia debe tener una materia definida; no se admiten guardias genéricas.</td></tr>
+    <tr><td>ABOGADO — DISPONIBILIDAD</td><td class="c">1 : N</td><td>Los periodos no pueden solaparse con el mismo tipo salvo corrección registrada.</td></tr>
+    <tr><td>ABOGADO — GUARDIA</td><td class="c">1 : N</td><td>Un abogado puede tener varias guardias, nunca solapadas; la validación se comprueba al asignar y al publicar.</td></tr>
+    <tr><td>CUADRANTE — GUARDIA</td><td class="c">1 : N</td><td>Toda guardia pertenece a un cuadrante y a una versión; el cambio de titular no la saca de su cuadrante.</td></tr>
+    <tr><td>GUARDIA — SOLICITUD</td><td class="c">1 : N</td><td>Puede haber varias solicitudes históricas; solo una puede estar abierta a la vez.</td></tr>
+    <tr><td>GUARDIA — INCIDENCIA</td><td class="c">1 : N</td><td>Una guardia puede acumular incidencias; cada una exige categoría y gravedad.</td></tr>
+    <tr><td>GUARDIA — PARTE_GUARDIA</td><td class="c">1 : 1</td><td>Cada guardia tiene un único parte, que se crea al cerrar la franja.</td></tr>
+    <tr><td>SOLICITUD — JUSTIFICANTE</td><td class="c">1 : N</td><td>Opcional; si el motivo lo exige, debe existir al menos uno antes de resolver.</td></tr>
+    <tr><td>DISPONIBILIDAD — JUSTIFICANTE</td><td class="c">1 : N</td><td>Opcional, salvo baja médica si la norma colegial lo requiere; acceso restringido.</td></tr>
+    <tr><td>USUARIO — NOTIFICACION</td><td class="c">1 : N</td><td>Toda notificación tiene destinatario, canal y estado de entrega.</td></tr>
+    <tr><td>AUDITORIA — (todas)</td><td class="c">N : 1 polimórfica</td><td>Cada asiento referencia entidad e identificador; no se actualiza ni se elimina.</td></tr>
+  </tbody>
+</table>
+
+<h2>Validaciones que el modelo impone</h2>
+<table class="grid">
+  <thead><tr><th style="width:34%">Validación</th><th style="width:30%">Momento en que se comprueba</th><th style="width:36%">Consecuencia si falla</th></tr></thead>
+  <tbody>
+    <tr><td>Habilitación vigente en la materia</td><td>Al asignar, al sustituir y al publicar</td><td>Operación rechazada con motivo visible</td></tr>
+    <tr><td>Ausencia de solapamiento horario</td><td>Al asignar, al permutar y al publicar</td><td>Operación rechazada</td></tr>
+    <tr><td>Indisponibilidad validada en la franja</td><td>Al asignar y al publicar</td><td>Operación rechazada</td></tr>
+    <tr><td>Cupo de guardias del periodo</td><td>Al asignar</td><td>Operación rechazada salvo excepción motivada</td></tr>
+    <tr><td>Descanso posterior</td><td>Al asignar</td><td>Operación rechazada si la regla está configurada</td></tr>
+    <tr><td>Integridad del cuadrante</td><td>Al publicar</td><td>No se publica con huecos sin justificar</td></tr>
+    <tr><td>Parte completo</td><td>Al cerrar la guardia</td><td>No se cierra sin horas y actuaciones</td></tr>
+    <tr><td>Inmutabilidad de auditoría</td><td>En cualquier modificación</td><td>Operación prohibida para todos los roles</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 24 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 24</span>Protección de datos, seguridad y accesibilidad</h1>
+<p class="chlead">La aplicación trata datos de profesionales y, en un caso concreto, datos de salud. Esa circunstancia
+condiciona el diseño y obliga a formalizar responsabilidades antes del primer día de uso.</p>
+
+<h2>Protección de datos</h2>
+<table class="grid">
+  <thead><tr><th style="width:26%">Cuestión</th><th style="width:74%">Planteamiento</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Responsable del tratamiento</strong></td><td>El Colegio, como titular del servicio y de la organización del turno.</td></tr>
+    <tr><td><strong>Encargado</strong></td><td>El proveedor de la solución, con contrato de encargo que fije finalidad, duración, medidas de seguridad y prohibición de uso para fines propios.</td></tr>
+    <tr><td><strong>Base jurídica</strong></td><td>Ejercicio de funciones de organización del servicio de asistencia jurídica gratuita y cumplimiento de obligaciones legales; los datos de salud se tratan al amparo de las excepciones del artículo 9 del RGPD, limitados a la constatación de la indisponibilidad.</td></tr>
+    <tr><td><strong>Minimización</strong></td><td>No se recoge diagnóstico, ni informe clínico, ni dato biométrico. Solo el periodo de indisponibilidad y, si la norma lo exige, el parte en espacio restringido.</td></tr>
+    <tr><td><strong>Registro de actividades</strong></td><td>El Colegio mantiene actualizado el registro de actividades de tratamiento con las finalidades y categorías de datos.</td></tr>
+    <tr><td><strong>Conservación</strong></td><td>Calendario aprobado por el Colegio, alineado con los plazos de prescripción y con la normativa de archivo; al vencer, bloqueo de acceso y posterior eliminación.</td></tr>
+    <tr><td><strong>Derechos</strong></td><td>Canal definido para ejercicio de acceso, rectificación, supresión y limitación, con plazo de respuesta y constancia.</td></tr>
+    <tr><td><strong>Evaluación de impacto</strong></td><td>Recomendable por el tratamiento de datos de salud a escala del colectivo; se documenta antes de la puesta en producción.</td></tr>
+  </tbody>
+</table>
+
+<h2>Seguridad</h2>
+<ul>
+  <li><strong>Acceso nominal</strong>: sin cuentas compartidas; cada actuación queda vinculada a una persona.</li>
+  <li><strong>Mínimo privilegio</strong>: cada rol ve solo lo que necesita; la administración técnica no accede al
+  contenido.</li>
+  <li><strong>Doble factor</strong> para los roles con capacidad de resolución y para la administración.</li>
+  <li><strong>Cifrado</strong> en tránsito y en reposo, con gestión de claves separada del proveedor de la aplicación.</li>
+  <li><strong>Copias de seguridad</strong> con prueba periódica de restauración documentada.</li>
+  <li><strong>Registro de accesos</strong> a información sensible, con alerta ante patrones anómalos.</li>
+  <li><strong>Procedimiento de incidentes</strong> con plazos de notificación y responsable identificado.</li>
+  <li><strong>Plan de continuidad</strong>: vía manual de designación mientras dure una indisponibilidad.</li>
+</ul>
+
+<h2>Accesibilidad y uso real</h2>
+<p>La aplicación se usará de pie, en un pasillo de juzgado, con una mano y a veces sin cobertura. De ahí tres
+requisitos que no son cosméticos: contraste y tamaños que permitan leer a la intemperie, navegación completa sin
+depender del color, y funcionamiento degradado que conserve lo esencial —mi guardia de hoy, el teléfono de la sede y
+el registro de una actuación— cuando la conexión falla. El objetivo de accesibilidad es el nivel AA de las pautas
+WCAG en las pantallas principales.</p>
+
+<!-- ============ CAPÍTULO 25 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 25</span>Implantación por fases y criterios de aceptación</h1>
+<p class="chlead">El proyecto se entrega en fases que producen valor desde la primera. Cada fase tiene un criterio de
+aceptación verificable, de modo que la Junta pueda comprobar el avance sin depender de impresiones.</p>
+
+<table class="grid">
+  <caption>Tabla 25.1 — Fases, contenido y criterio de aceptación</caption>
+  <thead><tr><th style="width:16%">Fase</th><th style="width:34%">Contenido</th><th style="width:22%">Quién participa</th><th style="width:28%">Criterio de aceptación</th></tr></thead>
+  <tbody>
+    <tr><td><strong>0 · Preparación</strong></td><td>Validación con la Junta de criterios, plazos y cupos; catálogo de especialidades y tipos de guardia; depuración de la lista del turno.</td><td>Junta, coordinación, asesoría jurídica</td><td>Parámetros aprobados por escrito y cargados en el sistema</td></tr>
+    <tr><td><strong>1 · Núcleo</strong></td><td>Letrados, especialidades, habilitaciones, tipos de guardia, cuadrante y publicación.</td><td>Coordinación</td><td>Un trimestre completo planificado y publicado sin uso de hoja de cálculo</td></tr>
+    <tr><td><strong>2 · Personas</strong></td><td>Disponibilidad, vacaciones, acuse, calendario personal y notificaciones.</td><td>Coordinación y letrados</td><td>Más del 90 % de los letrados del turno han comunicado disponibilidad por la aplicación</td></tr>
+    <tr><td><strong>3 · Movilidad</strong></td><td>Excusas, permutas, sustituciones, bolsa de candidatos y escalado.</td><td>Coordinación y letrados</td><td>Todas las sustituciones del periodo han pasado por el circuito y tienen resolución registrada</td></tr>
+    <tr><td><strong>4 · Operación</strong></td><td>Modo guardia, incidencias, cierre de partes y certificación.</td><td>Letrados y coordinación</td><td>Certificación de un trimestre emitida desde la aplicación sin reconstrucción manual</td></tr>
+    <tr><td><strong>5 · Control</strong></td><td>Panel, informes de equidad y cobertura, memoria anual y auditoría.</td><td>Junta y coordinación</td><td>Informe de equidad presentado y aceptado por la Junta</td></tr>
+  </tbody>
+</table>
+
+<h2>Riesgos y respuesta prevista</h2>
+<table class="grid">
+  <thead><tr><th style="width:30%">Riesgo</th><th style="width:34%">Efecto si no se atiende</th><th style="width:36%">Respuesta</th></tr></thead>
+  <tbody>
+    <tr><td>Resistencia al cambio en la coordinación</td><td>Se mantiene la hoja de cálculo en paralelo y la aplicación queda desactualizada</td><td>Fase 1 con acompañamiento y retirada acordada de la hoja de cálculo</td></tr>
+    <tr><td>Datos de partida incompletos</td><td>Habilitaciones y órdenes de turno erróneos desde el inicio</td><td>Depuración previa con contraste contra el registro colegial</td></tr>
+    <tr><td>Sustituciones fuera del circuito</td><td>El cuadrante deja de reflejar la realidad</td><td>Regla explícita: sin validación no hay cambio; comunicación a todo el turno</td></tr>
+    <tr><td>Criterios de equidad discutidos</td><td>Conflictos internos y pérdida de confianza</td><td>Publicación del criterio y de los pesos; revisión anual en Junta</td></tr>
+    <tr><td>Uso indebido de datos sensibles</td><td>Incidente de protección de datos</td><td>Acceso restringido, registro de accesos y formación específica</td></tr>
+    <tr><td>Caída del servicio en horario de guardia</td><td>Riesgo para la cobertura</td><td>Procedimiento manual documentado y probado</td></tr>
+  </tbody>
+</table>
+
+<div class="box ok">
+  <div class="box-title">Condición para declarar el proyecto terminado</div>
+  <p>La coordinación cubre un periodo completo sin hoja de cálculo paralela, todas las sustituciones del periodo
+  tienen resolución registrada, la certificación se emite desde el sistema y la Junta puede presentar el informe de
+  equidad al colectivo. Si esas cuatro condiciones se cumplen, la herramienta ha sustituido al procedimiento anterior;
+  si no, solo lo ha duplicado.</p>
+</div>

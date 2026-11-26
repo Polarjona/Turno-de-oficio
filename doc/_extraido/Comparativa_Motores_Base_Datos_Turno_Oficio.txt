@@ -1,0 +1,35 @@
+Comparativa de Motores de Base de Datos
+Proyecto: Turno de Oficio
+Objetivo
+Evaluar diferentes motores de base de datos para seleccionar la solución más adecuada para el
+proyecto, considerando coste, operación, copias de seguridad, cumplimiento normativo y
+mantenimiento a largo plazo.
+Motores Analizados
+PostgreSQL
+Ventajas: Software libre y gratuito, alta fiabilidad y estabilidad, excelente soporte para integridad
+referencial, buen rendimiento en consultas complejas y amplia comunidad.
+Desventajas: Requiere administración propia si se instala localmente.
+MySQL
+Ventajas: Fácil de administrar, muy extendido en aplicaciones web y amplia documentación.
+Desventajas: Menos funcionalidades avanzadas que PostgreSQL.
+Azure Database for PostgreSQL
+Ventajas: Servicio gestionado, copias automáticas y alta disponibilidad.
+Desventajas: Coste mensual asociado.
+Amazon RDS PostgreSQL
+Ventajas: Escalabilidad, mantenimiento simplificado y copias automáticas.
+Desventajas: Dependencia de AWS y coste mensual.
+Google Cloud SQL PostgreSQL
+Ventajas: Gestión simplificada, mantenimiento automatizado y recuperación ante fallos.
+Desventajas: Costes recurrentes y dependencia del proveedor cloud.
+Comparativa Resumida
+PostgreSQL: Coste muy bajo, administración manual, alta escalabilidad.
+MySQL: Coste muy bajo, administración manual, escalabilidad media-alta.
+Azure PostgreSQL: Coste medio, administración gestionada, alta escalabilidad.
+Amazon RDS: Coste medio, administración gestionada, alta escalabilidad.
+Google Cloud SQL: Coste medio, administración gestionada, alta escalabilidad.
+Recomendación
+Se recomienda PostgreSQL por su equilibrio entre coste, rendimiento, seguridad, integridad de
+datos y facilidad de mantenimiento para las necesidades del proyecto Turno de Oficio.
+Conclusión
+PostgreSQL representa la alternativa más adecuada para cubrir los requisitos actuales y futuros
+del sistema.

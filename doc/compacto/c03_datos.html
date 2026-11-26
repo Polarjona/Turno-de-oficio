@@ -1,0 +1,220 @@
+<!-- ============ CAPÍTULO 15 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 15</span>Reglas de negocio</h1>
+<p class="chlead">Se numeran para que puedan citarse en el pliego, en las pruebas y en las actas. Cada una indica si
+impide la operación (bloqueante) o solo advierte.</p>
+
+<table class="grid">
+  <thead><tr><th style="width:9%">ID</th><th style="width:72%">Regla</th><th style="width:19%">Tipo</th></tr></thead>
+  <tbody>
+    <tr><td class="mono">RN-01</td><td>Toda guardia planificada debe tener titular efectivo antes de iniciarse la franja.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-02</td><td>No puede designarse a un letrado sin habilitación vigente en la materia.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-03</td><td>No puede designarse a quien tenga indisponibilidad validada en la franja.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-04</td><td>No puede designarse a quien tenga otra guardia solapada.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-05</td><td>Debe respetarse la regla de descanso posterior fijada por la Junta.</td><td>Bloqueante si se configura</td></tr>
+    <tr><td class="mono">RN-06</td><td>Deben respetarse los cupos máximos por mes, trimestre y año.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-07</td><td>La propuesta automática no publica ni notifica por sí misma.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-08</td><td>Toda asignación que se aparte del criterio de equidad exige motivo tipificado.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-09</td><td>Publicar un cuadrante exige cobertura completa o justificación de cada hueco.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-10</td><td>El acuse no es condición para que la designación produzca efectos.</td><td>Informativa</td></tr>
+    <tr><td class="mono">RN-11</td><td>La falta de acuse en plazo genera recordatorio y aviso a coordinación.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-12</td><td>La excusa se presenta en el plazo fijado por la Junta; fuera de plazo se registra como extemporánea.</td><td>Bloqueante parcial</td></tr>
+    <tr><td class="mono">RN-13</td><td>La excusa no libera al titular hasta la resolución del Decano o del órgano en quien delegue.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-14</td><td>Toda sustitución requiere sustituto habilitado, disponible y sin solapamiento.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-15</td><td>Toda sustitución o permuta requiere validación expresa del Colegio.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-16</td><td>Una permuta exige misma materia y conformidad de ambos letrados.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-17</td><td>Una guardia descubierta genera alerta máxima y propuesta de cobertura inmediata.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-18</td><td>El parte no puede cerrarse sin horas de entrada y salida ni actuaciones descritas.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-19</td><td>Solo los partes validados cuentan para certificación y estadística definitiva.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-20</td><td>No puede modificarse ni eliminarse un asiento de auditoría.</td><td>Bloqueante absoluto</td></tr>
+    <tr><td class="mono">RN-21</td><td>Toda modificación de una guardia publicada genera nueva versión del cuadrante.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-22</td><td>Las versiones anteriores se conservan y son consultables.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-23</td><td>Ninguna comunicación contiene datos de salud ni documentación clínica.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-24</td><td>El justificante de salud solo es accesible a roles autorizados y su acceso se registra.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-25</td><td>Un letrado solo ve de sus compañeros el nombre y la materia de la guardia.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-26</td><td>Los criterios de reparto vigentes son consultables por cualquier colegiado del turno.</td><td>Obligatoria</td></tr>
+    <tr><td class="mono">RN-27</td><td>Plazos y cupos se versionan; se conserva la versión aplicada en cada periodo.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-28</td><td>Debe existir un procedimiento manual de designación si el sistema no está disponible.</td><td>Obligatoria</td></tr>
+    <tr><td class="mono">RN-29</td><td>Toda designación manual de excepción se registra con causa y autoridad.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-30</td><td>La habilitación caducada impide nuevas designaciones y marca para revisión las existentes.</td><td>Automática</td></tr>
+    <tr><td class="mono">RN-31</td><td>Una guardia anulada exige motivo y notificación a los afectados.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-32</td><td>El identificador de la guardia no cambia nunca, aunque cambie de titular.</td><td>Bloqueante</td></tr>
+    <tr><td class="mono">RN-33</td><td>Un refuerzo no sustituye al titular: se añade y consta como cobertura múltiple.</td><td>Bloqueante</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ CAPÍTULO 16 ============ -->
+<h1 class="chapter"><span class="chnum">Capítulo 16</span>Modelo de datos</h1>
+<p class="chlead">Catorce entidades sostienen toda la funcionalidad. La guardia es el centro; a su alrededor se
+organizan la planificación, las personas, la habilitación, la movilidad y el control.</p>
+
+<p class="small">Todas las entidades incorporan además los campos comunes de auditoría:
+<span class="mono">creado_en</span>, <span class="mono">creado_por</span>, <span class="mono">modificado_en</span> y
+<span class="mono">version</span>. Las claves principales se marcan en color; las ajenas llevan el sufijo
+<span class="mono">_id</span>.</p>
+
+<div class="er-grid">
+  <div class="er-card">
+    <div class="er-h">USUARIO <small>· cuenta</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>nombre / apellidos</td><td>texto</td></tr>
+      <tr><td>email</td><td>texto · único</td></tr>
+      <tr><td>password_hash</td><td>hash</td></tr>
+      <tr><td>rol</td><td>enum</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">ABOGADO <small>· colegiado del turno</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>usuario_id</td><td>FK · único</td></tr>
+      <tr><td>num_colegiado</td><td>texto · único</td></tr>
+      <tr><td>telefono_guardia</td><td>texto</td></tr>
+      <tr><td>orden_turno</td><td>entero</td></tr>
+      <tr><td>activo</td><td>booleano</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">ESPECIALIDAD <small>· materia</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>codigo</td><td>texto · único</td></tr>
+      <tr><td>nombre</td><td>texto</td></tr>
+      <tr><td>requiere_formacion</td><td>booleano</td></tr>
+      <tr><td>activa</td><td>booleano</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">HABILITACION <small>· acreditación</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>fecha_habilitacion</td><td>fecha</td></tr>
+      <tr><td>caducidad</td><td>fecha · nulo</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">TIPO_GUARDIA <small>· plantilla</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>especialidad_id</td><td>FK · ESPECIALIDAD</td></tr>
+      <tr><td>modalidad</td><td>enum</td></tr>
+      <tr><td>hora_inicio / fin</td><td>hora</td></tr>
+      <tr><td>peso_computo</td><td>decimal</td></tr>
+      <tr><td>letrados_previstos</td><td>entero</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">CUADRANTE <small>· versión</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>anio / periodo</td><td>entero / texto</td></tr>
+      <tr><td>version</td><td>entero</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>fecha_publicacion</td><td>fecha-hora</td></tr>
+      <tr><td>publicado_por</td><td>FK · USUARIO</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">GUARDIA <small>· servicio a cubrir</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>cuadrante_id</td><td>FK · CUADRANTE</td></tr>
+      <tr><td>tipo_guardia_id</td><td>FK · TIPO_GUARDIA</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>fecha / horario</td><td>fecha / hora</td></tr>
+      <tr><td>estado / origen</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">DISPONIBILIDAD <small>· ausencia</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>abogado_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>fecha_inicio / fin</td><td>fecha</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+      <tr><td>validada_por</td><td>FK · USUARIO</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">SOLICITUD <small>· excusa / permuta</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · GUARDIA</td></tr>
+      <tr><td>tipo</td><td>enum</td></tr>
+      <tr><td>solicitante_id / sustituto_id</td><td>FK · ABOGADO</td></tr>
+      <tr><td>motivo · detalle</td><td>enum / texto</td></tr>
+      <tr><td>estado / resuelta_por</td><td>enum / FK</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">INCIDENCIA <small>· evento</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · GUARDIA</td></tr>
+      <tr><td>categoria / gravedad</td><td>enum</td></tr>
+      <tr><td>abierta_por</td><td>FK · USUARIO</td></tr>
+      <tr><td>fecha_apertura / cierre</td><td>fecha-hora</td></tr>
+      <tr><td>estado</td><td>enum</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">PARTE_GUARDIA <small>· cierre</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>guardia_id</td><td>FK · único</td></tr>
+      <tr><td>realizada</td><td>booleano</td></tr>
+      <tr><td>hora_entrada / salida</td><td>hora</td></tr>
+      <tr><td>actuaciones</td><td>texto</td></tr>
+      <tr><td>validado / validado_por</td><td>bool / FK</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">JUSTIFICANTE <small>· documento</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>solicitud_id</td><td>FK · nulo</td></tr>
+      <tr><td>disponibilidad_id</td><td>FK · nulo</td></tr>
+      <tr><td>referencia_fichero</td><td>texto</td></tr>
+      <tr><td>acceso_restringido</td><td>booleano</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">NOTIFICACION <small>· aviso y acuse</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>usuario_id</td><td>FK · USUARIO</td></tr>
+      <tr><td>tipo / canal</td><td>enum</td></tr>
+      <tr><td>referencia_tipo / id</td><td>texto</td></tr>
+      <tr><td>estado_entrega / leida</td><td>enum / bool</td></tr>
+    </table>
+  </div>
+  <div class="er-card">
+    <div class="er-h">AUDITORIA <small>· registro inmutable</small></div>
+    <table>
+      <tr><td class="pk">id</td><td>UUID · PK</td></tr>
+      <tr><td>entidad / entidad_id</td><td>texto / UUID</td></tr>
+      <tr><td>accion</td><td>enum</td></tr>
+      <tr><td>estado_anterior / nuevo</td><td>texto</td></tr>
+      <tr><td>actor_id / fecha</td><td>FK / fecha-hora</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>Relaciones principales</h2>
+<table class="grid">
+  <thead><tr><th style="width:38%">Relación</th><th style="width:14%" class="c">Cardinalidad</th><th style="width:48%">Regla de integridad</th></tr></thead>
+  <tbody>
+    <tr><td>USUARIO — ABOGADO</td><td class="c">1 : 1</td><td>No hay abogado sin cuenta ni cuenta de abogado sin su registro.</td></tr>
+    <tr><td>ABOGADO — HABILITACION</td><td class="c">1 : N</td><td>Varias materias; no se repite la misma con estado vigente.</td></tr>
+    <tr><td>ABOGADO — GUARDIA</td><td class="c">1 : N</td><td>Varias guardias, nunca solapadas; se comprueba al asignar y al publicar.</td></tr>
+    <tr><td>CUADRANTE — GUARDIA</td><td class="c">1 : N</td><td>El cambio de titular no saca la guardia de su cuadrante.</td></tr>
+    <tr><td>GUARDIA — SOLICITUD</td><td class="c">1 : N</td><td>Varias históricas; solo una abierta a la vez.</td></tr>
+    <tr><td>GUARDIA — PARTE_GUARDIA</td><td class="c">1 : 1</td><td>Un parte por guardia, creado al cerrar la franja.</td></tr>
+    <tr><td>AUDITORIA — (todas)</td><td class="c">N : 1</td><td>Polimórfica por <span class="mono">entidad</span> + <span class="mono">entidad_id</span>; sin actualización ni borrado.</td></tr>
+  </tbody>
+</table>
