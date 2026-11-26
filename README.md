@@ -68,6 +68,40 @@ npm run dev:web             # http://localhost:3000
 | `npm test`          | Vitest en `packages/shared` y `apps/api`                                 |
 | `npm run openapi`   | Regenera `apps/api/openapi.json` y comprueba que no se sale del contrato |
 
+### Base de datos
+
+Postgres 16 en `localhost:5432`, con usuario, contraseña y base `turno`.
+
+```bash
+# 1. Levantar Postgres (la primera vez crea el volumen y lo inicializa)
+docker compose -f docker/docker-compose.yml up -d
+
+# 2. Comprobar que está sano
+docker compose -f docker/docker-compose.yml ps
+
+# 3. Aplicar la migración (idempotente: se puede repetir sin miedo)
+docker compose -f docker/docker-compose.yml exec -T postgres \
+  psql -U turno -d turno < db/migrations/0001_init.sql
+
+# 4. Ver las tablas creadas
+docker compose -f docker/docker-compose.yml exec -T postgres \
+  psql -U turno -d turno -c '\dt'
+```
+
+La carpeta `db/migrations` está montada en `/docker-entrypoint-initdb.d`, así
+que al crear el volumen el contenedor ya aplica la migración por su cuenta; el
+paso 3 sirve para volver a pasarla cuando se añade una nueva.
+
+La prueba de conexión de la API (`apps/api/src/db.test.ts`) se salta si no hay
+`DATABASE_URL`. Para que corra:
+
+```bash
+DATABASE_URL=postgres://turno:turno@localhost:5432/turno npm test -w @turno/api
+```
+
+Para parar el contenedor **sin perder los datos**:
+`docker compose -f docker/docker-compose.yml down` (sin `-v`).
+
 La CI (`.github/workflows/ci.yml`) corre esos mismos comandos en cada PR, con un
 Postgres 16 de servicio para las pruebas de la API. Además falla si el
 `openapi.json` versionado no coincide con el que genera el código, y si algún
