@@ -8,6 +8,10 @@ Convenciones para las cuatro personas del equipo (ETL/DevOps · Backend · Front
 - `produccion` — lo que se entrega al cliente: solo la versión final y revisada.
   Aquí no se trabaja; se actualiza desde `develop` cuando el entregable está cerrado.
 - `develop` — rama por defecto y base de todo. Aquí se juntan los cuatro roles.
+
+`produccion` y `develop` están protegidas en GitHub: no admiten push directo (ni
+siquiera el admin), solo merges de PR, y no se pueden borrar ni reescribir con
+force push. En `produccion` además el PR tiene que venir de `develop`.
 - Una rama por rol, donde cada persona hace push de lo suyo:
   - `etl-devops` — Pol (ETL y DevOps)
   - `backend` — Yazan
