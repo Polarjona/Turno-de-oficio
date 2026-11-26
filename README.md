@@ -9,7 +9,16 @@ jurídica gratuita. Documentación y entregables del proyecto de ejercicio de la
 ```
 ├── README.md, CONTRIBUTING.md
 ├── .github/
-│   └── ISSUE_TEMPLATE/tarjeta.md    Plantilla de issue = tarjeta de Trello
+│   ├── ISSUE_TEMPLATE/tarjeta.md    Plantilla de issue = tarjeta de Trello
+│   └── workflows/ci.yml             CI: lint, tipos, pruebas, contrato y build web
+├── apps/
+│   ├── api/                         NestJS 11 · contrato en http://localhost:3001/api-docs
+│   └── web/                         Next.js 15
+├── packages/shared/                 Tipos y esquemas Zod que usan api y web
+├── db/migrations/                   SQL del cuadrante (0001_init.sql)
+├── etl/                             Validación del cuadrante histórico antes de cargarlo
+├── docker/                          Postgres 16 para desarrollo local
+├── scripts/                         Comprobación del contrato OpenAPI
 ├── fuentes/                         Encargos originales del Colegio
 │   ├── Propuesta_Funcional_...pdf   (TOF-2026-001)
 │   └── Diseno_Funcional_...pdf      (TOF-2026-002)
@@ -39,6 +48,34 @@ cd Turno-de-oficio
 Cada persona hace push en su rama de rol (`etl-devops`, `backend`, `frontend`,
 `database`); Pol abre el PR contra `develop` y hace el merge. `produccion` guarda
 solo la versión final que se entrega al cliente. El detalle está en `CONTRIBUTING.md`.
+
+## Arrancar el monorepo
+
+Requisitos: Node 22 y Docker (solo para la base de datos).
+
+```bash
+npm install                 # instala workspaces y compila packages/shared
+docker compose -f docker/docker-compose.yml up -d   # Postgres 16 en localhost:5432
+
+npm run dev:api             # http://localhost:3001 y contrato en /api-docs
+npm run dev:web             # http://localhost:3000
+```
+
+| Comando             | Qué hace                                                                 |
+| ------------------- | ------------------------------------------------------------------------ |
+| `npm run lint`      | ESLint + Prettier sobre `apps/`, `packages/` y `scripts/`                |
+| `npm run typecheck` | `tsc --noEmit` en cada workspace                                         |
+| `npm test`          | Vitest en `packages/shared` y `apps/api`                                 |
+| `npm run openapi`   | Regenera `apps/api/openapi.json` y comprueba que no se sale del contrato |
+
+La CI (`.github/workflows/ci.yml`) corre esos mismos comandos en cada PR, con un
+Postgres 16 de servicio para las pruebas de la API. Además falla si el
+`openapi.json` versionado no coincide con el que genera el código, y si algún
+endpoint implementado no existe en `entregables/Backend/openapi.yaml`.
+
+`entregables/Backend/openapi.yaml` es el contrato aprobado: el código se adapta a
+él, no al revés. El paso de contrato informa de los endpoints que quedan por
+implementar.
 
 ## Cómo se regeneran los documentos
 

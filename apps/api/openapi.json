@@ -1,0 +1,72 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Turno de Oficio · API",
+    "description": "Contrato generado desde el código",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "paths": {
+    "/guardias": {
+      "get": {
+        "operationId": "GuardiasController_listar",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Guardias ordenadas por fecha"
+          }
+        },
+        "summary": "Lista las guardias del periodo",
+        "tags": [
+          "guardias"
+        ]
+      }
+    },
+    "/guardias/{guardiaId}": {
+      "get": {
+        "operationId": "GuardiasController_detalle",
+        "parameters": [
+          {
+            "name": "guardiaId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la guardia",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guardia encontrada"
+          },
+          "404": {
+            "description": "La guardia no existe"
+          }
+        },
+        "summary": "Detalle de una guardia",
+        "tags": [
+          "guardias"
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "MeController_actual",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Datos del usuario autenticado"
+          }
+        },
+        "summary": "Usuario de la sesión",
+        "tags": [
+          "sesion"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

@@ -1,0 +1,24 @@
+# Postgres 16 para desarrollo local: mismo motor que la CI.
+#   docker compose -f docker/docker-compose.yml up -d
+# Las migraciones de db/migrations se aplican la primera vez que arranca el volumen.
+services:
+  postgres:
+    image: postgres:16
+    container_name: turno-postgres
+    environment:
+      POSTGRES_USER: turno
+      POSTGRES_PASSWORD: turno
+      POSTGRES_DB: turno
+    ports:
+      - '5432:5432'
+    volumes:
+      - datos:/var/lib/postgresql/data
+      - ../db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U turno -d turno']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  datos:

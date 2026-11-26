@@ -1,14 +1,15 @@
 ---
 name: Tarjeta de trabajo
 about: Todo cambio o documento del proyecto nace de una tarjeta del tablero
-title: "[rol] "
-labels: ""
-assignees: ""
+title: '[rol] '
+labels: ''
+assignees: ''
 ---
 
 ## Tarjeta de Trello
 
 <!-- Enlace a la tarjeta. Una tarea sin tarjeta no existe. -->
+
 https://trello.com/b/03STIQc3
 
 ## Tipo

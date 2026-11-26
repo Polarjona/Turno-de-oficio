@@ -1,0 +1,8 @@
+# Documentos y entregables: se maquetan con doc/*.py, no con Prettier
+doc/
+entregables/
+fuentes/
+
+# Artefactos
+apps/api/openapi.json
+package-lock.json
