@@ -102,7 +102,7 @@ export class PostgresSolicitudesRepository implements SolicitudesRepository {
         values ($1::uuid, $2, '', $3, '-', $4)
         on conflict (id) do update set nombre = excluded.nombre, rol = excluded.rol
       `,
-      [usuario.id, usuario.nombre, `${usuario.id}@turno-oficio.test`, usuario.rol],
+      [usuario.id, usuario.nombre, usuario.email ?? `${usuario.id}@turno-oficio.test`, usuario.rol],
     );
 
     if (usuario.abogadoId) {

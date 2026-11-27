@@ -25,6 +25,8 @@ export interface UsuarioAutenticado {
   id: string;
   nombre: string;
   colegiado: string;
+  /** Correo del token: es la dirección a la que salen los avisos. */
+  email?: string | undefined;
   /** Nulo si el token no lo trae (usuario de demo sin registro de abogado). */
   abogadoId?: string | undefined;
   rol: Rol;
@@ -47,6 +49,7 @@ export function usuarioDesdeToken(payload: TokenKeycloak): UsuarioAutenticado {
     id: payload.sub,
     nombre: payload.name ?? payload.preferred_username ?? payload.sub,
     colegiado: payload.colegiado ?? payload.preferred_username ?? '',
+    email: payload.email,
     abogadoId: payload.abogado_id,
     rol,
     roles,
