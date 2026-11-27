@@ -1,5 +1,5 @@
 /**
- * Aplica db/migrations/0001_init.sql sobre una base vacía y comprueba que el
+ * Aplica db/migrations/*.sql, en orden, sobre una base vacía y comprueba que el
  * esquema queda con las 15 tablas del modelo.
  *
  * Existe porque la migración solo se probaba a mano: una futura que no aplique
@@ -12,13 +12,15 @@
  * terminar. Se ejecuta con el cliente `pg` y no con `psql` para no depender de
  * que el runner lo traiga instalado.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { Client } from 'pg';
 
 const TABLAS_ESPERADAS = 15;
 const BASE_DE_PRUEBA = 'ddl_check';
-const MIGRACION = new URL('../db/migrations/0001_init.sql', import.meta.url);
+const MIGRACIONES = fileURLToPath(new URL('../db/migrations/', import.meta.url));
 
 const url = new URL(process.env.DATABASE_URL ?? 'postgres://turno:turno@localhost:5432/turno');
 
@@ -48,9 +50,20 @@ async function main() {
   const cliente = await conectar(conBase(url, BASE_DE_PRUEBA));
 
   try {
-    // 2. La migración, tal cual está versionada.
-    const sql = readFileSync(MIGRACION, 'utf8');
-    await cliente.query(sql);
+    // 2. Las migraciones, en orden y tal cual están versionadas. Solo los .sql de
+    //    primer nivel: `down/` es el reverso y no debe aplicarse aquí.
+    const ficheros = readdirSync(MIGRACIONES)
+      .filter((nombre) => nombre.endsWith('.sql'))
+      .sort();
+
+    if (ficheros.length === 0) {
+      throw new Error(`no hay migraciones en ${MIGRACIONES}`);
+    }
+
+    for (const fichero of ficheros) {
+      console.log(`  aplicando ${fichero}`);
+      await cliente.query(readFileSync(join(MIGRACIONES, fichero), 'utf8'));
+    }
 
     // 3. ¿Están las 15 tablas?
     const { rows } = await cliente.query(
