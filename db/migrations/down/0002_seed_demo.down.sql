@@ -13,6 +13,8 @@ delete from guardia
 
 delete from tipo_guardia where codigo = 'PEN-DIA';
 delete from cuadrante where id = '00000000-0000-4000-8000-000000000201';
+delete from abogado where id = '00000000-0000-4000-8000-000000000201';
+delete from usuario where id = '00000000-0000-4000-8000-000000000101';
 delete from especialidad where codigo = 'PEN';
 
 commit;
