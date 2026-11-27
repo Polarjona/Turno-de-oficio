@@ -18,6 +18,9 @@ async function main(): Promise<void> {
     .setTitle('Turno de Oficio · API')
     .setDescription('Contrato generado desde el código')
     .setVersion('0.1.0')
+    // Debe coincidir con main.ts: sin el esquema declarado, el `security` que
+    // genera @ApiBearerAuth() queda colgando y el documento no es válido.
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
     .build();
 
   const documento = SwaggerModule.createDocument(app, config);

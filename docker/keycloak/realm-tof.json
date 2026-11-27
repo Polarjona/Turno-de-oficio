@@ -1,0 +1,154 @@
+{
+  "realm": "tof",
+  "displayName": "Turno de Oficio",
+  "displayNameHtml": "<strong>Turno de Oficio</strong> · Colegio de Abogados",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "passwordPolicy": "length(8)",
+  "roles": {
+    "realm": [
+      {
+        "name": "letrado",
+        "description": "Letrado de guardia: consulta su cuadrante, acusa y presenta solicitudes"
+      },
+      {
+        "name": "coordinacion",
+        "description": "Coordinación: planifica, designa, resuelve solicitudes y publica el cuadrante"
+      },
+      {
+        "name": "junta",
+        "description": "Junta de Gobierno: lectura de cuadrantes, equidad y exportaciones"
+      },
+      {
+        "name": "admin",
+        "description": "Administración técnica: parámetros, catálogos y usuarios"
+      }
+    ]
+  },
+  "groups": [
+    { "name": "letrados", "path": "/letrados", "realmRoles": ["letrado"] },
+    { "name": "coordinacion", "path": "/coordinacion", "realmRoles": ["coordinacion"] },
+    { "name": "junta", "path": "/junta", "realmRoles": ["junta"] },
+    { "name": "administracion", "path": "/administracion", "realmRoles": ["admin"] }
+  ],
+  "users": [
+    {
+      "username": "letrado.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "letrado.demo@example.test",
+      "firstName": "Lucía",
+      "lastName": "Demostración",
+      "attributes": { "colegiado": ["ICAT-0101"] },
+      "groups": ["/letrados"],
+      "credentials": [{ "type": "password", "value": "demo-letrado", "temporary": false }]
+    },
+    {
+      "username": "coordinacion.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "coordinacion.demo@example.test",
+      "firstName": "Marta",
+      "lastName": "Demostración",
+      "attributes": { "colegiado": ["ICAT-0001"] },
+      "groups": ["/coordinacion"],
+      "credentials": [{ "type": "password", "value": "demo-coordinacion", "temporary": false }]
+    },
+    {
+      "username": "junta.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "junta.demo@example.test",
+      "firstName": "Álvaro",
+      "lastName": "Demostración",
+      "attributes": { "colegiado": ["ICAT-0000"] },
+      "groups": ["/junta"],
+      "credentials": [{ "type": "password", "value": "demo-junta", "temporary": false }]
+    },
+    {
+      "username": "admin.demo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin.demo@example.test",
+      "firstName": "Admin",
+      "lastName": "Demostración",
+      "attributes": { "colegiado": ["ICAT-9999"] },
+      "groups": ["/administracion"],
+      "credentials": [{ "type": "password", "value": "demo-admin", "temporary": false }]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "tof-web",
+      "name": "Turno de Oficio · web",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "enabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "colegiado",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "colegiado",
+            "claim.name": "colegiado",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "tof-api",
+      "name": "Turno de Oficio · API",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "dev-only-tof-api",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "bearerOnly": false,
+      "attributes": { "access.token.signed.response.alg": "RS256" },
+      "protocolMappers": [
+        {
+          "name": "colegiado",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "colegiado",
+            "claim.name": "colegiado",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

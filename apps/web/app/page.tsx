@@ -12,7 +12,7 @@ export default function Home() {
         <thead>
           <tr style={{ textAlign: 'left', borderBottom: '1px solid #ddd' }}>
             <th style={{ padding: '0.5rem 0' }}>Fecha</th>
-            <th style={{ padding: '0.5rem 0' }}>Tipo</th>
+            <th style={{ padding: '0.5rem 0' }}>Horario</th>
             <th style={{ padding: '0.5rem 0' }}>Estado</th>
           </tr>
         </thead>
@@ -20,7 +20,9 @@ export default function Home() {
           {GUARDIAS_DEMO.map((guardia) => (
             <tr key={guardia.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
               <td style={{ padding: '0.5rem 0' }}>{guardia.fecha}</td>
-              <td style={{ padding: '0.5rem 0' }}>{guardia.tipo}</td>
+              <td style={{ padding: '0.5rem 0' }}>
+                {guardia.hora_inicio}–{guardia.hora_fin}
+              </td>
               <td style={{ padding: '0.5rem 0' }}>{guardia.estado}</td>
             </tr>
           ))}

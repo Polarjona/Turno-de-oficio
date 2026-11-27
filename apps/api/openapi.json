@@ -10,13 +10,104 @@
     "/guardias": {
       "get": {
         "operationId": "GuardiasController_listar",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco de la página anterior",
+            "schema": {}
+          },
+          {
+            "name": "limite",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "orden",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fecha_asc",
+                "fecha_desc"
+              ],
+              "default": "fecha_asc"
+            }
+          },
+          {
+            "name": "estado",
+            "required": false,
+            "in": "query",
+            "description": "Repetible: estado=planificada&estado=publicada",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "hasta",
+            "required": false,
+            "in": "query",
+            "description": "Fecha final inclusive (AAAA-MM-DD)",
+            "schema": {}
+          },
+          {
+            "name": "desde",
+            "required": false,
+            "in": "query",
+            "description": "Fecha inicial inclusive (AAAA-MM-DD)",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Guardias ordenadas por fecha"
+            "description": "Página de guardias"
+          },
+          "400": {
+            "description": "Filtro o cursor inválido"
           }
         },
-        "summary": "Lista las guardias del periodo",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Guardias del periodo con filtros",
+        "tags": [
+          "guardias"
+        ]
+      },
+      "post": {
+        "operationId": "GuardiasController_crear",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Guardia creada en estado planificada"
+          },
+          "400": {
+            "description": "El cuerpo no cumple GuardiaRequest"
+          },
+          "403": {
+            "description": "El rol no permite crear guardias"
+          },
+          "409": {
+            "description": "Ya existe una guardia de ese tipo en esa fecha"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crea una franja sin titular (estado planificada)",
         "tags": [
           "guardias"
         ]
@@ -38,12 +129,25 @@
         ],
         "responses": {
           "200": {
-            "description": "Guardia encontrada"
+            "description": "Guardia encontrada",
+            "headers": {
+              "ETag": {
+                "description": "Versión del recurso",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
             "description": "La guardia no existe"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Detalle de una guardia",
         "tags": [
           "guardias"
@@ -59,6 +163,11 @@
             "description": "Datos del usuario autenticado"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Usuario de la sesión",
         "tags": [
           "sesion"
@@ -67,6 +176,13 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
     "schemas": {}
   }
 }
