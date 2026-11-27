@@ -20,7 +20,8 @@
     "dev:api": "npm run dev -w @turno/api",
     "dev:web": "npm run dev -w @turno/web",
     "openapi": "npm run openapi -w @turno/api && node scripts/check-contrato.mjs",
-    "check:ddl": "node scripts/check-ddl.mjs"
+    "check:ddl": "node scripts/check-ddl.mjs",
+    "migrar": "node scripts/migrar.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

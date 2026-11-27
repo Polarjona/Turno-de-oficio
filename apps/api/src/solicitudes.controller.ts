@@ -65,8 +65,9 @@ export class SolicitudesController {
   @ApiOkResponse({ description: 'Página de solicitudes' })
   listar(
     @Query(new ZodPipe(SolicitudesQuerySchema)) filtros: FiltrosSolicitudes,
+    @UsuarioActual() usuario: UsuarioAutenticado,
   ): Promise<PaginaSolicitudes> {
-    return this.solicitudes.listar(filtros);
+    return this.solicitudes.listar(filtros, usuario);
   }
 
   @Post()
@@ -93,8 +94,11 @@ export class SolicitudesController {
   @ApiParam({ name: 'solicitudId', description: 'Identificador de la solicitud' })
   @ApiOkResponse({ description: 'Solicitud encontrada' })
   @ApiNotFoundResponse({ description: 'La solicitud no existe' })
-  detalle(@Param('solicitudId') solicitudId: string): Promise<Solicitud> {
-    return this.solicitudes.detalle(solicitudId);
+  detalle(
+    @Param('solicitudId') solicitudId: string,
+    @UsuarioActual() usuario: UsuarioAutenticado,
+  ): Promise<Solicitud> {
+    return this.solicitudes.detalle(solicitudId, usuario);
   }
 
   @Post(':solicitudId/resolucion')

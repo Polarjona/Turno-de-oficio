@@ -32,12 +32,28 @@ from especialidad e
 where e.codigo = 'PEN'
 on conflict (codigo) do nothing;
 
+-- La franja vive dentro de un cuadrante: RN-39 solo deja sin cuadrante las
+-- urgentes y las que aún están planificadas, y una guardia resuelta deja de
+-- estarlo.
+insert into cuadrante (id, anio, periodo, estado, fecha_publicacion)
+values (
+  '00000000-0000-4000-8000-000000000201',
+  extract(year from current_date + 10)::int,
+  'demo',
+  'publicado',
+  now()
+)
+on conflict (id) do nothing;
+
 -- Una franja a diez días vista: dentro de plazo, para que la excusa no se
 -- marque como extemporánea.
 insert into guardia (
-  tipo_guardia_id, especialidad_id, fecha, hora_inicio, hora_fin, es_detenido, estado, origen
+  tipo_guardia_id, especialidad_id, cuadrante_id, fecha, hora_inicio, hora_fin,
+  es_detenido, estado, origen
 )
-select t.id, t.especialidad_id, current_date + 10, '09:00', '20:00', false, 'planificada', 'planificacion'
+select
+  t.id, t.especialidad_id, '00000000-0000-4000-8000-000000000201',
+  current_date + 10, '09:00', '20:00', false, 'publicada', 'planificacion'
 from tipo_guardia t
 where t.codigo = 'PEN-DIA'
   and not exists (

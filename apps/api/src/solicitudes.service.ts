@@ -28,13 +28,18 @@ export class SolicitudesService {
     @Inject(SOLICITUDES_REPOSITORIO) private readonly repositorio: SolicitudesRepository,
   ) {}
 
-  listar(filtros: Partial<FiltrosSolicitudes> = {}): Promise<PaginaSolicitudes> {
-    return this.repositorio.listar(filtros);
+  async listar(
+    filtros: Partial<FiltrosSolicitudes>,
+    usuario: UsuarioAutenticado,
+  ): Promise<PaginaSolicitudes> {
+    return this.repositorio.listar(acotarAlUsuario(filtros, usuario));
   }
 
-  async detalle(id: string): Promise<Solicitud> {
+  async detalle(id: string, usuario: UsuarioAutenticado): Promise<Solicitud> {
     const solicitud = await this.repositorio.detalle(id);
-    if (!solicitud) {
+    // Un letrado no ve el expediente de otro: mismo 404 que si no existiera,
+    // para no confirmar siquiera que está ahí.
+    if (!solicitud || (usuario.rol === 'letrado' && !esSuya(solicitud, usuario))) {
       throw new NotFoundException('Solicitud no encontrada');
     }
     return solicitud;
@@ -65,6 +70,11 @@ export class SolicitudesService {
       });
     }
 
+    // Solo el titular se excusa de su propia guardia: nadie presenta por otro.
+    if (guardia.abogadoId !== usuario.abogadoId) {
+      throw new ForbiddenException('Solo el letrado titular puede presentar la solicitud');
+    }
+
     return this.repositorio.crear({
       ...datos,
       solicitante_id: usuario.abogadoId,
@@ -80,6 +90,31 @@ export class SolicitudesService {
     await this.repositorio.asegurarAbogado(usuario);
     return this.repositorio.resolver(id, resolucion, usuario.id);
   }
+}
+
+/**
+ * Un letrado solo ve sus propias solicitudes: el motivo es dato de salud y no
+ * tiene por qué llegar al resto de la bolsa. Coordinación, junta y admin ven
+ * todas.
+ */
+function acotarAlUsuario(
+  filtros: Partial<FiltrosSolicitudes>,
+  usuario: UsuarioAutenticado,
+): Partial<FiltrosSolicitudes> {
+  if (usuario.rol !== 'letrado') {
+    return filtros;
+  }
+  if (!usuario.abogadoId) {
+    throw new ForbiddenException('El token no identifica al abogado');
+  }
+  if (filtros.solicitante_id && filtros.solicitante_id !== usuario.abogadoId) {
+    throw new ForbiddenException('Un letrado solo puede consultar sus propias solicitudes');
+  }
+  return { ...filtros, solicitante_id: usuario.abogadoId };
+}
+
+function esSuya(solicitud: Solicitud, usuario: UsuarioAutenticado): boolean {
+  return solicitud.solicitante_id === usuario.abogadoId;
 }
 
 /** RN-12: se registra la extemporaneidad, no se oculta. */

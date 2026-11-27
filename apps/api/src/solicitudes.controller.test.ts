@@ -1,4 +1,9 @@
-import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ResolucionRequestSchema, SolicitudRequestSchema } from '@turno/shared';
 import { describe, expect, it } from 'vitest';
 
@@ -25,6 +30,15 @@ const LETRADO: UsuarioAutenticado = {
   nombre: 'Lucía Demostración',
   colegiado: 'ICAT-0101',
   abogadoId: '00000000-0000-4000-8000-000000000201',
+  rol: 'letrado',
+  roles: ['letrado'],
+};
+
+const LETRADO_2: UsuarioAutenticado = {
+  id: '00000000-0000-4000-8000-000000000903',
+  nombre: 'Iván Demostración',
+  colegiado: 'ICAT-0102',
+  abogadoId: '00000000-0000-4000-8000-000000000203',
   rol: 'letrado',
   roles: ['letrado'],
 };
@@ -155,6 +169,37 @@ describe('SolicitudesService', () => {
       await expect(servicio.resolver(creada.id, resolucion, COORDINACION)).rejects.toThrow(
         ConflictException,
       );
+    });
+  });
+
+  describe('visibilidad de las solicitudes', () => {
+    it('devuelve 403 si un letrado se excusa de la guardia de otro', async () => {
+      await expect(crearServicio().crear({ ...nueva }, LETRADO_2)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('un letrado solo lista las suyas; coordinación las ve todas', async () => {
+      const servicio = crearServicio();
+      await servicio.crear({ ...nueva }, LETRADO);
+
+      const suyas = await servicio.listar({}, LETRADO);
+      expect(suyas.data).toHaveLength(1);
+      expect(suyas.data.every((s) => s.solicitante_id === LETRADO.abogadoId)).toBe(true);
+      expect((await servicio.listar({}, COORDINACION)).data).toHaveLength(1);
+    });
+
+    it('un letrado no puede filtrar por otro abogado ni abrir su expediente', async () => {
+      const servicio = crearServicio();
+      const creada = await servicio.crear({ ...nueva }, LETRADO);
+
+      await expect(
+        servicio.listar({ solicitante_id: LETRADO.abogadoId }, LETRADO_2),
+      ).rejects.toThrow(ForbiddenException);
+      await expect(servicio.detalle(creada.id, LETRADO_2)).rejects.toThrow(NotFoundException);
+      await expect(servicio.detalle(creada.id, LETRADO)).resolves.toMatchObject({
+        id: creada.id,
+      });
     });
   });
 
