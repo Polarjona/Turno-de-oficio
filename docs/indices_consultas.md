@@ -1,0 +1,1 @@
+# Índices y Consultas Críticas
