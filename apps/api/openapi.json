@@ -19,7 +19,7 @@
             "schema": {}
           },
           {
-            "name": "limite",
+            "name": "limit",
             "required": false,
             "in": "query",
             "schema": {
@@ -38,6 +38,53 @@
                 "fecha_desc"
               ],
               "default": "fecha_asc"
+            }
+          },
+          {
+            "name": "solo_detenido",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Franjas de asistencia al detenido (RN-35)"
+          },
+          {
+            "name": "solo_descubiertas",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "abogado_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Si no se indica y el rol es letrado, se fuerza al propio"
+          },
+          {
+            "name": "tipo_guardia_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "especialidad_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           },
           {
@@ -69,7 +116,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Página de guardias"
+            "description": "Página de guardias",
+            "headers": {
+              "X-Total-Estimado": {
+                "description": "Guardias que cumplen los filtros",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "400": {
             "description": "Filtro o cursor inválido"

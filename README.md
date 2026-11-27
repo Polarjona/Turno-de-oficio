@@ -15,7 +15,7 @@ jurídica gratuita. Documentación y entregables del proyecto de ejercicio de la
 │   ├── api/                         NestJS 11 · contrato en http://localhost:3101/api-docs
 │   └── web/                         Next.js 15
 ├── packages/shared/                 Tipos y esquemas Zod que usan api y web
-├── db/migrations/                   SQL del cuadrante (0001_init.sql)
+├── db/migrations/                   Esquema físico v0 (0001_init.sql); el reverso, en down/
 ├── etl/                             Validación del cuadrante histórico antes de cargarlo
 ├── docker/                          Stack local: Postgres, PgBouncer, Keycloak, Mailpit, MinIO, Prometheus y Grafana
 ├── scripts/                         Comprobación del contrato OpenAPI
@@ -162,6 +162,28 @@ docker compose -f docker/docker-compose.yml exec -T postgres \
 La carpeta `db/migrations` está montada en `/docker-entrypoint-initdb.d`, así
 que al crear el volumen el contenedor ya aplica la migración por su cuenta; el
 paso 3 sirve para volver a pasarla cuando se añade una nueva.
+
+La migración crea el esquema físico del modelo: las 14 entidades de
+`entregables/BBDD/Modelo_ER_DDL_TOF-2026-012.pdf` (usuario, abogado,
+especialidad, habilitacion, tipo_guardia, cuadrante, guardia, disponibilidad,
+solicitud, incidencia, parte_guardia, justificante, notificacion, auditoria) más
+`parametro`, con sus claves, sus CHECK de estado y las reglas que impone el
+motor: el solapamiento de guardias de un mismo letrado (RN-04, `tstzrange` +
+`EXCLUDE USING gist`), la designación urgente sin cuadrante (RN-39), el parte sin
+horas ni actuaciones (RN-18), una sola solicitud abierta por guardia y la
+auditoría sin `UPDATE`/`DELETE` para el rol de aplicación. Es idempotente: se
+puede repetir sobre el mismo volumen.
+
+Para revertirla:
+
+```bash
+docker compose -f docker/docker-compose.yml exec -T postgres \
+  psql -U turno -d turno < db/migrations/down/0001_init.down.sql
+```
+
+El reverso vive en `db/migrations/down/` a propósito: el entrypoint de Postgres
+ejecuta todos los `.sql` del directorio montado, y un `.down.sql` suelto ahí
+borraría el esquema justo después de crearlo.
 
 La prueba de conexión de la API (`apps/api/src/db.test.ts`) se salta si no hay
 `DATABASE_URL`. Para que corra:

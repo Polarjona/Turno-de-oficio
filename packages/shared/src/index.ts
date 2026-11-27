@@ -89,8 +89,18 @@ export const PaginaGuardiasSchema = z.object({
 export type PaginaGuardias = z.infer<typeof PaginaGuardiasSchema>;
 
 /**
- * Filtros de `GET /guardias`. `estado` puede repetirse en la query, así que
- * acepta un valor suelto o una lista y siempre sale como lista.
+ * Booleano de query: llega como texto, así que solo `true` es verdadero
+ * (`Boolean('false')` sería `true`, que es la trampa habitual).
+ */
+const BooleanoConsultaSchema = z
+  .enum(['true', 'false'])
+  .default('false')
+  .transform((valor) => valor === 'true');
+
+/**
+ * Filtros de `GET /guardias` (contrato, `listarGuardias`). `estado` puede
+ * repetirse en la query, así que acepta un valor suelto o una lista y siempre
+ * sale como lista.
  */
 export const GuardiasQuerySchema = z.object({
   desde: FechaSchema.optional(),
@@ -101,8 +111,13 @@ export const GuardiasQuerySchema = z.object({
     .transform((valor) =>
       valor === undefined ? undefined : Array.isArray(valor) ? valor : [valor],
     ),
+  especialidad_id: z.string().uuid().optional(),
+  tipo_guardia_id: z.string().uuid().optional(),
+  abogado_id: z.string().uuid().optional(),
+  solo_descubiertas: BooleanoConsultaSchema,
+  solo_detenido: BooleanoConsultaSchema,
   orden: OrdenGuardiasSchema.default('fecha_asc'),
-  limite: z.coerce.number().int().min(1).max(100).default(20),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   cursor: z.string().min(1).optional(),
 });
 export type FiltrosGuardias = z.infer<typeof GuardiasQuerySchema>;

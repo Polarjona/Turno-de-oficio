@@ -45,6 +45,17 @@ function claims(...roles: string[]): TokenKeycloak & { exp: number } {
   };
 }
 
+/** Token con el claim `abogado_id`, como el que emite el realm real. */
+const claimsConAbogado = (
+  abogadoId: string,
+  ...roles: string[]
+): TokenKeycloak & { exp: number } => ({
+  ...claims(...roles),
+  abogado_id: abogadoId,
+});
+
+const ABOGADO_DEMO = '00000000-0000-4000-8000-000000000201';
+
 class EstrategiaDePrueba extends PassportStrategy(Strategy, 'jwt') {
   constructor() {
     super({
@@ -162,6 +173,63 @@ describe('Autenticación por HTTP', () => {
       const pagina = (await respuesta.json()) as { data: { fecha: string }[] };
       expect(pagina.data).toHaveLength(1);
       expect(pagina.data[0]!.fecha).toBe('2026-12-01');
+    });
+
+    it('filtra por especialidad, tipo y descubiertas', async () => {
+      const especialidad = '00000000-0000-4000-8000-000000000401';
+      const tipo = '00000000-0000-4000-8000-000000000301';
+
+      const porEspecialidad = await pedir(
+        `/guardias?especialidad_id=${especialidad}&tipo_guardia_id=${tipo}`,
+        conToken('coordinacion'),
+      );
+      expect(porEspecialidad.status).toBe(200);
+      expect(((await porEspecialidad.json()) as { data: unknown[] }).data).toHaveLength(2);
+
+      const descubiertas = await pedir(
+        '/guardias?solo_descubiertas=true',
+        conToken('coordinacion'),
+      );
+      expect(((await descubiertas.json()) as { data: unknown[] }).data).toHaveLength(0);
+
+      const detenido = await pedir('/guardias?solo_detenido=true', conToken('coordinacion'));
+      expect(((await detenido.json()) as { data: unknown[] }).data).toHaveLength(0);
+    });
+
+    it('pagina con limit y expone X-Total-Estimado', async () => {
+      const respuesta = await pedir('/guardias?limit=1', conToken('coordinacion'));
+      expect(respuesta.status).toBe(200);
+      expect(respuesta.headers.get('x-total-estimado')).toBe('2');
+
+      const pagina = (await respuesta.json()) as {
+        data: unknown[];
+        page: { has_more: boolean };
+      };
+      expect(pagina.data).toHaveLength(1);
+      expect(pagina.page.has_more).toBe(true);
+    });
+
+    it('un letrado solo ve sus propias guardias', async () => {
+      const cabeceras = {
+        authorization: `Bearer ${token(claimsConAbogado(ABOGADO_DEMO, 'letrado'))}`,
+      };
+      const respuesta = await pedir('/guardias', cabeceras);
+      expect(respuesta.status).toBe(200);
+
+      const pagina = (await respuesta.json()) as { data: { abogado_id: string | null }[] };
+      expect(pagina.data).toHaveLength(1);
+      expect(pagina.data.every((guardia) => guardia.abogado_id === ABOGADO_DEMO)).toBe(true);
+    });
+
+    it('403 si un letrado pide las guardias de otro abogado', async () => {
+      const cabeceras = {
+        authorization: `Bearer ${token(claimsConAbogado(ABOGADO_DEMO, 'letrado'))}`,
+      };
+      const respuesta = await pedir(
+        '/guardias?abogado_id=00000000-0000-4000-8000-000000000999',
+        cabeceras,
+      );
+      expect(respuesta.status).toBe(403);
     });
 
     it('400 con un filtro mal formado', async () => {
