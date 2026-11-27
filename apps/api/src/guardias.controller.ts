@@ -41,15 +41,21 @@ import { ZodPipe } from './zod.pipe';
  * Un letrado solo ve sus guardias: el contrato fuerza `abogado_id` al propio
  * cuando el rol es `letrado`. El resto de roles filtra por quien quieran.
  *
- * Si el token no trae `abogado_id` (usuario sin registro de abogado) no se
- * fuerza nada: es mejor devolver la lista que romper la consulta.
+ * Si el token del letrado no trae `abogado_id` no se puede saber a quién
+ * pertenece: se responde 403 en vez de dejarle ver las guardias de todos.
  */
 export function filtrosParaUsuario(
   filtros: FiltrosGuardias,
   usuario: UsuarioAutenticado,
 ): FiltrosGuardias {
-  if (usuario.rol !== 'letrado' || !usuario.abogadoId) {
+  if (usuario.rol !== 'letrado') {
     return filtros;
+  }
+
+  if (!usuario.abogadoId) {
+    throw new ForbiddenException(
+      'El token no identifica al abogado; no se pueden consultar guardias sin saber de quién son',
+    );
   }
 
   if (filtros.abogado_id && filtros.abogado_id !== usuario.abogadoId) {
@@ -124,13 +130,14 @@ export class GuardiasController {
     },
   })
   @ApiBadRequestResponse({ description: 'Filtro o cursor inválido' })
-  listar(
+  async listar(
     @Query(new ZodPipe(GuardiasQuerySchema)) filtros: FiltrosGuardias,
     @UsuarioActual() usuario: UsuarioAutenticado,
     @Res({ passthrough: true }) respuesta: RespuestaConCabeceras,
-  ): PaginaGuardias {
+  ): Promise<PaginaGuardias> {
     const efectivos = filtrosParaUsuario(filtros, usuario);
-    respuesta.setHeader('X-Total-Estimado', String(this.guardias.contar(efectivos)));
+    const total = await this.guardias.contar(efectivos);
+    respuesta.setHeader('X-Total-Estimado', String(total));
     return this.guardias.listar(efectivos);
   }
 
@@ -141,12 +148,12 @@ export class GuardiasController {
   @ApiBadRequestResponse({ description: 'El cuerpo no cumple GuardiaRequest' })
   @ApiForbiddenResponse({ description: 'El rol no permite crear guardias' })
   @ApiConflictResponse({ description: 'Ya existe una guardia de ese tipo en esa fecha' })
-  crear(
+  async crear(
     @Body(new ZodPipe(GuardiaRequestSchema)) datos: GuardiaRequest,
     @Headers('idempotency-key') claveIdempotencia: string | undefined,
     @Res({ passthrough: true }) respuesta: RespuestaConCabeceras,
-  ): Guardia {
-    const { guardia } = this.guardias.crear(datos, claveIdempotencia);
+  ): Promise<Guardia> {
+    const { guardia } = await this.guardias.crear(datos, claveIdempotencia);
     respuesta.setHeader('Location', `/guardias/${guardia.id}`);
     return guardia;
   }
@@ -161,11 +168,11 @@ export class GuardiasController {
     },
   })
   @ApiNotFoundResponse({ description: 'La guardia no existe' })
-  detalle(
+  async detalle(
     @Param('guardiaId') guardiaId: string,
     @Res({ passthrough: true }) respuesta: RespuestaConCabeceras,
-  ): Guardia {
-    const guardia = this.guardias.detalle(guardiaId);
+  ): Promise<Guardia> {
+    const guardia = await this.guardias.detalle(guardiaId);
     respuesta.setHeader('ETag', `"${guardia.version}"`);
     return guardia;
   }

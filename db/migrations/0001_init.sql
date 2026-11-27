@@ -221,6 +221,15 @@ alter table guardia add constraint ux_guardia_solape exclude using gist (
   tstzrange(inicio_en, fin_en) with &&
 ) where (estado <> 'anulada' and abogado_id is not null);
 
+-- Una sola guardia de cada tipo por fecha: POST /guardias responde 409 a la
+-- repeticion y la base lo impone aqui, no en el servicio.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'ux_guardia_fecha_tipo') then
+    alter table guardia add constraint ux_guardia_fecha_tipo unique (fecha, tipo_guardia_id);
+  end if;
+end $$;
+
 create index if not exists ix_guardia_fecha_materia on guardia (fecha, especialidad_id, estado);
 create index if not exists ix_guardia_abogado_fecha on guardia (abogado_id, fecha);
 
@@ -380,6 +389,14 @@ exception
   when undefined_object then
     raise notice 'El rol app_role no existe; se omite el REVOKE de auditoria.';
 end $$;
+
+-- Claves de Idempotency-Key ya usadas: el reintento devuelve la misma guardia
+-- en vez de crear otra.
+create table if not exists idempotencia_guardia (
+  clave      text primary key,
+  guardia_id uuid not null references guardia (id) on delete cascade,
+  creado_en  timestamptz not null default now()
+);
 
 -- ─── Parámetros versionados (RN-27) ─────────────────────────────────────────
 

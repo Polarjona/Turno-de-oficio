@@ -185,6 +185,11 @@ El reverso vive en `db/migrations/down/` a propósito: el entrypoint de Postgres
 ejecuta todos los `.sql` del directorio montado, y un `.down.sql` suelto ahí
 borraría el esquema justo después de crearlo.
 
+La API usa esas tablas en cuanto arranca con `DATABASE_URL` (a través de
+PgBouncer: `postgres://turno:turno@localhost:6432/turno`). Sin la variable,
+`GuardiasService` trabaja en memoria, que es lo que usan los tests y el arranque
+sin Docker. El repositorio se elige en un solo sitio: `apps/api/src/app.module.ts`.
+
 La prueba de conexión de la API (`apps/api/src/db.test.ts`) se salta si no hay
 `DATABASE_URL`. Para que corra:
 

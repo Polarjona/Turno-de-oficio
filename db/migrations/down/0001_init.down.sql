@@ -9,6 +9,7 @@
 begin;
 
 drop table if exists parametro cascade;
+drop table if exists idempotencia_guardia cascade;
 drop table if exists auditoria cascade;
 drop table if exists notificacion cascade;
 drop table if exists justificante cascade;
