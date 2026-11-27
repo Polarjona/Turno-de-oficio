@@ -48,7 +48,10 @@
       "email": "letrado.demo@example.test",
       "firstName": "Lucía",
       "lastName": "Demostración",
-      "attributes": { "colegiado": ["ICAT-0101"] },
+      "attributes": {
+        "colegiado": ["ICAT-0101"],
+        "abogado_id": ["00000000-0000-4000-8000-000000000201"]
+      },
       "groups": ["/letrados"],
       "credentials": [{ "type": "password", "value": "demo-letrado", "temporary": false }]
     },
@@ -59,7 +62,10 @@
       "email": "coordinacion.demo@example.test",
       "firstName": "Marta",
       "lastName": "Demostración",
-      "attributes": { "colegiado": ["ICAT-0001"] },
+      "attributes": {
+        "colegiado": ["ICAT-0001"],
+        "abogado_id": ["00000000-0000-4000-8000-000000000202"]
+      },
       "groups": ["/coordinacion"],
       "credentials": [{ "type": "password", "value": "demo-coordinacion", "temporary": false }]
     },
@@ -70,7 +76,10 @@
       "email": "junta.demo@example.test",
       "firstName": "Álvaro",
       "lastName": "Demostración",
-      "attributes": { "colegiado": ["ICAT-0000"] },
+      "attributes": {
+        "colegiado": ["ICAT-0000"],
+        "abogado_id": ["00000000-0000-4000-8000-000000000203"]
+      },
       "groups": ["/junta"],
       "credentials": [{ "type": "password", "value": "demo-junta", "temporary": false }]
     },
@@ -81,7 +90,10 @@
       "email": "admin.demo@example.test",
       "firstName": "Admin",
       "lastName": "Demostración",
-      "attributes": { "colegiado": ["ICAT-9999"] },
+      "attributes": {
+        "colegiado": ["ICAT-9999"],
+        "abogado_id": ["00000000-0000-4000-8000-000000000204"]
+      },
       "groups": ["/administracion"],
       "credentials": [{ "type": "password", "value": "demo-admin", "temporary": false }]
     }
@@ -117,6 +129,20 @@
             "access.token.claim": "true",
             "userinfo.token.claim": "true"
           }
+        },
+        {
+          "name": "abogado_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "abogado_id",
+            "claim.name": "abogado_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
         }
       ]
     },
@@ -142,6 +168,20 @@
           "config": {
             "user.attribute": "colegiado",
             "claim.name": "colegiado",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "abogado_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "abogado_id",
+            "claim.name": "abogado_id",
             "jsonType.label": "String",
             "id.token.claim": "true",
             "access.token.claim": "true",

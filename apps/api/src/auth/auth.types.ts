@@ -15,6 +15,8 @@ export interface TokenKeycloak {
   name?: string;
   email?: string;
   colegiado?: string;
+  /** Id del registro `abogado`, para que un letrado solo vea lo suyo. */
+  abogado_id?: string;
   realm_access?: { roles?: string[] };
 }
 
@@ -23,6 +25,8 @@ export interface UsuarioAutenticado {
   id: string;
   nombre: string;
   colegiado: string;
+  /** Nulo si el token no lo trae (usuario de demo sin registro de abogado). */
+  abogadoId?: string | undefined;
   rol: Rol;
   roles: Rol[];
 }
@@ -43,6 +47,7 @@ export function usuarioDesdeToken(payload: TokenKeycloak): UsuarioAutenticado {
     id: payload.sub,
     nombre: payload.name ?? payload.preferred_username ?? payload.sub,
     colegiado: payload.colegiado ?? payload.preferred_username ?? '',
+    abogadoId: payload.abogado_id,
     rol,
     roles,
   };

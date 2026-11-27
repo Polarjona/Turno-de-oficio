@@ -42,18 +42,31 @@ export class GuardiasService {
   private readonly idempotencia = new Map<string, string>();
 
   /**
-   * Página de guardias (`Pagina` en el contrato).
-   *
-   * Filtra por fecha (extremos incluidos) y por estado, ordena por fecha y
-   * devuelve un cursor opaco mientras queden elementos.
+   * Aplica los filtros del contrato y ordena por fecha. Lo comparten `listar` y
+   * `contar` para que la cabecera `X-Total-Estimado` hable del mismo conjunto.
    */
-  listar(filtros: Partial<FiltrosGuardias> = {}): PaginaGuardias {
-    const { desde, hasta, estado, orden, limite, cursor } = filtros;
+  private filtrar(filtros: Partial<FiltrosGuardias> = {}): Guardia[] {
+    const {
+      desde,
+      hasta,
+      estado,
+      especialidad_id,
+      tipo_guardia_id,
+      abogado_id,
+      solo_descubiertas,
+      solo_detenido,
+      orden,
+    } = filtros;
 
     const filtradas = this.guardias.filter((guardia) => {
       if (desde && guardia.fecha < desde) return false;
       if (hasta && guardia.fecha > hasta) return false;
       if (estado && estado.length > 0 && !estado.includes(guardia.estado)) return false;
+      if (especialidad_id && guardia.especialidad_id !== especialidad_id) return false;
+      if (tipo_guardia_id && guardia.tipo_guardia_id !== tipo_guardia_id) return false;
+      if (abogado_id && guardia.abogado_id !== abogado_id) return false;
+      if (solo_descubiertas && guardia.estado !== 'descubierta') return false;
+      if (solo_detenido && !guardia.es_detenido) return false;
       return true;
     });
 
@@ -62,8 +75,20 @@ export class GuardiasService {
       (a, b) => sentido * (a.fecha.localeCompare(b.fecha) || a.id.localeCompare(b.id)),
     );
 
-    const tamano = limite ?? 20;
-    const inicio = cursor ? decodificarCursor(cursor) : 0;
+    return filtradas;
+  }
+
+  /**
+   * Página de guardias (`Pagina` en el contrato).
+   *
+   * Filtra según el contrato, ordena por fecha y devuelve un cursor opaco
+   * mientras queden elementos.
+   */
+  listar(filtros: Partial<FiltrosGuardias> = {}): PaginaGuardias {
+    const filtradas = this.filtrar(filtros);
+
+    const tamano = filtros.limit ?? 20;
+    const inicio = filtros.cursor ? decodificarCursor(filtros.cursor) : 0;
     const pagina = filtradas.slice(inicio, inicio + tamano);
     const siguiente = inicio + pagina.length;
     const hayMas = siguiente < filtradas.length;
@@ -76,6 +101,11 @@ export class GuardiasService {
         size: pagina.length,
       },
     };
+  }
+
+  /** Total de guardias que cumplen los filtros, para `X-Total-Estimado`. */
+  contar(filtros: Partial<FiltrosGuardias> = {}): number {
+    return this.filtrar(filtros).length;
   }
 
   detalle(id: string): Guardia {
