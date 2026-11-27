@@ -1,6 +1,10 @@
 /**
  * Aplica db/migrations/*.sql, en orden, sobre una base vacía y comprueba que el
- * esquema queda con las 15 tablas del modelo.
+ * esquema queda con las 15 tablas del modelo y con las reglas que de verdad
+ * importan:
+ *
+ *   - `ux_guardia_solape` existe y es un `EXCLUDE USING gist` (RN-04).
+ *   - El CHECK de `guardia.origen` rechaza un `urgente` con `cuadrante_id`.
  *
  * Existe porque la migración solo se probaba a mano: una futura que no aplique
  * (una FK mal puesta, un CHECK que no compila, un orden de tablas roto) se
@@ -35,6 +39,78 @@ async function conectar(cadena) {
   const cliente = new Client({ connectionString: cadena });
   await cliente.connect();
   return cliente;
+}
+
+/** RN-04: el solape lo tiene que impedir el motor, no una consulta de la API. */
+async function comprobarSolape(cliente) {
+  const { rows } = await cliente.query(
+    `select contype, pg_get_constraintdef(oid) as definicion
+       from pg_constraint
+      where conname = 'ux_guardia_solape'
+        and conrelid = 'guardia'::regclass`,
+  );
+
+  if (rows.length !== 1) {
+    throw new Error('no existe la restricción ux_guardia_solape en la tabla guardia');
+  }
+
+  const [restriccion] = rows;
+  const esExclude = restriccion.contype === 'x';
+  const usaGist = /exclude using gist/i.test(restriccion.definicion);
+
+  if (!esExclude || !usaGist) {
+    throw new Error(`ux_guardia_solape no es un EXCLUDE USING gist: ${restriccion.definicion}`);
+  }
+
+  console.log(`  ux_guardia_solape: ${restriccion.definicion}`);
+}
+
+/**
+ * Lo urgente va fuera de cuadrante y lo demás dentro. Se prueba de verdad: se
+ * montan las filas mínimas y se intenta el INSERT que la regla debe rechazar.
+ * Todo va en una transacción que se deshace, así que la base queda como estaba.
+ */
+async function comprobarUrgenteConCuadrante(cliente) {
+  await cliente.query('begin');
+
+  try {
+    await cliente.query(`
+      insert into especialidad (codigo, nombre) values ('CHECK', 'Comprobación');
+      insert into usuario (nombre, apellidos, email, password_hash, rol)
+        values ('Check', 'CI', 'check@example.test', 'x', 'coordinacion');
+      insert into abogado (usuario_id, num_colegiado)
+        select id, 'CI-0001' from usuario where email = 'check@example.test';
+      insert into tipo_guardia (codigo, especialidad_id, modalidad, hora_inicio, hora_fin)
+        select 'CI-ORD', id, 'presencial', '09:00', '20:00' from especialidad where codigo = 'CHECK';
+      insert into cuadrante (anio, periodo) values (2026, 'CI');
+    `);
+
+    let rechazado = false;
+    let mensaje = '';
+
+    try {
+      await cliente.query(`
+        insert into guardia (tipo_guardia_id, especialidad_id, abogado_id, cuadrante_id,
+                             fecha, hora_inicio, hora_fin, estado, origen)
+        select t.id, t.especialidad_id, a.id, c.id, '2026-12-05', '09:00', '20:00',
+               'planificada', 'urgente'
+        from tipo_guardia t, abogado a, cuadrante c;
+      `);
+    } catch (error) {
+      rechazado = error.code === '23514' || /check constraint/i.test(error.message);
+      mensaje = error.message;
+    }
+
+    if (!rechazado) {
+      throw new Error('el CHECK de guardia.origen ha aceptado un urgente con cuadrante_id');
+    }
+
+    console.log(
+      `  CHECK guardia.origen: rechaza el urgente con cuadrante (${mensaje.split('\n')[0]})`,
+    );
+  } finally {
+    await cliente.query('rollback');
+  }
 }
 
 async function main() {
@@ -84,11 +160,15 @@ async function main() {
 
     console.log(`DDL: ${tablas.length} tablas desde una base vacía.`);
     console.log(`  ${tablas.join(', ')}`);
+
+    // 4. Las reglas que el motor tiene que hacer cumplir.
+    await comprobarSolape(cliente);
+    await comprobarUrgenteConCuadrante(cliente);
   } finally {
     await cliente.end();
   }
 
-  // 4. Limpieza: la base de la comprobación no se queda por ahí.
+  // 5. Limpieza: la base de la comprobación no se queda por ahí.
   const limpieza = await conectar(url.toString());
   try {
     await limpieza.query(`drop database if exists ${BASE_DE_PRUEBA}`);
@@ -98,6 +178,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`El DDL no se pudo aplicar: ${error.message}`);
+  console.error(`Fallo la comprobación del DDL: ${error.message}`);
   process.exitCode = 1;
 });
