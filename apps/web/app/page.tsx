@@ -1,4 +1,5 @@
 import { GUARDIAS_DEMO } from '@turno/shared';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -28,6 +29,10 @@ export default function Home() {
           ))}
         </tbody>
       </table>
+
+      <p style={{ marginTop: '2rem' }}>
+        <Link href="/solicitudes">Solicitudes y resoluciones →</Link>
+      </p>
 
       <p style={{ color: '#777', fontSize: 14, marginTop: '2rem' }}>
         Datos ilustrativos: el proyecto no trata datos reales del Colegio.

@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import type { FiltrosGuardias, Guardia, GuardiaRequest, PaginaGuardias } from '@turno/shared';
-import { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 import { codificarCursor, decodificarCursor, type GuardiasRepository } from './guardias.repository';
 
@@ -75,12 +75,31 @@ function filaAGuardia(fila: FilaGuardia): Guardia {
  * del cliente. El cursor sigue siendo un desplazamiento opaco, el mismo que
  * devuelve `page.next_cursor`.
  */
+const INSERCION = `
+  insert into guardia (
+    tipo_guardia_id, especialidad_id, fecha, hora_inicio, hora_fin,
+    es_detenido, estado, origen
+  )
+  values ($1::uuid, $2::uuid, $3::date, $4::time, $5::time, $6, 'planificada', 'planificacion')
+  returning ${COLUMNAS}
+`;
+
 @Injectable()
 export class PostgresGuardiasRepository implements GuardiasRepository {
-  private readonly pool: Pool;
+  constructor(private readonly pool: Pool) {}
 
-  constructor(cadenaConexion: string) {
-    this.pool = new Pool({ connectionString: cadenaConexion, max: 10 });
+  /** Traduce las violaciones de integridad a los códigos del contrato. */
+  private traducir(error: unknown, fecha: string): unknown {
+    const codigo = (error as { code?: string }).code;
+    const restriccion = (error as { constraint?: string }).constraint;
+
+    if (codigo === '23505' && restriccion === 'ux_guardia_fecha_tipo') {
+      return new ConflictException(`Ya existe una guardia de ese tipo el ${fecha}`);
+    }
+    if (codigo === '23503') {
+      return new BadRequestException('tipo_guardia_id o especialidad_id no existen en el catálogo');
+    }
+    return error;
   }
 
   /** Convierte los filtros en un `where` con parámetros numerados. */
@@ -164,70 +183,80 @@ export class PostgresGuardiasRepository implements GuardiasRepository {
     return rows[0] ? filaAGuardia(rows[0]) : null;
   }
 
+  private insertar(
+    cliente: Pool | PoolClient,
+    datos: GuardiaRequest,
+  ): Promise<{ rows: FilaGuardia[] }> {
+    return cliente.query<FilaGuardia>(INSERCION, [
+      datos.tipo_guardia_id,
+      datos.especialidad_id,
+      datos.fecha,
+      datos.hora_inicio,
+      datos.hora_fin,
+      datos.es_detenido,
+    ]);
+  }
+
+  /**
+   * Alta de la franja. Con `Idempotency-Key` todo va en una transacción y se
+   * toma un advisory lock sobre la clave: dos reintentos simultáneos se
+   * serializan, el segundo ve la clave ya escrita y devuelve la misma guardia en
+   * vez de chocar con `ux_guardia_fecha_tipo`.
+   */
   async crear(
     datos: GuardiaRequest,
     claveIdempotencia?: string,
   ): Promise<{ guardia: Guardia; creada: boolean }> {
-    if (claveIdempotencia) {
-      const { rows } = await this.pool.query<{ guardia_id: string }>(
+    if (!claveIdempotencia) {
+      try {
+        const { rows } = await this.insertar(this.pool, datos);
+        return { guardia: filaAGuardia(rows[0]!), creada: true };
+      } catch (error) {
+        throw this.traducir(error, datos.fecha);
+      }
+    }
+
+    const cliente = await this.pool.connect();
+    try {
+      await cliente.query('begin');
+      await cliente.query('select pg_advisory_xact_lock(hashtext($1))', [claveIdempotencia]);
+
+      const { rows: previas } = await cliente.query<{ guardia_id: string }>(
         'select guardia_id from idempotencia_guardia where clave = $1',
         [claveIdempotencia],
       );
-      const previa = rows[0] ? await this.detalle(rows[0].guardia_id) : null;
-      if (previa) return { guardia: previa, creada: false };
-    }
 
-    try {
-      const { rows } = await this.pool.query<FilaGuardia>(
-        `
-          insert into guardia (
-            tipo_guardia_id, especialidad_id, fecha, hora_inicio, hora_fin,
-            es_detenido, estado, origen
-          )
-          values ($1::uuid, $2::uuid, $3::date, $4::time, $5::time, $6, 'planificada', 'planificacion')
-          returning ${COLUMNAS}
-        `,
-        [
-          datos.tipo_guardia_id,
-          datos.especialidad_id,
-          datos.fecha,
-          datos.hora_inicio,
-          datos.hora_fin,
-          datos.es_detenido,
-        ],
+      if (previas[0]) {
+        const { rows } = await cliente.query<FilaGuardia>(
+          `select ${COLUMNAS} from guardia where id = $1::uuid`,
+          [previas[0].guardia_id],
+        );
+        if (rows[0]) {
+          await cliente.query('commit');
+          return { guardia: filaAGuardia(rows[0]), creada: false };
+        }
+        // La guardia ya no existe: la clave se libera y se vuelve a crear.
+        await cliente.query('delete from idempotencia_guardia where clave = $1', [
+          claveIdempotencia,
+        ]);
+      }
+
+      const { rows } = await this.insertar(cliente, datos);
+      await cliente.query(
+        'insert into idempotencia_guardia (clave, guardia_id) values ($1, $2::uuid)',
+        [claveIdempotencia, rows[0]!.id],
       );
-
-      const guardia = filaAGuardia(rows[0]!);
-      if (claveIdempotencia) {
-        await this.pool.query(
-          `insert into idempotencia_guardia (clave, guardia_id) values ($1, $2::uuid)
-           on conflict (clave) do nothing`,
-          [claveIdempotencia, guardia.id],
-        );
-      }
-      return { guardia, creada: true };
+      await cliente.query('commit');
+      return { guardia: filaAGuardia(rows[0]!), creada: true };
     } catch (error) {
-      const codigo = (error as { code?: string }).code;
-      const restriccion = (error as { constraint?: string }).constraint;
-
-      if (codigo === '23505' && restriccion === 'ux_guardia_fecha_tipo') {
-        throw new ConflictException(`Ya existe una guardia de ese tipo el ${datos.fecha}`);
-      }
-      if (codigo === '23503') {
-        throw new BadRequestException(
-          'tipo_guardia_id o especialidad_id no existen en el catálogo',
-        );
-      }
-      throw error;
+      await cliente.query('rollback').catch(() => undefined);
+      throw this.traducir(error, datos.fecha);
+    } finally {
+      cliente.release();
     }
   }
 
   async cerrar(): Promise<void> {
-    await this.pool.end();
-  }
-
-  /** Nest llama a este hook al cerrar la aplicación y suelta el pool. */
-  async onModuleDestroy(): Promise<void> {
-    await this.cerrar();
+    // El pool lo cierra `PoolPostgres`, que es su dueño.
   }
 }

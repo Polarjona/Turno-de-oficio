@@ -342,7 +342,7 @@ create table if not exists notificacion (
                   check (tipo in ('designacion', 'cambio', 'incidencia', 'cuadrante', 'recordatorio')),
   referencia_tipo text not null,
   referencia_id   uuid,
-  canal           text not null check (canal in ('email', 'sms', 'in_app')),
+  canal           text not null check (canal in ('app', 'email', 'sms', 'push')),
   estado_entrega  text not null default 'pendiente'
                   check (estado_entrega in ('pendiente', 'enviada', 'entregada', 'error')),
   fecha_envio     timestamptz,
@@ -355,6 +355,19 @@ create table if not exists notificacion (
   -- Idempotencia evento–destinatario–canal: un reintento no duplica el envío.
   unique (referencia_tipo, referencia_id, usuario_id, canal)
 );
+
+-- El contrato nombra el canal de la aplicación `app`; si el volumen viene de
+-- la version anterior del DDL, el CHECK se reemplaza aqui.
+do $$
+begin
+  if exists (select 1 from pg_constraint where conname = 'notificacion_canal_check') then
+    alter table notificacion drop constraint notificacion_canal_check;
+  end if;
+  alter table notificacion add constraint notificacion_canal_check
+    check (canal in ('app', 'email', 'sms', 'push'));
+exception
+  when duplicate_object then null;
+end $$;
 
 create index if not exists ix_notificacion_estado_entrega on notificacion (estado_entrega);
 

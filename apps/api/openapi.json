@@ -228,6 +228,200 @@
           "sesion"
         ]
       }
+    },
+    "/solicitudes": {
+      "get": {
+        "operationId": "SolicitudesController_listar",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco de la página anterior",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "solo_vencidas",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "solicitante_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "guardia_id",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tipo",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "excusa",
+                "permuta",
+                "sustitucion"
+              ]
+            }
+          },
+          {
+            "name": "estado",
+            "required": false,
+            "in": "query",
+            "description": "Repetible: estado=comunicada&estado=en_revision",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de solicitudes"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Excusas, permutas y sustituciones",
+        "tags": [
+          "solicitudes"
+        ]
+      },
+      "post": {
+        "operationId": "SolicitudesController_crear",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Solicitud registrada"
+          },
+          "400": {
+            "description": "El cuerpo no cumple SolicitudRequest"
+          },
+          "403": {
+            "description": "Solo el letrado titular presenta solicitudes"
+          },
+          "404": {
+            "description": "La guardia no existe"
+          },
+          "409": {
+            "description": "La guardia ya tiene una solicitud abierta"
+          },
+          "422": {
+            "description": "Regla de negocio: excusa fuera del orden penal"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registra excusa, permuta o sustitución",
+        "tags": [
+          "solicitudes"
+        ]
+      }
+    },
+    "/solicitudes/{solicitudId}": {
+      "get": {
+        "operationId": "SolicitudesController_detalle",
+        "parameters": [
+          {
+            "name": "solicitudId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la solicitud",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud encontrada"
+          },
+          "404": {
+            "description": "La solicitud no existe"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Detalle de una solicitud",
+        "tags": [
+          "solicitudes"
+        ]
+      }
+    },
+    "/solicitudes/{solicitudId}/resolucion": {
+      "post": {
+        "operationId": "SolicitudesController_resolver",
+        "parameters": [
+          {
+            "name": "solicitudId",
+            "required": true,
+            "in": "path",
+            "description": "Identificador de la solicitud",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud resuelta"
+          },
+          "400": {
+            "description": "Falta la decisión o el motivo de la resolución"
+          },
+          "403": {
+            "description": "El rol no puede resolver solicitudes"
+          },
+          "409": {
+            "description": "La solicitud ya estaba resuelta"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Resuelve la solicitud con motivación obligatoria",
+        "tags": [
+          "solicitudes"
+        ]
+      }
     }
   },
   "components": {

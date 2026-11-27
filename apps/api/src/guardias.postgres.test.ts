@@ -33,11 +33,10 @@ describe.skipIf(!url)('Guardias en Postgres', () => {
        on conflict (id) do nothing`,
       [TIPO, ESPECIALIDAD],
     );
-    repositorio = new PostgresGuardiasRepository(url!);
+    repositorio = new PostgresGuardiasRepository(pool);
   });
 
   afterAll(async () => {
-    await repositorio?.cerrar();
     await pool?.query('delete from guardia where tipo_guardia_id = $1', [TIPO]);
     await pool?.end();
   });
