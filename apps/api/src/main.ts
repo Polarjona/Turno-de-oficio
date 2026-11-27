@@ -6,6 +6,10 @@ import { AppModule } from './app.module';
 async function main(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
+  // La web (Next en :3000) llama a la API desde el navegador con el token del
+  // usuario; sin esto el navegador bloquea las peticiones por CORS.
+  app.enableCors({ origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000' });
+
   const config = new DocumentBuilder()
     .setTitle('Turno de Oficio · API')
     .setDescription(

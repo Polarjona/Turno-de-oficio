@@ -49,8 +49,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - name: Deja la base del job con el esquema (la usan los tests de integración)
+        run: npm run migrar
       - run: npm test
-      - name: El DDL aplica desde una base vacía y deja las 15 tablas
+      - name: El DDL aplica desde una base vacía y deja las 16 tablas
         run: npm run check:ddl
 
   contrato:

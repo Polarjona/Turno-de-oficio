@@ -91,6 +91,10 @@ describe('Autenticación por HTTP', () => {
   let base: string;
 
   beforeAll(async () => {
+    // Estos tests corren contra el repositorio en memoria aunque haya una base
+    // de datos configurada (la CI la define para los tests de integración).
+    delete process.env.DATABASE_URL;
+
     const modulo = await Test.createTestingModule({
       imports: [AppModule],
       controllers: [RutaDeCoordinacion as unknown as Type<unknown>],
@@ -131,13 +135,20 @@ describe('Autenticación por HTTP', () => {
     expect(respuesta.status).toBe(200);
   });
 
-  it('un letrado lee las guardias y /me devuelve los datos de su token', async () => {
-    const cabeceras = conToken('letrado');
+  it('un letrado lee sus guardias y /me devuelve los datos de su token', async () => {
+    const cabeceras = {
+      authorization: `Bearer ${token(claimsConAbogado(ABOGADO_DEMO, 'letrado'))}`,
+    };
     expect((await pedir('/guardias', cabeceras)).status).toBe(200);
 
     const yo = await pedir('/me', cabeceras);
     expect(yo.status).toBe(200);
     expect(await yo.json()).toMatchObject({ rol: 'letrado', colegiado: 'ICAT-0101' });
+  });
+
+  it('403 si el token del letrado no identifica a su abogado', async () => {
+    // Antes se dejaba pasar y el letrado veía las guardias de todos.
+    expect((await pedir('/guardias', conToken('letrado'))).status).toBe(403);
   });
 
   it('401 con la firma manipulada', async () => {
@@ -152,7 +163,7 @@ describe('Autenticación por HTTP', () => {
 
   describe('GET /guardias', () => {
     it('devuelve una página con data y page', async () => {
-      const respuesta = await pedir('/guardias', conToken('letrado'));
+      const respuesta = await pedir('/guardias', conToken('coordinacion'));
       expect(respuesta.status).toBe(200);
 
       const pagina = (await respuesta.json()) as {
@@ -166,7 +177,7 @@ describe('Autenticación por HTTP', () => {
     it('aplica desde, estado y orden', async () => {
       const respuesta = await pedir(
         '/guardias?desde=2026-12-01&estado=publicada&estado=propuesta&orden=fecha_desc',
-        conToken('letrado'),
+        conToken('coordinacion'),
       );
       expect(respuesta.status).toBe(200);
 
@@ -233,18 +244,20 @@ describe('Autenticación por HTTP', () => {
     });
 
     it('400 con un filtro mal formado', async () => {
-      expect((await pedir('/guardias?desde=03/12/2026', conToken('letrado'))).status).toBe(400);
-      expect((await pedir('/guardias?orden=reciente', conToken('letrado'))).status).toBe(400);
-      expect((await pedir('/guardias?cursor=basura', conToken('letrado'))).status).toBe(400);
+      expect((await pedir('/guardias?desde=03/12/2026', conToken('coordinacion'))).status).toBe(
+        400,
+      );
+      expect((await pedir('/guardias?orden=reciente', conToken('coordinacion'))).status).toBe(400);
+      expect((await pedir('/guardias?cursor=basura', conToken('coordinacion'))).status).toBe(400);
     });
 
     it('el detalle devuelve el ETag de la versión', async () => {
-      const lista = (await (await pedir('/guardias', conToken('letrado'))).json()) as {
+      const lista = (await (await pedir('/guardias', conToken('coordinacion'))).json()) as {
         data: { id: string; version: number }[];
       };
       const primera = lista.data[0]!;
 
-      const detalle = await pedir(`/guardias/${primera.id}`, conToken('letrado'));
+      const detalle = await pedir(`/guardias/${primera.id}`, conToken('coordinacion'));
       expect(detalle.status).toBe(200);
       expect(detalle.headers.get('etag')).toBe(`"${primera.version}"`);
     });

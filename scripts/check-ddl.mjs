@@ -1,6 +1,6 @@
 /**
  * Aplica db/migrations/*.sql, en orden, sobre una base vacía y comprueba que el
- * esquema queda con las 15 tablas del modelo y con las reglas que de verdad
+ * esquema queda con las 16 tablas del modelo y con las reglas que de verdad
  * importan:
  *
  *   - `ux_guardia_solape` existe y es un `EXCLUDE USING gist` (RN-04).
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 
 import { Client } from 'pg';
 
-const TABLAS_ESPERADAS = 15;
+const TABLAS_ESPERADAS = 16;
 const BASE_DE_PRUEBA = 'ddl_check';
 const MIGRACIONES = fileURLToPath(new URL('../db/migrations/', import.meta.url));
 const REVERSOS = join(MIGRACIONES, 'down');
@@ -206,7 +206,7 @@ async function main() {
 
     await aplicar(cliente, MIGRACIONES, ficheros);
 
-    // 3. ¿Están las 15 tablas?
+    // 3. ¿Están las 16 tablas?
     const tablas = await tablasDe(cliente);
 
     if (tablas.length !== TABLAS_ESPERADAS) {

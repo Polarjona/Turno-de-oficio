@@ -185,6 +185,39 @@ El reverso vive en `db/migrations/down/` a propósito: el entrypoint de Postgres
 ejecuta todos los `.sql` del directorio montado, y un `.down.sql` suelto ahí
 borraría el esquema justo después de crearlo.
 
+La API usa esas tablas en cuanto arranca con `DATABASE_URL` (a través de
+PgBouncer: `postgres://turno:turno@localhost:6432/turno`). Sin la variable,
+`GuardiasService` trabaja en memoria, que es lo que usan los tests y el arranque
+sin Docker. El repositorio se elige en un solo sitio: `apps/api/src/app.module.ts`.
+
+### Solicitudes y notificaciones
+
+El vertical de solicitudes funciona de punta a punta:
+
+| Paso                                    | Quién                            | Endpoint                                     |
+| --------------------------------------- | -------------------------------- | -------------------------------------------- |
+| Registrar excusa, permuta o sustitución | `letrado`                        | `POST /solicitudes`                          |
+| Consultar la bandeja                    | cualquiera                       | `GET /solicitudes` · `GET /solicitudes/{id}` |
+| Resolver con motivo obligatorio         | `coordinacion`, `junta`, `admin` | `POST /solicitudes/{id}/resolucion`          |
+
+Reglas que aplica la API: sin `motivo_resolucion` el cuerpo no valida (**400**); una
+guardia solo admite una solicitud abierta (**409**); la excusa solo cabe en materia
+penal (**422**, RN-36); la extemporaneidad se registra, no se oculta (RN-12).
+
+La resolución va en **una transacción**: estado de la solicitud, guardia (estimada con
+sustituto cambia el titular, sin sustituto la deja descubierta, desestimada la devuelve
+al titular), asiento en `auditoria` y aviso en el outbox `notificacion`. El worker de
+`NotificacionesService` envía los pendientes a **Mailpit** por HTTP
+(`http://localhost:8025/api/v1/send`) cada cinco segundos; necesita `MAILPIT_URL`, y sin
+ella no arranca (los tests no mandan correos).
+
+La pantalla está en `http://localhost:3000/solicitudes`: conecta como `letrado.demo` y
+`coordinacion.demo`, registra la solicitud, la resuelve y enlaza a Mailpit para ver el
+aviso. Necesita `npm run dev:api` y `npm run dev:web` a la vez.
+
+`db/migrations/0002_seed_demo.sql` deja una materia penal, su plantilla y una franja a
+diez días vista para que la demo tenga con qué trabajar.
+
 La prueba de conexión de la API (`apps/api/src/db.test.ts`) se salta si no hay
 `DATABASE_URL`. Para que corra:
 

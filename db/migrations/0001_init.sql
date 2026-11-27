@@ -221,6 +221,15 @@ alter table guardia add constraint ux_guardia_solape exclude using gist (
   tstzrange(inicio_en, fin_en) with &&
 ) where (estado <> 'anulada' and abogado_id is not null);
 
+-- Una sola guardia de cada tipo por fecha: POST /guardias responde 409 a la
+-- repeticion y la base lo impone aqui, no en el servicio.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'ux_guardia_fecha_tipo') then
+    alter table guardia add constraint ux_guardia_fecha_tipo unique (fecha, tipo_guardia_id);
+  end if;
+end $$;
+
 create index if not exists ix_guardia_fecha_materia on guardia (fecha, especialidad_id, estado);
 create index if not exists ix_guardia_abogado_fecha on guardia (abogado_id, fecha);
 
@@ -333,7 +342,7 @@ create table if not exists notificacion (
                   check (tipo in ('designacion', 'cambio', 'incidencia', 'cuadrante', 'recordatorio')),
   referencia_tipo text not null,
   referencia_id   uuid,
-  canal           text not null check (canal in ('email', 'sms', 'in_app')),
+  canal           text not null check (canal in ('app', 'email', 'sms', 'push')),
   estado_entrega  text not null default 'pendiente'
                   check (estado_entrega in ('pendiente', 'enviada', 'entregada', 'error')),
   fecha_envio     timestamptz,
@@ -346,6 +355,19 @@ create table if not exists notificacion (
   -- Idempotencia evento–destinatario–canal: un reintento no duplica el envío.
   unique (referencia_tipo, referencia_id, usuario_id, canal)
 );
+
+-- El contrato nombra el canal de la aplicación `app`; si el volumen viene de
+-- la version anterior del DDL, el CHECK se reemplaza aqui.
+do $$
+begin
+  if exists (select 1 from pg_constraint where conname = 'notificacion_canal_check') then
+    alter table notificacion drop constraint notificacion_canal_check;
+  end if;
+  alter table notificacion add constraint notificacion_canal_check
+    check (canal in ('app', 'email', 'sms', 'push'));
+exception
+  when duplicate_object then null;
+end $$;
 
 create index if not exists ix_notificacion_estado_entrega on notificacion (estado_entrega);
 
@@ -380,6 +402,14 @@ exception
   when undefined_object then
     raise notice 'El rol app_role no existe; se omite el REVOKE de auditoria.';
 end $$;
+
+-- Claves de Idempotency-Key ya usadas: el reintento devuelve la misma guardia
+-- en vez de crear otra.
+create table if not exists idempotencia_guardia (
+  clave      text primary key,
+  guardia_id uuid not null references guardia (id) on delete cascade,
+  creado_en  timestamptz not null default now()
+);
 
 -- ─── Parámetros versionados (RN-27) ─────────────────────────────────────────
 

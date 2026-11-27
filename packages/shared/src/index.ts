@@ -122,6 +122,106 @@ export const GuardiasQuerySchema = z.object({
 });
 export type FiltrosGuardias = z.infer<typeof GuardiasQuerySchema>;
 
+// ─── Solicitudes ───────────────────────────────────────────────────────────
+
+export const TipoSolicitudSchema = z.enum(['excusa', 'permuta', 'sustitucion']);
+export type TipoSolicitud = z.infer<typeof TipoSolicitudSchema>;
+
+/** Vocabulario único de `solicitud.motivo`: categoría general, sin diagnósticos. */
+export const MotivoSolicitudSchema = z.enum([
+  'enfermedad',
+  'asunto_propio',
+  'conciliacion',
+  'fuerza_mayor',
+  'otro',
+]);
+export type MotivoSolicitud = z.infer<typeof MotivoSolicitudSchema>;
+
+export const EstadoSolicitudSchema = z.enum([
+  'comunicada',
+  'en_revision',
+  'oferta_enviada',
+  'pendiente_validacion',
+  'estimada',
+  'desestimada',
+]);
+export type EstadoSolicitud = z.infer<typeof EstadoSolicitudSchema>;
+
+export const SolicitudSchema = z.object({
+  id: z.string().uuid(),
+  guardia_id: z.string().uuid(),
+  tipo: TipoSolicitudSchema,
+  solicitante_id: z.string().uuid(),
+  sustituto_id: z.string().uuid().nullable(),
+  motivo: MotivoSolicitudSchema,
+  detalle: z.string().nullable(),
+  estado: EstadoSolicitudSchema,
+  extemporanea: z.boolean(),
+  sobrevenida: z.boolean(),
+  fecha_solicitud: z.string().datetime(),
+  /** RN-38: cinco días desde la presentación. */
+  fecha_limite_resolucion: z.string().datetime().nullable(),
+  plazo_vencido: z.boolean(),
+  fecha_resolucion: z.string().datetime().nullable(),
+  resuelta_por: z.string().uuid().nullable(),
+  motivo_resolucion: z.string().nullable(),
+});
+export type Solicitud = z.infer<typeof SolicitudSchema>;
+
+export const SolicitudRequestSchema = z
+  .object({
+    guardia_id: z.string().uuid(),
+    tipo: TipoSolicitudSchema,
+    motivo: MotivoSolicitudSchema,
+    detalle: z.string().max(2000).optional(),
+    sustituto_propuesto_id: z.string().uuid().optional(),
+    sobrevenida: z.boolean().default(false),
+  })
+  .refine((datos) => datos.tipo !== 'permuta' || Boolean(datos.sustituto_propuesto_id), {
+    message: 'sustituto_propuesto_id es obligatorio en una permuta',
+    path: ['sustituto_propuesto_id'],
+  });
+export type SolicitudRequest = z.infer<typeof SolicitudRequestSchema>;
+
+/** El motivo de la resolución es obligatorio (RN-13): sin él, 400. */
+export const ResolucionRequestSchema = z.object({
+  decision: z.enum(['estimar', 'desestimar']),
+  sustituto_id: z.string().uuid().optional(),
+  motivo_resolucion: z
+    .string()
+    .trim()
+    .min(1, 'el motivo de la resolución es obligatorio')
+    .max(2000),
+  justificar_hueco: z.boolean().default(false),
+});
+export type ResolucionRequest = z.infer<typeof ResolucionRequestSchema>;
+
+export const SolicitudesQuerySchema = z.object({
+  estado: z
+    .union([EstadoSolicitudSchema, z.array(EstadoSolicitudSchema)])
+    .optional()
+    .transform((valor) =>
+      valor === undefined ? undefined : Array.isArray(valor) ? valor : [valor],
+    ),
+  tipo: TipoSolicitudSchema.optional(),
+  guardia_id: z.string().uuid().optional(),
+  solicitante_id: z.string().uuid().optional(),
+  solo_vencidas: BooleanoConsultaSchema,
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().min(1).optional(),
+});
+export type FiltrosSolicitudes = z.infer<typeof SolicitudesQuerySchema>;
+
+export const PaginaSolicitudesSchema = z.object({
+  data: z.array(SolicitudSchema),
+  page: z.object({
+    next_cursor: z.string().nullable(),
+    has_more: z.boolean(),
+    size: z.number().int().nonnegative(),
+  }),
+});
+export type PaginaSolicitudes = z.infer<typeof PaginaSolicitudesSchema>;
+
 /** Datos ilustrativos: el proyecto no trata datos reales del Colegio. */
 export const USUARIO_DEMO: Usuario = {
   id: '00000000-0000-4000-8000-000000000001',
