@@ -1,10 +1,10 @@
 # Comparativa de Motores de Base de Datos
 
-| Motor | Ventajas | Desventajas |
-|---------|---------|---------|
+| Motor      | Ventajas                        | Desventajas                     |
+| ---------- | ------------------------------- | ------------------------------- |
 | PostgreSQL | Open Source, robusto, escalable | Curva de aprendizaje algo mayor |
-| MySQL | Popular y sencillo | Menos funcionalidades avanzadas |
-| SQL Server | Excelente integración Microsoft | Coste de licencias |
+| MySQL      | Popular y sencillo              | Menos funcionalidades avanzadas |
+| SQL Server | Excelente integración Microsoft | Coste de licencias              |
 
 ## Criterios evaluados
 
