@@ -138,4 +138,78 @@ describe('Autenticación por HTTP', () => {
     const sinRol = token({ ...claims(), realm_access: { roles: ['offline_access'] } });
     expect((await pedir('/guardias', { authorization: `Bearer ${sinRol}` })).status).toBe(401);
   });
+
+  describe('POST /guardias', () => {
+    const cuerpo = (fecha: string) => ({
+      tipo_guardia_id: '00000000-0000-4000-8000-000000000301',
+      especialidad_id: '00000000-0000-4000-8000-000000000401',
+      fecha,
+      hora_inicio: '09:00',
+      hora_fin: '20:00',
+    });
+
+    const crear = (fecha: string, ...roles: string[]): Promise<Response> =>
+      fetch(`${base}/guardias`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...conToken(...roles) },
+        body: JSON.stringify(cuerpo(fecha)),
+      });
+
+    it('201 con coordinación, en estado planificada y con Location', async () => {
+      const respuesta = await crear('2026-12-03', 'coordinacion');
+      expect(respuesta.status).toBe(201);
+
+      const guardia = (await respuesta.json()) as { id: string; estado: string; abogado_id: null };
+      expect(guardia).toMatchObject({ estado: 'planificada', abogado_id: null });
+      expect(respuesta.headers.get('location')).toBe(`/guardias/${guardia.id}`);
+    });
+
+    it('201 también para admin', async () => {
+      expect((await crear('2026-12-07', 'admin')).status).toBe(201);
+    });
+
+    it('403 si lo intenta un letrado', async () => {
+      expect((await crear('2026-12-08', 'letrado')).status).toBe(403);
+    });
+
+    it('401 sin token', async () => {
+      const respuesta = await fetch(`${base}/guardias`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(cuerpo('2026-12-09')),
+      });
+      expect(respuesta.status).toBe(401);
+    });
+
+    it('400 si el cuerpo no cumple el contrato', async () => {
+      const respuesta = await fetch(`${base}/guardias`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...conToken('coordinacion') },
+        body: JSON.stringify({ ...cuerpo('2026-12-10'), hora_inicio: '25:00' }),
+      });
+      expect(respuesta.status).toBe(400);
+    });
+
+    it('409 si la franja ya existe', async () => {
+      expect((await crear('2026-12-11', 'coordinacion')).status).toBe(201);
+      expect((await crear('2026-12-11', 'coordinacion')).status).toBe(409);
+    });
+
+    it('con la misma Idempotency-Key devuelve la misma guardia', async () => {
+      const enviar = (): Promise<Response> =>
+        fetch(`${base}/guardias`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'idempotency-key': 'reintento-de-prueba-0001',
+            ...conToken('coordinacion'),
+          },
+          body: JSON.stringify(cuerpo('2026-12-12')),
+        });
+
+      const primera = (await (await enviar()).json()) as { id: string };
+      const segunda = (await (await enviar()).json()) as { id: string };
+      expect(segunda.id).toBe(primera.id);
+    });
+  });
 });

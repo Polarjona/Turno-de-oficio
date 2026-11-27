@@ -16,7 +16,39 @@
             "description": "Guardias ordenadas por fecha"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Lista las guardias del periodo",
+        "tags": [
+          "guardias"
+        ]
+      },
+      "post": {
+        "operationId": "GuardiasController_crear",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Guardia creada en estado planificada"
+          },
+          "400": {
+            "description": "El cuerpo no cumple GuardiaRequest"
+          },
+          "403": {
+            "description": "El rol no permite crear guardias"
+          },
+          "409": {
+            "description": "Ya existe una guardia de ese tipo en esa fecha"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crea una franja sin titular (estado planificada)",
         "tags": [
           "guardias"
         ]
@@ -44,6 +76,11 @@
             "description": "La guardia no existe"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Detalle de una guardia",
         "tags": [
           "guardias"

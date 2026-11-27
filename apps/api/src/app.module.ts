@@ -6,6 +6,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { RolesGuard } from './auth/roles.guard';
 import { GuardiasController } from './guardias.controller';
+import { GuardiasService } from './guardias.service';
 import { MeController } from './me.controller';
 
 /**
@@ -16,6 +17,7 @@ import { MeController } from './me.controller';
   imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
   controllers: [MeController, GuardiasController],
   providers: [
+    GuardiasService,
     JwtStrategy,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
