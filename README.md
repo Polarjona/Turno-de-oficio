@@ -17,7 +17,7 @@ jurídica gratuita. Documentación y entregables del proyecto de ejercicio de la
 ├── packages/shared/                 Tipos y esquemas Zod que usan api y web
 ├── db/migrations/                   SQL del cuadrante (0001_init.sql)
 ├── etl/                             Validación del cuadrante histórico antes de cargarlo
-├── docker/                          Postgres 16 para desarrollo local
+├── docker/                          Stack local: Postgres, PgBouncer, Keycloak, Mailpit, MinIO, Prometheus y Grafana
 ├── scripts/                         Comprobación del contrato OpenAPI
 ├── fuentes/                         Encargos originales del Colegio
 │   ├── Propuesta_Funcional_...pdf   (TOF-2026-001)
@@ -55,7 +55,7 @@ Requisitos: Node 22 y Docker (solo para la base de datos).
 
 ```bash
 npm install                 # instala workspaces y compila packages/shared
-docker compose -f docker/docker-compose.yml up -d   # Postgres 16 en localhost:5432
+scripts/dev-up.sh           # stack completo en Docker + migraciones aplicadas
 
 npm run dev:api             # http://localhost:3101 (PORT=... para cambiarlo) y contrato en /api-docs
 npm run dev:web             # http://localhost:3000
@@ -68,13 +68,40 @@ npm run dev:web             # http://localhost:3000
 | `npm test`          | Vitest en `packages/shared` y `apps/api`                                 |
 | `npm run openapi`   | Regenera `apps/api/openapi.json` y comprueba que no se sale del contrato |
 
+### Entorno completo del prototipo
+
+`scripts/dev-up.sh` levanta todo el stack, espera a Postgres, aplica las
+migraciones de `db/migrations` y comprueba la conexión a través de PgBouncer.
+
+| Servicio   | Puerto local | Para qué                                             |
+| ---------- | ------------ | ---------------------------------------------------- |
+| Postgres   | 5432         | Base de datos del prototipo                          |
+| PgBouncer  | 6432         | Entrada de la API a Postgres (agrupa conexiones)     |
+| Keycloak   | 8081         | Identidad: roles del Colegio y usuarios de demo      |
+| Mailpit    | 1025 · 8025  | SMTP de desarrollo y buzón donde se leen los correos |
+| MinIO      | 9000 · 9001  | Almacenamiento S3-compatible (consola en 9001)       |
+| Prometheus | 9090         | Métricas                                             |
+| Grafana    | 3300         | Cuadros de mando (Prometheus ya conectado)           |
+
+Keycloak va en 8081 y Grafana en 3300 porque 8080 y 3000 están ocupados en la
+máquina de desarrollo. Todos los puertos se cambian en el `.env`
+(`cp .env.example .env`); sin `.env` el stack arranca igual con esos valores.
+
+```bash
+scripts/dev-up.sh            # todo + migraciones
+docker compose -f docker/docker-compose.yml ps          # estado y salud
+docker compose -f docker/docker-compose.yml down        # parar (conserva datos)
+docker compose -f docker/docker-compose.yml down -v     # parar y borrar los datos
+```
+
 ### Base de datos
 
-Postgres 16 en `localhost:5432`, con usuario, contraseña y base `turno`.
+Postgres 16 en `localhost:5432`, con usuario, contraseña y base `turno`. Si solo
+necesitas la base de datos (es lo que usa la CI), arranca ese servicio suelto:
 
 ```bash
 # 1. Levantar Postgres (la primera vez crea el volumen y lo inicializa)
-docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml up -d postgres
 
 # 2. Comprobar que está sano
 docker compose -f docker/docker-compose.yml ps

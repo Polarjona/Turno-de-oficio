@@ -1,0 +1,10 @@
+# Prometheus de desarrollo: se vigila a sí mismo.
+# Cuando la API exponga /metrics, añadir aquí el job con host.docker.internal:3101.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
