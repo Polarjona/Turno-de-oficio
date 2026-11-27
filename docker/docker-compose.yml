@@ -1,24 +1,144 @@
-# Postgres 16 para desarrollo local: mismo motor que la CI.
-#   docker compose -f docker/docker-compose.yml up -d
-# Las migraciones de db/migrations se aplican la primera vez que arranca el volumen.
+# Stack del prototipo para desarrollo local, con imágenes fijadas y 0 €.
+#
+#   docker compose -f docker/docker-compose.yml up -d              # todo
+#   docker compose -f docker/docker-compose.yml up -d postgres     # solo la base de datos
+#   scripts/dev-up.sh                                              # todo + migraciones
+#
+# Los puertos y credenciales se pueden cambiar en el .env (ver .env.example).
+# Los valores por defecto funcionan sin .env y están elegidos para no chocar con
+# lo que ya corre en la máquina de desarrollo: 8080 y 3000 están ocupados, así
+# que Keycloak va en 8081 y Grafana en 3300.
 services:
   postgres:
     image: postgres:16
     container_name: turno-postgres
     environment:
-      POSTGRES_USER: turno
-      POSTGRES_PASSWORD: turno
-      POSTGRES_DB: turno
+      POSTGRES_USER: ${POSTGRES_USER:-turno}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-turno}
+      POSTGRES_DB: ${POSTGRES_DB:-turno}
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - datos:/var/lib/postgresql/data
+      # Al crear el volumen, Postgres ejecuta las migraciones por su cuenta.
       - ../db/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U turno -d turno']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-turno} -d ${POSTGRES_DB:-turno}']
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Punto de entrada de la API a Postgres: agrupa conexiones y las reutiliza.
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.23.1-p2
+    container_name: turno-pgbouncer
+    environment:
+      DB_HOST: postgres
+      DB_PORT: '5432'
+      DB_USER: ${POSTGRES_USER:-turno}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-turno}
+      DB_NAME: ${POSTGRES_DB:-turno}
+      POOL_MODE: transaction
+      AUTH_TYPE: scram-sha-256
+      MAX_CLIENT_CONN: '100'
+      DEFAULT_POOL_SIZE: '20'
+    ports:
+      - '${PGBOUNCER_PORT:-6432}:5432'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER:-turno} -d ${POSTGRES_DB:-turno}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Identidad: roles del Colegio y usuarios de demo. El realm lo importa la
+  # tarjeta «Keycloak: realm, roles y usuarios de demo»; hasta entonces arranca
+  # vacío y se administra desde la consola.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: turno-keycloak
+    command: ['start-dev']
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: 'true'
+      KC_HTTP_PORT: '8080'
+      KC_HOSTNAME_STRICT: 'false'
+    ports:
+      - '${KEYCLOAK_PORT:-8081}:8080'
+    healthcheck:
+      # La imagen no trae curl ni wget: se consulta /health/ready por /dev/tcp.
+      test:
+        [
+          'CMD-SHELL',
+          'exec 3<>/dev/tcp/127.0.0.1/9000 && printf "GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && grep -q UP <&3',
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  # Buzón de correo de desarrollo: la API envía a 1025 y se lee en 8025.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: turno-mailpit
+    ports:
+      - '${SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_PORT:-8025}:8025'
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Almacenamiento S3-compatible para justificantes y exportaciones.
+  # MinIO retiró minio/minio de Docker Hub (septiembre de 2026) y quay.io ya no
+  # sirve la imagen sin cuenta: se usa la de Chainguard, que es el mismo binario
+  # oficial y solo publica la etiqueta latest.
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: turno-minio
+    command: ['server', '/data', '--console-address', ':9001']
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio12345}
+    ports:
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    volumes:
+      - minio:/data
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: turno-prometheus
+    ports:
+      - '${PROMETHEUS_PORT:-9090}:9090'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: turno-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    ports:
+      - '${GRAFANA_PORT:-3300}:3000'
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+
 volumes:
   datos:
+  minio:
+  prometheus:
+  grafana:
