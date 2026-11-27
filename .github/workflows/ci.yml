@@ -50,6 +50,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: El DDL aplica desde una base vacía y deja las 15 tablas
+        run: npm run check:ddl
 
   contrato:
     name: Contrato OpenAPI
