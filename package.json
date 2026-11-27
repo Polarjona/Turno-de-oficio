@@ -19,7 +19,8 @@
     "test": "npm run test --workspaces --if-present",
     "dev:api": "npm run dev -w @turno/api",
     "dev:web": "npm run dev -w @turno/web",
-    "openapi": "npm run openapi -w @turno/api && node scripts/check-contrato.mjs"
+    "openapi": "npm run openapi -w @turno/api && node scripts/check-contrato.mjs",
+    "check:ddl": "node scripts/check-ddl.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
