@@ -59,6 +59,11 @@
             "description": "Datos del usuario autenticado"
           }
         },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
         "summary": "Usuario de la sesión",
         "tags": [
           "sesion"

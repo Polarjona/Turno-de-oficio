@@ -87,6 +87,50 @@ Keycloak va en 8081 y Grafana en 3300 porque 8080 y 3000 están ocupados en la
 máquina de desarrollo. Todos los puertos se cambian en el `.env`
 (`cp .env.example .env`); sin `.env` el stack arranca igual con esos valores.
 
+### Autenticación con Keycloak
+
+El realm `tof` se importa al arrancar (`--import-realm`) desde
+`docker/keycloak/realm-tof.json`: los cuatro roles de realm del contrato
+(`letrado`, `coordinacion`, `junta`, `admin`), un grupo por rol y cuatro usuarios
+de demo con el email verificado.
+
+| Usuario             | Contraseña          | Rol            |
+| ------------------- | ------------------- | -------------- |
+| `letrado.demo`      | `demo-letrado`      | `letrado`      |
+| `coordinacion.demo` | `demo-coordinacion` | `coordinacion` |
+| `junta.demo`        | `demo-junta`        | `junta`        |
+| `admin.demo`        | `demo-admin`        | `admin`        |
+
+Son credenciales de desarrollo: viven en el realm de ejemplo, no en el código de
+la aplicación. La consola de administración está en http://localhost:8081 con
+`KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` (por defecto `admin` / `admin`).
+
+La web usa el cliente público `tof-web` (PKCE S256, redirect
+`http://localhost:3000/*`). La API no guarda ningún secreto: valida la firma del
+token con las claves públicas de
+`/realms/tof/protocol/openid-connect/certs`, comprueba `iss` y caducidad, y
+resuelve el rol desde `realm_access.roles`
+(`apps/api/src/auth/jwt.strategy.ts`). Dos guards globales cierran el resto:
+**401** sin token o con token inválido, **403** si el rol no está entre los
+declarados con `@Roles(...)` (el `x-roles` de cada operación del contrato).
+
+Para pedir un token sin pasar por la web (el cliente `tof-web` admite _direct
+access grants_ solo para desarrollo):
+
+```bash
+TOKEN=$(curl -s http://localhost:8081/realms/tof/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=tof-web \
+  -d username=letrado.demo -d password=demo-letrado | jq -r .access_token)
+
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3101/guardias   # 401
+curl -s -o /dev/null -w '%{http_code}\n' \
+  -H "Authorization: Bearer $TOKEN" http://localhost:3101/guardias        # 200
+```
+
+Si cambias `realm-tof.json`, el realm ya importado no se sobrescribe: hay que
+borrar el volumen con `docker compose -f docker/docker-compose.yml down -v`
+antes de `scripts/dev-up.sh`.
+
 ```bash
 scripts/dev-up.sh            # todo + migraciones
 docker compose -f docker/docker-compose.yml ps          # estado y salud

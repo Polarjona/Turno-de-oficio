@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-/** Roles del sistema (Catálogo de reglas y estados, TOF-2026-008). */
-export const RolSchema = z.enum(['coordinacion', 'letrado', 'administracion']);
+/** Roles del sistema: los cuatro de `x-roles` en el contrato (OpenAPI v0.1). */
+export const RolSchema = z.enum(['letrado', 'coordinacion', 'junta', 'admin']);
 export type Rol = z.infer<typeof RolSchema>;
 
 export const EstadoGuardiaSchema = z.enum([
