@@ -6,9 +6,10 @@
  *   - `ux_guardia_solape` existe y es un `EXCLUDE USING gist` (RN-04).
  *   - El CHECK de `guardia.origen` rechaza un `urgente` con `cuadrante_id`.
  *
- * Existe porque la migración solo se probaba a mano: una futura que no aplique
- * (una FK mal puesta, un CHECK que no compila, un orden de tablas roto) se
- * llevaría por delante el arranque del entorno sin que la CI se enterase.
+ * Después hace el camino de vuelta: aplica los reversos de db/migrations/down/,
+ * comprueba que no queda ninguna tabla y vuelve a subir, para que una migración
+ * que no se pueda deshacer o que no se pueda reaplicar se vea en la CI y no al
+ * levantar el entorno.
  *
  *   DATABASE_URL=postgres://turno:turno@localhost:5432/turno npm run check:ddl
  *
@@ -16,7 +17,7 @@
  * terminar. Se ejecuta con el cliente `pg` y no con `psql` para no depender de
  * que el runner lo traiga instalado.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +26,7 @@ import { Client } from 'pg';
 const TABLAS_ESPERADAS = 15;
 const BASE_DE_PRUEBA = 'ddl_check';
 const MIGRACIONES = fileURLToPath(new URL('../db/migrations/', import.meta.url));
+const REVERSOS = join(MIGRACIONES, 'down');
 
 const url = new URL(process.env.DATABASE_URL ?? 'postgres://turno:turno@localhost:5432/turno');
 
@@ -39,6 +41,33 @@ async function conectar(cadena) {
   const cliente = new Client({ connectionString: cadena });
   await cliente.connect();
   return cliente;
+}
+
+/** Los .sql de un directorio, ordenados. `down/` se queda fuera por no ser .sql. */
+function migraciones(directorio) {
+  if (!existsSync(directorio)) {
+    return [];
+  }
+  return readdirSync(directorio)
+    .filter((nombre) => nombre.endsWith('.sql'))
+    .sort();
+}
+
+async function aplicar(cliente, directorio, ficheros) {
+  for (const fichero of ficheros) {
+    console.log(`  aplicando ${fichero}`);
+    await cliente.query(readFileSync(join(directorio, fichero), 'utf8'));
+  }
+}
+
+async function tablasDe(cliente) {
+  const { rows } = await cliente.query(
+    `select table_name
+       from information_schema.tables
+      where table_schema = 'public' and table_type = 'BASE TABLE'
+      order by table_name`,
+  );
+  return rows.map((fila) => fila.table_name);
 }
 
 /** RN-04: el solape lo tiene que impedir el motor, no una consulta de la API. */
@@ -113,6 +142,48 @@ async function comprobarUrgenteConCuadrante(cliente) {
   }
 }
 
+/**
+ * El reverso tiene que deshacer todo y la migración tiene que poder volver a
+ * aplicarse. Se exige un `.down.sql` por migración: una que no se pueda deshacer
+ * es un problema, no una comodidad.
+ */
+async function comprobarReverso(cliente, ficheros) {
+  const disponibles = new Set(migraciones(REVERSOS));
+  const pasos = [...ficheros].reverse().map((fichero) => ({
+    subida: fichero,
+    reverso: fichero.replace(/\.sql$/, '.down.sql'),
+  }));
+
+  const sinReverso = pasos.filter((paso) => !disponibles.has(paso.reverso));
+  if (sinReverso.length > 0) {
+    throw new Error(
+      `falta el reverso en db/migrations/down/: ${sinReverso.map((paso) => paso.reverso).join(', ')}`,
+    );
+  }
+
+  for (const paso of pasos) {
+    console.log(`  revirtiendo con ${paso.reverso}`);
+    await cliente.query(readFileSync(join(REVERSOS, paso.reverso), 'utf8'));
+  }
+
+  const trasBajar = await tablasDe(cliente);
+  if (trasBajar.length !== 0) {
+    throw new Error(
+      `el reverso deja ${trasBajar.length} tabla(s): ${trasBajar.join(', ') || 'ninguna'}`,
+    );
+  }
+  console.log('  reverso: 0 tablas');
+
+  await aplicar(cliente, MIGRACIONES, ficheros);
+  const trasSubir = await tablasDe(cliente);
+  if (trasSubir.length !== TABLAS_ESPERADAS) {
+    throw new Error(
+      `al reaplicar quedan ${trasSubir.length} tabla(s) y se esperaban ${TABLAS_ESPERADAS}`,
+    );
+  }
+  console.log(`  reaplicado: ${trasSubir.length} tablas`);
+}
+
 async function main() {
   // 1. Base limpia. `drop database` no puede ir dentro de una transacción.
   const admin = await conectar(url.toString());
@@ -126,29 +197,17 @@ async function main() {
   const cliente = await conectar(conBase(url, BASE_DE_PRUEBA));
 
   try {
-    // 2. Las migraciones, en orden y tal cual están versionadas. Solo los .sql de
-    //    primer nivel: `down/` es el reverso y no debe aplicarse aquí.
-    const ficheros = readdirSync(MIGRACIONES)
-      .filter((nombre) => nombre.endsWith('.sql'))
-      .sort();
+    // 2. Las migraciones, en orden y tal cual están versionadas.
+    const ficheros = migraciones(MIGRACIONES);
 
     if (ficheros.length === 0) {
       throw new Error(`no hay migraciones en ${MIGRACIONES}`);
     }
 
-    for (const fichero of ficheros) {
-      console.log(`  aplicando ${fichero}`);
-      await cliente.query(readFileSync(join(MIGRACIONES, fichero), 'utf8'));
-    }
+    await aplicar(cliente, MIGRACIONES, ficheros);
 
     // 3. ¿Están las 15 tablas?
-    const { rows } = await cliente.query(
-      `select table_name
-         from information_schema.tables
-        where table_schema = 'public' and table_type = 'BASE TABLE'
-        order by table_name`,
-    );
-    const tablas = rows.map((fila) => fila.table_name);
+    const tablas = await tablasDe(cliente);
 
     if (tablas.length !== TABLAS_ESPERADAS) {
       console.error(
@@ -164,11 +223,14 @@ async function main() {
     // 4. Las reglas que el motor tiene que hacer cumplir.
     await comprobarSolape(cliente);
     await comprobarUrgenteConCuadrante(cliente);
+
+    // 5. Y el camino de vuelta.
+    await comprobarReverso(cliente, ficheros);
   } finally {
     await cliente.end();
   }
 
-  // 5. Limpieza: la base de la comprobación no se queda por ahí.
+  // 6. Limpieza: la base de la comprobación no se queda por ahí.
   const limpieza = await conectar(url.toString());
   try {
     await limpieza.query(`drop database if exists ${BASE_DE_PRUEBA}`);
