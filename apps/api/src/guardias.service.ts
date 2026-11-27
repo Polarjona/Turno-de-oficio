@@ -1,14 +1,38 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { GUARDIAS_DEMO, type Guardia, type GuardiaRequest } from '@turno/shared';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  GUARDIAS_DEMO,
+  type FiltrosGuardias,
+  type Guardia,
+  type GuardiaRequest,
+  type PaginaGuardias,
+} from '@turno/shared';
 
 import { randomUUID } from 'node:crypto';
+
+/** El cursor es opaco para el cliente: aquí guarda la posición en la lista. */
+function codificarCursor(posicion: number): string {
+  return Buffer.from(String(posicion), 'utf8').toString('base64url');
+}
+
+function decodificarCursor(cursor: string): number {
+  const posicion = Number(Buffer.from(cursor, 'base64url').toString('utf8'));
+  if (!Number.isInteger(posicion) || posicion < 0) {
+    throw new BadRequestException('Cursor inválido');
+  }
+  return posicion;
+}
 
 /**
  * Guardias en memoria mientras el DDL completo (14 entidades) no está migrado.
  *
  * Sustituir esto por el repositorio de Postgres es cambiar esta clase: el
- * controlador no sabe de dónde salen los datos. Las reglas de fecha y tipo ya
- * se aplican aquí para que la interfaz no cambie.
+ * controlador no sabe de dónde salen los datos. Los filtros y el cursor ya se
+ * aplican aquí para que la interfaz no cambie.
  */
 @Injectable()
 export class GuardiasService {
@@ -17,8 +41,41 @@ export class GuardiasService {
   /** Clave de idempotencia -> id de la guardia creada con ella. */
   private readonly idempotencia = new Map<string, string>();
 
-  listar(): Guardia[] {
-    return [...this.guardias].sort((a, b) => a.fecha.localeCompare(b.fecha));
+  /**
+   * Página de guardias (`Pagina` en el contrato).
+   *
+   * Filtra por fecha (extremos incluidos) y por estado, ordena por fecha y
+   * devuelve un cursor opaco mientras queden elementos.
+   */
+  listar(filtros: Partial<FiltrosGuardias> = {}): PaginaGuardias {
+    const { desde, hasta, estado, orden, limite, cursor } = filtros;
+
+    const filtradas = this.guardias.filter((guardia) => {
+      if (desde && guardia.fecha < desde) return false;
+      if (hasta && guardia.fecha > hasta) return false;
+      if (estado && estado.length > 0 && !estado.includes(guardia.estado)) return false;
+      return true;
+    });
+
+    const sentido = orden === 'fecha_desc' ? -1 : 1;
+    filtradas.sort(
+      (a, b) => sentido * (a.fecha.localeCompare(b.fecha) || a.id.localeCompare(b.id)),
+    );
+
+    const tamano = limite ?? 20;
+    const inicio = cursor ? decodificarCursor(cursor) : 0;
+    const pagina = filtradas.slice(inicio, inicio + tamano);
+    const siguiente = inicio + pagina.length;
+    const hayMas = siguiente < filtradas.length;
+
+    return {
+      data: pagina,
+      page: {
+        next_cursor: hayMas ? codificarCursor(siguiente) : null,
+        has_more: hayMas,
+        size: pagina.length,
+      },
+    };
   }
 
   detalle(id: string): Guardia {

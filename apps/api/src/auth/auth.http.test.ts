@@ -139,6 +139,49 @@ describe('Autenticación por HTTP', () => {
     expect((await pedir('/guardias', { authorization: `Bearer ${sinRol}` })).status).toBe(401);
   });
 
+  describe('GET /guardias', () => {
+    it('devuelve una página con data y page', async () => {
+      const respuesta = await pedir('/guardias', conToken('letrado'));
+      expect(respuesta.status).toBe(200);
+
+      const pagina = (await respuesta.json()) as {
+        data: { fecha: string }[];
+        page: { has_more: boolean; size: number; next_cursor: string | null };
+      };
+      expect(pagina.data.length).toBeGreaterThan(0);
+      expect(pagina.page).toMatchObject({ has_more: false, size: pagina.data.length });
+    });
+
+    it('aplica desde, estado y orden', async () => {
+      const respuesta = await pedir(
+        '/guardias?desde=2026-12-01&estado=publicada&estado=propuesta&orden=fecha_desc',
+        conToken('letrado'),
+      );
+      expect(respuesta.status).toBe(200);
+
+      const pagina = (await respuesta.json()) as { data: { fecha: string }[] };
+      expect(pagina.data).toHaveLength(1);
+      expect(pagina.data[0]!.fecha).toBe('2026-12-01');
+    });
+
+    it('400 con un filtro mal formado', async () => {
+      expect((await pedir('/guardias?desde=03/12/2026', conToken('letrado'))).status).toBe(400);
+      expect((await pedir('/guardias?orden=reciente', conToken('letrado'))).status).toBe(400);
+      expect((await pedir('/guardias?cursor=basura', conToken('letrado'))).status).toBe(400);
+    });
+
+    it('el detalle devuelve el ETag de la versión', async () => {
+      const lista = (await (await pedir('/guardias', conToken('letrado'))).json()) as {
+        data: { id: string; version: number }[];
+      };
+      const primera = lista.data[0]!;
+
+      const detalle = await pedir(`/guardias/${primera.id}`, conToken('letrado'));
+      expect(detalle.status).toBe(200);
+      expect(detalle.headers.get('etag')).toBe(`"${primera.version}"`);
+    });
+  });
+
   describe('POST /guardias', () => {
     const cuerpo = (fecha: string) => ({
       tipo_guardia_id: '00000000-0000-4000-8000-000000000301',

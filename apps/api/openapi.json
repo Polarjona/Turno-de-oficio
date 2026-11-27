@@ -10,10 +10,69 @@
     "/guardias": {
       "get": {
         "operationId": "GuardiasController_listar",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Cursor opaco de la página anterior",
+            "schema": {}
+          },
+          {
+            "name": "limite",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "orden",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fecha_asc",
+                "fecha_desc"
+              ],
+              "default": "fecha_asc"
+            }
+          },
+          {
+            "name": "estado",
+            "required": false,
+            "in": "query",
+            "description": "Repetible: estado=planificada&estado=publicada",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "hasta",
+            "required": false,
+            "in": "query",
+            "description": "Fecha final inclusive (AAAA-MM-DD)",
+            "schema": {}
+          },
+          {
+            "name": "desde",
+            "required": false,
+            "in": "query",
+            "description": "Fecha inicial inclusive (AAAA-MM-DD)",
+            "schema": {}
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Guardias ordenadas por fecha"
+            "description": "Página de guardias"
+          },
+          "400": {
+            "description": "Filtro o cursor inválido"
           }
         },
         "security": [
@@ -21,7 +80,7 @@
             "bearer": []
           }
         ],
-        "summary": "Lista las guardias del periodo",
+        "summary": "Guardias del periodo con filtros",
         "tags": [
           "guardias"
         ]
@@ -70,7 +129,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Guardia encontrada"
+            "description": "Guardia encontrada",
+            "headers": {
+              "ETag": {
+                "description": "Versión del recurso",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
             "description": "La guardia no existe"

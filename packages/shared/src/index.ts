@@ -74,6 +74,39 @@ export const GuardiaRequestSchema = z.object({
 });
 export type GuardiaRequest = z.infer<typeof GuardiaRequestSchema>;
 
+export const OrdenGuardiasSchema = z.enum(['fecha_asc', 'fecha_desc']);
+export type OrdenGuardias = z.infer<typeof OrdenGuardiasSchema>;
+
+/** Respuesta de `GET /guardias` (contrato, `Pagina`). */
+export const PaginaGuardiasSchema = z.object({
+  data: z.array(GuardiaSchema),
+  page: z.object({
+    next_cursor: z.string().nullable(),
+    has_more: z.boolean(),
+    size: z.number().int().nonnegative(),
+  }),
+});
+export type PaginaGuardias = z.infer<typeof PaginaGuardiasSchema>;
+
+/**
+ * Filtros de `GET /guardias`. `estado` puede repetirse en la query, así que
+ * acepta un valor suelto o una lista y siempre sale como lista.
+ */
+export const GuardiasQuerySchema = z.object({
+  desde: FechaSchema.optional(),
+  hasta: FechaSchema.optional(),
+  estado: z
+    .union([EstadoGuardiaSchema, z.array(EstadoGuardiaSchema)])
+    .optional()
+    .transform((valor) =>
+      valor === undefined ? undefined : Array.isArray(valor) ? valor : [valor],
+    ),
+  orden: OrdenGuardiasSchema.default('fecha_asc'),
+  limite: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().min(1).optional(),
+});
+export type FiltrosGuardias = z.infer<typeof GuardiasQuerySchema>;
+
 /** Datos ilustrativos: el proyecto no trata datos reales del Colegio. */
 export const USUARIO_DEMO: Usuario = {
   id: '00000000-0000-4000-8000-000000000001',

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query, Res } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -9,9 +9,17 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { GuardiaRequestSchema, type Guardia, type GuardiaRequest } from '@turno/shared';
+import {
+  GuardiaRequestSchema,
+  GuardiasQuerySchema,
+  type FiltrosGuardias,
+  type Guardia,
+  type GuardiaRequest,
+  type PaginaGuardias,
+} from '@turno/shared';
 
 import { Roles } from './auth/roles.decorator';
 import { GuardiasService } from './guardias.service';
@@ -29,10 +37,26 @@ export class GuardiasController {
   constructor(private readonly guardias: GuardiasService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Lista las guardias del periodo' })
-  @ApiOkResponse({ description: 'Guardias ordenadas por fecha' })
-  listar(): Guardia[] {
-    return this.guardias.listar();
+  @ApiOperation({ summary: 'Guardias del periodo con filtros' })
+  @ApiQuery({ name: 'desde', required: false, description: 'Fecha inicial inclusive (AAAA-MM-DD)' })
+  @ApiQuery({ name: 'hasta', required: false, description: 'Fecha final inclusive (AAAA-MM-DD)' })
+  @ApiQuery({
+    name: 'estado',
+    required: false,
+    description: 'Repetible: estado=planificada&estado=publicada',
+    schema: { type: 'array', items: { type: 'string' } },
+  })
+  @ApiQuery({
+    name: 'orden',
+    required: false,
+    schema: { type: 'string', enum: ['fecha_asc', 'fecha_desc'], default: 'fecha_asc' },
+  })
+  @ApiQuery({ name: 'limite', required: false, schema: { type: 'integer', default: 20 } })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor opaco de la página anterior' })
+  @ApiOkResponse({ description: 'Página de guardias' })
+  @ApiBadRequestResponse({ description: 'Filtro o cursor inválido' })
+  listar(@Query(new ZodPipe(GuardiasQuerySchema)) filtros: FiltrosGuardias): PaginaGuardias {
+    return this.guardias.listar(filtros);
   }
 
   @Post()
@@ -55,9 +79,19 @@ export class GuardiasController {
   @Get(':guardiaId')
   @ApiOperation({ summary: 'Detalle de una guardia' })
   @ApiParam({ name: 'guardiaId', description: 'Identificador de la guardia' })
-  @ApiOkResponse({ description: 'Guardia encontrada' })
+  @ApiOkResponse({
+    description: 'Guardia encontrada',
+    headers: {
+      ETag: { description: 'Versión del recurso', schema: { type: 'string' } },
+    },
+  })
   @ApiNotFoundResponse({ description: 'La guardia no existe' })
-  detalle(@Param('guardiaId') guardiaId: string): Guardia {
-    return this.guardias.detalle(guardiaId);
+  detalle(
+    @Param('guardiaId') guardiaId: string,
+    @Res({ passthrough: true }) respuesta: RespuestaConCabeceras,
+  ): Guardia {
+    const guardia = this.guardias.detalle(guardiaId);
+    respuesta.setHeader('ETag', `"${guardia.version}"`);
+    return guardia;
   }
 }
